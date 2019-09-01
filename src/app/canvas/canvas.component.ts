@@ -52,10 +52,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     ngOnInit(){
     }
 
-    afterLoading(){
-        this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
-    }
-
     ngAfterViewInit() {    
         console.log("ngAfterViewInit()");
 
@@ -63,7 +59,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         this.element = this.img.nativeElement;
 
         this.draw();
-
         setInterval(() => {
 
             if (this.move_right_bg)    this.xpos += -1;
@@ -75,6 +70,11 @@ export class CanvasComponent implements OnInit, AfterViewInit {
             }
         }, this.refresh_rate_bg);
     }
+
+    afterLoading(){
+        // this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
+    }
+
 
     @HostListener('window:keydown', ['$event'])
     keyDownEvent(event: KeyboardEvent){
@@ -232,6 +232,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     draw_fg_1(){
 
         this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
+
     }
 
     draw_bg_1(){
