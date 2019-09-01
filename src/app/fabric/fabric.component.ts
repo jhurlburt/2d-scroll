@@ -29,7 +29,7 @@ export class FabricComponent implements OnInit, AfterViewInit {
   constructor() { }
 
   ngOnInit(){
-    this.canvas = new fabric.Canvas('canvas', { selection: false });
+    //this.canvas = new fabric.Canvas('canvas', { selection: false });
     this.addGridLines();
     this.addCircuit( 0, 0 );
     this.addLight( 0, 50 );

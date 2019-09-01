@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { FabricComponent } from './fabric/fabric.component';
+import { CanvasComponent } from './canvas/canvas.component';
 
 const routes: Routes = [
-  { path: 'fabric', component: FabricComponent }
+  { path: 'canvas', component: CanvasComponent }
 ];
 
 @NgModule({
