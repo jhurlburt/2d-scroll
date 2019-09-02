@@ -32,14 +32,23 @@ import { log, debuglog } from 'util';
         this.src = 'assets/NES - Super Mario Bros - Mario & Luigi.png';
     }
 
+
+    render(): void {
+      this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
+
+    }
+
     ngOnInit(): void {
 
     }      
     ngAfterViewInit(): void {
+      // this.element = this.img.nativeElement;
+
         // this.ctx = (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d');
-        this.element = this.img.nativeElement;
     }
     afterLoading(){
+      this.element = this.img.nativeElement;
+
         // this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
 
         // context.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
@@ -52,7 +61,7 @@ import { log, debuglog } from 'util';
         // dy	Destination y	0
         // dw	Destination width	Frame width
         // dh	Destination height	Frame height
-        this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
+        // this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
 
     }
   }

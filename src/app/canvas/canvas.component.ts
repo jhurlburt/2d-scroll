@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostListener } from '@angular/core';
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
+import { MarioComponent } from '../mario/mario.component';
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -19,6 +20,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     
     @ViewChild('canvasE1') myCanvas: ElementRef;
     @ViewChild('img') img: ElementRef;
+    @ViewChild('sprites') sprites: ElementRef;
     private ctx: CanvasRenderingContext2D;
     private xpos: number = 0;
     private ypos: number = 0;
@@ -36,17 +38,19 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     private jumping: boolean = false;
     private jump_counter: number = 0;
     private isdrawing = false;
-    private element: HTMLImageElement;
+    private imgElement: HTMLImageElement;
+    private spriteElement: HTMLImageElement;
 
+    // private sprite: MarioComponent;
 
     imgWidth: number;
     imgHeight: number;
     src: string;
 
     constructor() { 
-        this.imgWidth = 100;
-        this.imgHeight = 100;
-        this.src = 'assets/super-mario.png';    
+        // this.imgWidth = 100;
+        // this.imgHeight = 100;
+        // this.src = 'assets/super-mario.png';    
     }
 
     ngOnInit(){
@@ -56,8 +60,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         console.log("ngAfterViewInit()");
 
         this.ctx = (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d');
-        this.element = this.img.nativeElement;
-
+        // this.imgElement = this.img.nativeElement;
+        this.spriteElement = this.sprites.nativeElement;
+        
         this.draw();
         setInterval(() => {
 
@@ -73,6 +78,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
     afterLoading(){
         // this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
+        // this.sprites = new MarioComponent(this.ctx);        
     }
 
 
@@ -220,19 +226,32 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
         this.draw_fg_1();
 
-        this.draw_bg_1();
+        // this.draw_bg_1();
     
-        this.draw_bg_2();
+        // this.draw_bg_2();
 
-        this.draw_bg_3();
+        // this.draw_bg_3();
 
         this.isdrawing = false;
     }
 
     draw_fg_1(){
 
-        this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
+        // context.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+        // img Source image object	Sprite sheet
+        // sx	Source x	Frame index times frame width
+        // sy	Source y	0
+        // sw	Source width	Frame width
+        // sh	Source height	Frame height 
+        // dx	Destination x	0
+        // dy	Destination y	0
+        // dw	Destination width	Frame width
+        // dh	Destination height	Frame height
+        // this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
 
+        this.ctx.drawImage(this.spriteElement, 4, 4, 64, 64, 100, 200, 64, 64);
+        // if (this.sprites != null)
+        //     this.sprites.render();
     }
 
     draw_bg_1(){
