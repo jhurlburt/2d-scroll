@@ -2,6 +2,8 @@ import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostLi
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
 import { MarioComponent } from '../mario/mario.component';
+import { analyzeAndValidateNgModules } from '@angular/compiler';
+import { typeWithParameters } from '@angular/compiler/src/render3/util';
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -16,11 +18,11 @@ export enum KEY_CODE {
   templateUrl: './canvas.component.html',
   styleUrls: ['./canvas.component.css']
 })
+
 export class CanvasComponent implements OnInit, AfterViewInit {
-    
     @ViewChild('canvasE1') myCanvas: ElementRef;
-    @ViewChild('img') img: ElementRef;
     @ViewChild('sprites') sprites: ElementRef;
+    @ViewChild('img') img: ElementRef;
     private ctx: CanvasRenderingContext2D;
     private xpos: number = 0;
     private ypos: number = 0;
@@ -41,16 +43,115 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     private imgElement: HTMLImageElement;
     private spriteElement: HTMLImageElement;
 
-    // private sprite: MarioComponent;
-
     imgWidth: number;
     imgHeight: number;
     src: string;
+    mario: any;
 
     constructor() { 
-        // this.imgWidth = 100;
-        // this.imgHeight = 100;
-        // this.src = 'assets/super-mario.png';    
+        // var lastTime = 0;
+        // var vendors = ['ms', 'moz', 'webkit', 'o'];
+        // for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        //     window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        //     window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+        //                                || window[vendors[x]+'CancelRequestAnimationFrame'];
+        // }
+     
+        // if (!window.requestAnimationFrame)
+        //     window.requestAnimationFrame = function(callback, element) {
+        //         var currTime = new Date().getTime();
+        //         var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+        //         var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+        //           timeToCall);
+        //         lastTime = currTime + timeToCall;
+        //         return id;
+        //     };
+     
+        // if (!window.cancelAnimationFrame)
+        //     window.cancelAnimationFrame = function(id) {
+        //         clearTimeout(id);
+        //     };
+    }
+
+    gameLoop(){
+
+        // this.draw();
+        setInterval(() => {
+
+            this.mario.update();
+
+            this.mario.render();
+
+            // if (this.move_right_bg)    this.xpos += -1;
+            // if (this.move_left_bg)     this.xpos += 1;
+
+            // if (this.move_left_bg || this.move_right_bg) {
+                
+            //     this.draw();
+            // }
+        }, this.refresh_rate_bg);
+
+        // window.requestAnimationFrame(this.gameLoop);
+    }
+
+
+    sprite(options){        
+        let frameIndex: number = 0;
+        let tickCount: number = 0;
+        let ticksPerFrame: number = options.ticksPerFrame || 0;
+        let numberOfFrames: number = options.numberOfFrames || 1;
+
+        class hero {
+            context: CanvasRenderingContext2D;
+            width: number;
+            height: number;
+            image: HTMLImageElement;
+            update: any;
+            render: any;
+        }
+        
+        var that: hero;
+        that.context = options.context;
+        that.width = options.width;
+        that.height = options.height;
+        that.image = options.image;
+       
+		that.update = function () {
+
+            tickCount += 1;
+
+            if (tickCount > ticksPerFrame) {
+
+				tickCount = 0;
+				
+                // If the current frame index is in range
+                if (frameIndex < numberOfFrames - 1) {	
+                    // Go to the next frame
+                    frameIndex += 1;
+                } else {
+                    frameIndex = 0;
+                }
+            }
+        };
+
+        that.render = function () {
+            // Clear the canvas
+            that.context.clearRect(0, 0, that.width, that.height);
+            
+            // Draw the animation
+            that.context.drawImage(
+              that.image,
+              frameIndex * that.width / numberOfFrames,
+              0,
+              that.width / numberOfFrames,
+              that.height,
+              0,
+              0,
+              that.width / numberOfFrames,
+              that.height);
+          };
+          
+        return that;
     }
 
     ngOnInit(){
@@ -60,20 +161,23 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         console.log("ngAfterViewInit()");
 
         this.ctx = (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d');
-        // this.imgElement = this.img.nativeElement;
         this.spriteElement = this.sprites.nativeElement;
-        
-        this.draw();
-        setInterval(() => {
 
-            if (this.move_right_bg)    this.xpos += -1;
-            if (this.move_left_bg)     this.xpos += 1;
+        // Create sprite
+        this.mario = this.sprite({
+            context: (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d'),
+            width: 64,
+            height: 64,
+            image: this.spriteElement,
+            numberOfFrames: 1,
+            ticksPerFrame: 4
+        });
 
-            if (this.move_left_bg || this.move_right_bg) {
-                
-                this.draw();
-            }
-        }, this.refresh_rate_bg);
+        // this.ctx.drawImage(this.sprites.nativeElement, 4, 4, 64, 64, 100, 200, 64, 64);
+
+        // Load sprite sheet
+        this.spriteElement.addEventListener("load", this.gameLoop);
+        this.spriteElement.src = "assets/mario-running.png";
     }
 
     afterLoading(){
@@ -249,7 +353,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         // dh	Destination height	Frame height
         // this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
 
-        this.ctx.drawImage(this.spriteElement, 4, 4, 64, 64, 100, 200, 64, 64);
+        this.ctx.drawImage(this.sprites.nativeElement, 4, 4, 64, 64, 100, 200, 64, 64);
         // if (this.sprites != null)
         //     this.sprites.render();
     }
