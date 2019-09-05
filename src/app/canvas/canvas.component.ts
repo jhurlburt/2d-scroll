@@ -78,9 +78,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         // this.draw();
         setInterval(() => {
 
-            this.mario.update();
-
-            this.mario.render();
+            // this.mario.update();
+            // this.mario.render();
 
             // if (this.move_right_bg)    this.xpos += -1;
             // if (this.move_left_bg)     this.xpos += 1;
@@ -92,66 +91,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         }, this.refresh_rate_bg);
 
         // window.requestAnimationFrame(this.gameLoop);
-    }
-
-
-    sprite(options){        
-        let frameIndex: number = 0;
-        let tickCount: number = 0;
-        let ticksPerFrame: number = options.ticksPerFrame || 0;
-        let numberOfFrames: number = options.numberOfFrames || 1;
-
-        class hero {
-            context: CanvasRenderingContext2D;
-            width: number;
-            height: number;
-            image: HTMLImageElement;
-            update: any;
-            render: any;
-        }
-        
-        var that: hero;
-        that.context = options.context;
-        that.width = options.width;
-        that.height = options.height;
-        that.image = options.image;
-       
-		that.update = function () {
-
-            tickCount += 1;
-
-            if (tickCount > ticksPerFrame) {
-
-				tickCount = 0;
-				
-                // If the current frame index is in range
-                if (frameIndex < numberOfFrames - 1) {	
-                    // Go to the next frame
-                    frameIndex += 1;
-                } else {
-                    frameIndex = 0;
-                }
-            }
-        };
-
-        that.render = function () {
-            // Clear the canvas
-            that.context.clearRect(0, 0, that.width, that.height);
-            
-            // Draw the animation
-            that.context.drawImage(
-              that.image,
-              frameIndex * that.width / numberOfFrames,
-              0,
-              that.width / numberOfFrames,
-              that.height,
-              0,
-              0,
-              that.width / numberOfFrames,
-              that.height);
-          };
-          
-        return that;
     }
 
     ngOnInit(){
@@ -414,3 +353,90 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         this.ctx.stroke();
     }
 }
+
+class Hero {
+    context:  CanvasRenderingContext2D;
+    width:    number;
+    height:   number;
+    image:    HTMLImageElement;
+
+    constructor (options){
+        let context:    number = options.context;
+        let width:      number = options.width;
+        let height:     number = options.height;
+        let image:      number = options.image;    
+    }
+
+    update () {
+        return null;
+    }
+
+    render (){
+        return null;
+    }
+}
+
+class Sprite {        
+    frameIndex:     number = 0;
+    tickCount:      number = 0;
+    ticksPerFrame:  number = 0;
+    numberOfFrames: number = 1;
+    that:           Hero = null;
+
+    constructor (options){
+        this.frameIndex = options.frameIndex;
+        this.tickCount = options.tickCount;
+        this.ticksPerFrame = options.ticksPerFrame || 0;
+        this.numberOfFrames = options.numberOfFrames || 1;    
+        this.that = new Hero(
+            {
+                context: options.context,
+                width: options.width,
+                height: options.height,
+                image: options.image
+            }
+        ) 
+    }
+
+    
+
+
+   
+    that.update = function () {
+
+        tickCount += 1;
+
+        if (tickCount > ticksPerFrame) {
+
+            tickCount = 0;
+            
+            // If the current frame index is in range
+            if (frameIndex < numberOfFrames - 1) {	
+                // Go to the next frame
+                frameIndex += 1;
+            } else {
+                frameIndex = 0;
+            }
+        }
+    };
+
+    that.render = function () {
+        // Clear the canvas
+        that.context.clearRect(0, 0, that.width, that.height);
+        
+        // Draw the animation
+        that.context.drawImage(
+          that.image,
+          frameIndex * that.width / numberOfFrames,
+          0,
+          that.width / numberOfFrames,
+          that.height,
+          0,
+          0,
+          that.width / numberOfFrames,
+          that.height);
+      };
+      
+    return that;
+}
+
