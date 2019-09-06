@@ -1,9 +1,9 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostListener } from '@angular/core';
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
-import { MarioComponent } from '../mario/mario.component';
-import { analyzeAndValidateNgModules } from '@angular/compiler';
-import { typeWithParameters } from '@angular/compiler/src/render3/util';
+// import { MarioComponent } from '../mario/mario.component';
+// import { analyzeAndValidateNgModules } from '@angular/compiler';
+// import { typeWithParameters } from '@angular/compiler/src/render3/util';
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -22,7 +22,7 @@ export enum KEY_CODE {
 export class CanvasComponent implements OnInit, AfterViewInit {
     @ViewChild('canvasE1') myCanvas: ElementRef;
     @ViewChild('sprites') sprites: ElementRef;
-    @ViewChild('img') img: ElementRef;
+    // @ViewChild('img') img: ElementRef;
     private ctx: CanvasRenderingContext2D;
     private xpos: number = 0;
     private ypos: number = 0;
@@ -35,18 +35,19 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     private momentum: number = 0;
     private momentum_max: number = 5;
     private running: boolean = false;
-    private refresh_rate_bg: number = 100;
+    private refresh_rate_bg: number = 10;
     private redraw_bg: boolean = false;
     private jumping: boolean = false;
     private jump_counter: number = 0;
     private isdrawing = false;
     private imgElement: HTMLImageElement;
     private spriteElement: HTMLImageElement;
+    private canvasElement: HTMLCanvasElement;
 
     imgWidth: number;
     imgHeight: number;
     src: string;
-    mario: any;
+    mario: Sprite;
 
     constructor() { 
         // var lastTime = 0;
@@ -75,10 +76,15 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
     gameLoop(){
 
+        console.log("gameLoop()");
+
         // this.draw();
         setInterval(() => {
 
+            this.draw();
+
             // this.mario.update();
+
             // this.mario.render();
 
             // if (this.move_right_bg)    this.xpos += -1;
@@ -97,31 +103,31 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {    
+
         console.log("ngAfterViewInit()");
+
+        this.canvasElement = (<HTMLCanvasElement>this.myCanvas.nativeElement);
 
         this.ctx = (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d');
         this.spriteElement = this.sprites.nativeElement;
-
+        this.spriteElement.src = "assets/mario-walking.png";
+        
         // Create sprite
-        this.mario = this.sprite({
-            context: (<HTMLCanvasElement>this.myCanvas.nativeElement).getContext('2d'),
-            width: 64,
+        this.mario = new Sprite({
+            context: this.ctx,
+            width: 186,
             height: 64,
             image: this.spriteElement,
-            numberOfFrames: 1,
-            ticksPerFrame: 4
-        });
-
-        // this.ctx.drawImage(this.sprites.nativeElement, 4, 4, 64, 64, 100, 200, 64, 64);
-
-        // Load sprite sheet
-        this.spriteElement.addEventListener("load", this.gameLoop);
-        this.spriteElement.src = "assets/mario-running.png";
+            numberOfFrames: 3,
+            ticksPerFrame: 15
+        });        
+        
+        // window.requestAnimationFrame(gameLoop);
+        this.gameLoop();
     }
 
     afterLoading(){
-        // this.ctx.drawImage(this.element, 0, 0, this.imgWidth, this.imgHeight);
-        // this.sprites = new MarioComponent(this.ctx);        
+
     }
 
 
@@ -279,22 +285,13 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     }
 
     draw_fg_1(){
-
-        // context.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
-        // img Source image object	Sprite sheet
-        // sx	Source x	Frame index times frame width
-        // sy	Source y	0
-        // sw	Source width	Frame width
-        // sh	Source height	Frame height 
-        // dx	Destination x	0
-        // dy	Destination y	0
-        // dw	Destination width	Frame width
-        // dh	Destination height	Frame height
-        // this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
-
-        this.ctx.drawImage(this.sprites.nativeElement, 4, 4, 64, 64, 100, 200, 64, 64);
+        // this.ctx.drawImage(this.sprites.nativeElement, 4, 4, 64, 64, 100, 200, 64, 64);
         // if (this.sprites != null)
         //     this.sprites.render();
+
+        this.mario.update();
+
+        this.mario.render();
     }
 
     draw_bg_1(){
@@ -354,89 +351,75 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     }
 }
 
-class Hero {
-    context:  CanvasRenderingContext2D;
-    width:    number;
-    height:   number;
-    image:    HTMLImageElement;
-
-    constructor (options){
-        let context:    number = options.context;
-        let width:      number = options.width;
-        let height:     number = options.height;
-        let image:      number = options.image;    
-    }
-
-    update () {
-        return null;
-    }
-
-    render (){
-        return null;
-    }
-}
-
-class Sprite {        
+// numberOfFrames: 14,
+// ticksPerFrame: 1
+class Sprite {
     frameIndex:     number = 0;
     tickCount:      number = 0;
     ticksPerFrame:  number = 0;
     numberOfFrames: number = 1;
-    that:           Hero = null;
+    //that
+    context:        CanvasRenderingContext2D;
+    width:          number;
+    height:         number;
+    image:          HTMLImageElement;
 
     constructor (options){
-        this.frameIndex = options.frameIndex;
-        this.tickCount = options.tickCount;
+        // this.frameIndex = options.frameIndex;
+        // this.tickCount = options.tickCount;
         this.ticksPerFrame = options.ticksPerFrame || 0;
-        this.numberOfFrames = options.numberOfFrames || 1;    
-        this.that = new Hero(
-            {
-                context: options.context,
-                width: options.width,
-                height: options.height,
-                image: options.image
-            }
-        ) 
+        this.numberOfFrames = options.numberOfFrames || 1;
+        this.context = options.context;
+        this.width = options.width;
+        this.height = options.height;
+        this.image = options.image;
     }
 
-    
+    update = function () {
 
+        this.tickCount += 1;
 
-   
-    that.update = function () {
-
-        tickCount += 1;
-
-        if (tickCount > ticksPerFrame) {
-
-            tickCount = 0;
+        if (this.tickCount > this.ticksPerFrame) {
+            this.tickCount = 0;
             
             // If the current frame index is in range
-            if (frameIndex < numberOfFrames - 1) {	
+            if (this.frameIndex < this.numberOfFrames - 1) {	
                 // Go to the next frame
-                frameIndex += 1;
+                this.frameIndex += 1;
             } else {
-                frameIndex = 0;
+                this.frameIndex = 0;
             }
         }
     };
 
-    that.render = function () {
+    render = function () {
         // Clear the canvas
-        that.context.clearRect(0, 0, that.width, that.height);
+        this.context.clearRect(0, 0, this.width, this.height);
         
+        // context.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+        // img Source image object	Sprite sheet
+        // sx	Source x	Frame index times frame width
+        // sy	Source y	0
+        // sw	Source width	Frame width
+        // sh	Source height	Frame height 
+        // dx	Destination x	0
+        // dy	Destination y	0
+        // dw	Destination width	Frame width
+        // dh	Destination height	Frame height
+        // this.ctx.drawImage(this.element, 0, 0, 100, 100, 0, 0, 100, 100);
+
         // Draw the animation
-        that.context.drawImage(
-          that.image,
-          frameIndex * that.width / numberOfFrames,
+        this.context.drawImage(
+          this.image,
+          this.frameIndex * this.width / this.numberOfFrames,
           0,
-          that.width / numberOfFrames,
-          that.height,
-          0,
-          0,
-          that.width / numberOfFrames,
-          that.height);
-      };
-      
-    return that;
+          this.width / this.numberOfFrames,
+          this.height,
+          50,
+          200,
+          this.width / this.numberOfFrames,
+          this.height);
+    };      
+    // return that;
 }
 
