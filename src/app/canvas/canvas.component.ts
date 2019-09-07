@@ -1,9 +1,6 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostListener } from '@angular/core';
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
-// import { MarioComponent } from '../mario/mario.component';
-// import { analyzeAndValidateNgModules } from '@angular/compiler';
-// import { typeWithParameters } from '@angular/compiler/src/render3/util';
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -12,14 +9,13 @@ export enum KEY_CODE {
     CHAR_A = 65,
     CHAR_D = 68
   }
-
   export enum MARIO_ACTIONS {
-    STAND = 0,
-    WALK_LEFT = 1,
-    WALK_RIGHT = 2,
-    JUMP = 3
+    STILL_LEFT = 0,
+    STILL_RIGHT = 1,
+    WALK_LEFT = 2,
+    WALK_RIGHT = 3,
+    JUMP = 4
   }
-
 
 @Component({
   selector: 'myCanvas',
@@ -27,20 +23,21 @@ export enum KEY_CODE {
   styleUrls: ['./canvas.component.css']
 })
 export class CanvasComponent implements OnInit, AfterViewInit {
-    @ViewChild('canvasE1') canvasE1: ElementRef<HTMLCanvasElement>;
-    @ViewChild('imgMarioWalkingRight') imgMarioWalkingRight: ElementRef<HTMLImageElement>;
-    @ViewChild('imgMarioWalkingLeft') imgMarioWalkingLeft: ElementRef<HTMLImageElement>;
-    @ViewChild('imgMario') imgMario: ElementRef<HTMLImageElement>;
+    @ViewChild('canvasE1') canvasE1:                            ElementRef<HTMLCanvasElement>;
+    @ViewChild('imgMarioWalkingRight') imgMarioWalkingRight:    ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioWalkingLeft') imgMarioWalkingLeft:      ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioStillLeft') imgMarioStillLeft:          ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioStillRight') imgMarioStillRight:        ElementRef<HTMLImageElement>;
 
     ctx: CanvasRenderingContext2D;
     xpos: number = 0;
     ypos: number = 0;
-    layer1_speed: number = 5;
-    layer2_speed: number = 3;
+    layer1_speed: number = 3;
+    layer2_speed: number = 2;
     layer3_speed: number = 1;
     move_up: boolean = false;
-    move_left_bg: boolean = false;
-    move_right_bg: boolean = false;
+    move_left: boolean = false;
+    move_right: boolean = false;
     momentum: number = 0;
     momentum_max: number = 5;
     running: boolean = false;
@@ -50,6 +47,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     jump_counter: number = 0;
     isdrawing = false;
     mario: Character;
+    lastAction: MARIO_ACTIONS;
 
     constructor() { 
         // var lastTime = 0;
@@ -86,26 +84,30 @@ export class CanvasComponent implements OnInit, AfterViewInit {
             if (this.isdrawing) return;
             this.isdrawing = true;
     
-            console.log("redraw: =>", (this.move_left_bg || this.move_right_bg || this.move_up));
+            console.log("redraw: =>", (this.move_left || this.move_right || this.move_up));
     
             //TODO: have each element clear it's own canvas
-            this.clearCanvas();
-    
-            if (this.move_right_bg){
-                this.mario.render(MARIO_ACTIONS.WALK_RIGHT);
-                this.xpos += -1;
-            } 
+            this.clearCanvas(); 
+            this.draw_bg_1();
+            this.draw_bg_2();
+            this.draw_bg_3();
 
-            if (this.move_left_bg){
-                this.mario.render(MARIO_ACTIONS.WALK_LEFT);
+            if (this.move_right){
+                this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
+                this.xpos += -1;
+
+            } else if (this.move_left){
+                this.lastAction = MARIO_ACTIONS.WALK_LEFT;
                 this.xpos += 1;
-            }     
+
+            } else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) {
+                this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
+
+            } else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) {
+                this.lastAction = MARIO_ACTIONS.STILL_LEFT;
+            }
+            this.mario.render(this.lastAction);
     
-            // this.draw_bg_1();
-        
-            // this.draw_bg_2();
-    
-            // this.draw_bg_3();
     
             this.isdrawing = false;
     
@@ -122,37 +124,22 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         console.log("ngAfterViewInit()");
 
         this.ctx = this.canvasE1.nativeElement.getContext('2d');
+        this.imgMarioStillLeft.nativeElement.src = "assets/mario-still-left.png";
+        this.imgMarioStillRight.nativeElement.src = "assets/mario-still-right.png";
+        this.imgMarioWalkingLeft.nativeElement.src = "assets/mario-walking-left.png";
         this.imgMarioWalkingRight.nativeElement.src = "assets/mario-walking-right.png";
-
-        // context: options.ctx,
-        // width: options.image.width,
-        // height: options.image.width,
-        // image: options.image,
-        // numberOfFrames: options.numberOfFrames,
-        // ticksPerFrame: options.ticksPerFrame,
-        // x: options.x,
-        // y: options.y
 
         this.mario = new Character({
             context: this.ctx,
-            images: [ this.imgMarioWalkingRight.nativeElement ],
-            numberOfFrames: 3,
-            ticksPerFrame: 15,
+            images: [ 
+                this.imgMarioStillLeft.nativeElement,
+                this.imgMarioStillRight.nativeElement,
+                this.imgMarioWalkingLeft.nativeElement, 
+                this.imgMarioWalkingRight.nativeElement
+             ],
             x: 40,
             y: 200
         });
-
-        // // Create sprite
-        // this.mario_move_right = new Sprite({
-        //     context: this.ctx,
-        //     width: 186,
-        //     height: 64,
-        //     image: this.imgMarioMovingRight.nativeElement,
-        //     numberOfFrames: 3,
-        //     ticksPerFrame: 15,
-        //     x: 40,
-        //     y: 200
-        // });        
         
         // window.requestAnimationFrame(gameLoop);
         this.gameLoop();
@@ -165,12 +152,12 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         // this.resetActions();
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
             // this.xpos = this.xpos + -1;
-            this.move_right_bg = true;
+            this.move_right = true;
             // this.redraw = true;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
             // this.xpos = this.xpos + 1;
-            this.move_left_bg = true;
+            this.move_left = true;
             // this.redraw = true;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
@@ -203,11 +190,11 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
         // this.resetActions();
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
-            this.move_right_bg = false;
+            this.move_right = false;
             // this.xpos = this.xpos + -1;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
-            this.move_left_bg = false;
+            this.move_left = false;
             // this.xpos = this.xpos + 1;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
@@ -296,7 +283,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         if (this.isdrawing) return;
         this.isdrawing = true;
 
-        console.log("redraw: =>", (this.move_left_bg || this.move_right_bg || this.move_up));
+        console.log("redraw: =>", (this.move_left || this.move_right || this.move_up));
 
         this.clearCanvas();
 
@@ -312,7 +299,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     draw_bg_1(){
 
         // Set line width
-        this.ctx.lineWidth = 10;
+        this.ctx.lineWidth = 3;
 
         // Wall
         this.ctx.strokeRect(75 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1), 150, 110);
@@ -331,7 +318,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     draw_bg_2(){
 
         // Set line width
-        this.ctx.lineWidth = 5;
+        this.ctx.lineWidth = 2;
 
         // Wall
         this.ctx.strokeRect(175 + (this.xpos * this.layer2_speed), 140, 150, 110);
@@ -367,34 +354,44 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 }
 
 class Character {
-    mario_still: Sprite;
-    mario_walking_left: Sprite;
-    mario_walking_right: Sprite;
+    mario_still_left:       Sprite;
+    mario_still_right:      Sprite;
+    mario_walking_left:     Sprite;
+    mario_walking_right:    Sprite;
 
     constructor(options){
-        this.mario_still =  new Sprite({
+        this.mario_still_left = new Sprite({
             context:        options.context,
             image:          options.images[0],           
             frameIndex:     options.frameIndex,
-            ticksPerFrame:  options.ticksPerFrame,
+            ticksPerFrame:  -1,
+            tickCount:      options.tickCount,
+            x:              options.x,
+            y:              options.y        
+        });
+        this.mario_still_right = new Sprite({
+            context:        options.context,
+            image:          options.images[1],           
+            frameIndex:     options.frameIndex,
+            ticksPerFrame:  -1,
             tickCount:      options.tickCount,
             x:              options.x,
             y:              options.y        
         });
         this.mario_walking_left =  new Sprite({
             context:        options.context,
-            image:          options.images[0],           
+            image:          options.images[2],           
             frameIndex:     options.frameIndex,
-            ticksPerFrame:  options.ticksPerFrame,
+            ticksPerFrame:  10,
             tickCount:      options.tickCount,
             x:              options.x,
             y:              options.y        
         });
         this.mario_walking_right =  new Sprite({
             context:        options.context,
-            image:          options.images[0],           
+            image:          options.images[3],           
             frameIndex:     options.frameIndex,
-            ticksPerFrame:  options.ticksPerFrame,
+            ticksPerFrame:  10,
             tickCount:      options.tickCount,
             x:              options.x,
             y:              options.y        
@@ -413,9 +410,14 @@ class Character {
                 this.mario_walking_right.render();
                 break;
             }
+            case MARIO_ACTIONS.STILL_LEFT: {
+                this.mario_still_left.update();
+                this.mario_still_left.render();
+                break;
+            }
             default: {
-                this.mario_still.update();
-                this.mario_still.render();
+                this.mario_still_right.update();
+                this.mario_still_right.render();
                 break;
             }
         }
@@ -424,21 +426,24 @@ class Character {
 
 class Sprite {
     context:        CanvasRenderingContext2D;
-    image:          HTMLImageElement;           //distinct
-    numberOfFrames: number = 1;                 //distinct
+    image:          HTMLImageElement;
+    numberOfFrames: number = 1;
     frameIndex:     number = 0;
     ticksPerFrame:  number = 0;
     tickCount:      number = 0;
     x:              number = 0;
     y:              number = 0;
+    frameWidth:     number = 64;
+    frameHeight:    number = 0;
 
     constructor (options){
         this.ticksPerFrame = options.ticksPerFrame || 0;
-        this.numberOfFrames = options.image.width / 64;
         this.context = options.context;
         this.image = options.image;
         this.x = options.x || 0;
         this.y = options.y || 0;
+        this.frameHeight = this.image.height;
+        this.numberOfFrames = options.image.width / this.frameWidth;
     }
 
     update = function () {
@@ -454,31 +459,21 @@ class Sprite {
             }
         }
     };
-
-    // img Source image object	Sprite sheet
-    // sx	Source x	Frame index times frame width
-    // sy	Source y	0
-    // sw	Source width	Frame width
-    // sh	Source height	Frame height 
-    // dx	Destination x	0
-    // dy	Destination y	0
-    // dw	Destination width	Frame width
-    // dh	Destination height	Frame height
     render = function () {
         // Clear the canvas
-        this.context.clearRect(this.x, this.y, this.image.width / this.numberOfFrames, this.image.height);
+        this.context.clearRect(this.x, this.y, this.frameWidth, this.frameHeight);
         
         // Draw the animation
         this.context.drawImage(
-          this.image,
-          this.frameIndex * this.image.width / this.numberOfFrames,
-          0,
-          this.image.width / this.numberOfFrames,
-          this.image.height,
-          this.x,
-          this.y,
-          this.image.width / this.numberOfFrames,
-          this.image.height);
+          this.image,                               // img  Source image object	Sprite sheet
+          this.frameIndex * this.frameWidth,        // sx	Source x	Frame index times frame width
+          0,                                        // sy	Source y	0
+          this.frameWidth,                          // sw	Source width	Frame width
+          this.frameHeight,                         // sh	Source height	Frame height 
+          this.x,                                   // dx	Destination x	0
+          this.y,                                   // dy	Destination y	0
+          this.frameWidth,                          // dw	Destination width	Frame width
+          this.frameHeight);                        // dh	Destination height	Frame height
     };      
 }
 
