@@ -8,41 +8,40 @@ export enum KEY_CODE {
     SPACE = 32,
     CHAR_A = 65,
     CHAR_D = 68
-  }
-  export enum MARIO_ACTIONS {
+}
+export enum MARIO_ACTIONS {
     STILL_LEFT = 0,
     STILL_RIGHT = 1,
     WALK_LEFT = 2,
     WALK_RIGHT = 3,
     JUMP = 4
-  }
+}
+const MARIO_POSITION_X: number = 40;
+const MARIO_POSITION_Y: number = 200;
+const MAX_MOMENTUM: number = 5;
+const REFRESH_RATE: number = 1;
 
 @Component({
   selector: 'myCanvas',
   templateUrl: './canvas.component.html',
   styleUrls: ['./canvas.component.css']
 })
-export class CanvasComponent implements OnInit, AfterViewInit {
-    @ViewChild('canvasE1') canvasE1:                            ElementRef<HTMLCanvasElement>;
-    @ViewChild('imgMarioWalkingRight') imgMarioWalkingRight:    ElementRef<HTMLImageElement>;
-    @ViewChild('imgMarioWalkingLeft') imgMarioWalkingLeft:      ElementRef<HTMLImageElement>;
-    @ViewChild('imgMarioStillLeft') imgMarioStillLeft:          ElementRef<HTMLImageElement>;
-    @ViewChild('imgMarioStillRight') imgMarioStillRight:        ElementRef<HTMLImageElement>;
-
+export class CanvasComponent implements AfterViewInit {
+    @ViewChild('canvasE1') canvasE1: ElementRef<HTMLCanvasElement>;
+    @ViewChild('imgMarioWalkingRight') imgMarioWalkRt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioWalkingLeft') imgMarioWalkLt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioStillLeft') imgMarioStillLt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioStillRight') imgMarioStillRt: ElementRef<HTMLImageElement>;
     ctx: CanvasRenderingContext2D;
     xpos: number = 0;
     ypos: number = 0;
     layer1_speed: number = 3;
     layer2_speed: number = 2;
     layer3_speed: number = 1;
-    move_up: boolean = false;
-    move_left: boolean = false;
-    move_right: boolean = false;
     momentum: number = 0;
-    momentum_max: number = 5;
-    running: boolean = false;
-    refresh_rate_bg: number = 10;
-    redraw_bg: boolean = false;
+    move_up: boolean = false;
+    walk_lt: boolean = false;
+    walk_rt: boolean = false;
     jumping: boolean = false;
     jump_counter: number = 0;
     isdrawing = false;
@@ -75,73 +74,59 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     }
 
     gameLoop(){
-
         console.log("gameLoop()");
 
-        // this.draw();
         setInterval(() => {
 
             if (this.isdrawing) return;
             this.isdrawing = true;
     
-            console.log("redraw: =>", (this.move_left || this.move_right || this.move_up));
-    
-            //TODO: have each element clear it's own canvas
-            this.clearCanvas(); 
-            this.draw_bg_1();
-            this.draw_bg_2();
-            this.draw_bg_3();
+            console.log("redraw: =>", (this.walk_lt || this.walk_rt || this.move_up));
 
-            if (this.move_right){
+            this.xpos += (this.walk_rt ? -1 : (this.walk_lt ? 1 : 0));
+
+            //TODO: replace with this.background.render(this.lastAction)
+            this.draw_bg();
+
+            if (this.walk_rt)
                 this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
-                this.xpos += -1;
-
-            } else if (this.move_left){
+            else if (this.walk_lt)
                 this.lastAction = MARIO_ACTIONS.WALK_LEFT;
-                this.xpos += 1;
-
-            } else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) {
+            else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) 
                 this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
-
-            } else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) {
+            else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) 
                 this.lastAction = MARIO_ACTIONS.STILL_LEFT;
-            }
+
             this.mario.render(this.lastAction);
     
-    
             this.isdrawing = false;
-    
-        }, this.refresh_rate_bg);
-
+            
+        }, REFRESH_RATE);
         // window.requestAnimationFrame(this.gameLoop);
     }
 
-    ngOnInit(){
-    }
-
     ngAfterViewInit() {    
-
         console.log("ngAfterViewInit()");
 
         this.ctx = this.canvasE1.nativeElement.getContext('2d');
-        this.imgMarioStillLeft.nativeElement.src = "assets/mario-still-left.png";
-        this.imgMarioStillRight.nativeElement.src = "assets/mario-still-right.png";
-        this.imgMarioWalkingLeft.nativeElement.src = "assets/mario-walking-left.png";
-        this.imgMarioWalkingRight.nativeElement.src = "assets/mario-walking-right.png";
+        this.imgMarioStillLt.nativeElement.src = "assets/mario-still-left.png";
+        this.imgMarioStillRt.nativeElement.src = "assets/mario-still-right.png";
+        this.imgMarioWalkLt.nativeElement.src = "assets/mario-walking-left.png";
+        this.imgMarioWalkRt.nativeElement.src = "assets/mario-walking-right.png";
 
         this.mario = new Character({
             context: this.ctx,
             images: [ 
-                this.imgMarioStillLeft.nativeElement,
-                this.imgMarioStillRight.nativeElement,
-                this.imgMarioWalkingLeft.nativeElement, 
-                this.imgMarioWalkingRight.nativeElement
+                this.imgMarioStillLt.nativeElement,
+                this.imgMarioStillRt.nativeElement,
+                this.imgMarioWalkLt.nativeElement, 
+                this.imgMarioWalkRt.nativeElement
              ],
-            x: 40,
-            y: 200
+            x: MARIO_POSITION_X,
+            y: MARIO_POSITION_Y
         });
         
-        // window.requestAnimationFrame(gameLoop);
+        // window.requestAnimationFrame(this.gameLoop);
         this.gameLoop();
     }
 
@@ -149,22 +134,14 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     keyDownEvent(event: KeyboardEvent){
         console.log("window:keydown => %s", event.keyCode.toString());
 
-        // this.resetActions();
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
-            // this.xpos = this.xpos + -1;
-            this.move_right = true;
-            // this.redraw = true;
+            this.walk_rt = true;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
-            // this.xpos = this.xpos + 1;
-            this.move_left = true;
-            // this.redraw = true;
+            this.walk_lt = true;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
-            // this.ypos = this.ypos + 1;
-            // this.jumping = true;
-            this.move_up = true;
-            // this.redraw = true;
+            this.jumping = true;
 
             //Rules of Jumping
             //1. movement gradually decreases over time
@@ -173,13 +150,11 @@ export class CanvasComponent implements OnInit, AfterViewInit {
             //   * power is at full capacity
             //   * keyup event fired on SPACE key
 
-
             //pressing the space bar should launch the player
             //the longer the button is held down, the further the jump
             //regular jump is 
             //gravity does the work of returning the player to earth
             //the higher the altitude, the greater the effects of gravity
-
         }
     }
 
@@ -190,12 +165,10 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
         // this.resetActions();
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
-            this.move_right = false;
-            // this.xpos = this.xpos + -1;
+            this.walk_rt = false;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
-            this.move_left = false;
-            // this.xpos = this.xpos + 1;
+            this.walk_lt = false;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
             this.jumping = false;
@@ -271,29 +244,17 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         }
     }
 
-     clearCanvas(){
+     clearCanvasAll(){
         this.ctx.beginPath();
-
         this.ctx.clearRect(0, 0, (<HTMLCanvasElement>this.canvasE1.nativeElement).width, (<HTMLCanvasElement>this.canvasE1.nativeElement).height);
-
         this.ctx.closePath();
     }
 
-    draw(){
-        if (this.isdrawing) return;
-        this.isdrawing = true;
-
-        console.log("redraw: =>", (this.move_left || this.move_right || this.move_up));
-
-        this.clearCanvas();
-
-        // this.draw_bg_1();
-    
-        // this.draw_bg_2();
-
-        // this.draw_bg_3();
-
-        this.isdrawing = false;
+    draw_bg(){
+        this.clearCanvasAll();
+        this.draw_bg_1();
+        this.draw_bg_2();
+        this.draw_bg_3();
     }
 
     draw_bg_1(){
@@ -354,70 +315,37 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 }
 
 class Character {
-    mario_still_left:       Sprite;
-    mario_still_right:      Sprite;
-    mario_walking_left:     Sprite;
-    mario_walking_right:    Sprite;
+    mario_still_lt: Sprite;
+    mario_still_rt: Sprite;
+    mario_walk_lt:  Sprite;
+    mario_walk_rt:  Sprite;
 
     constructor(options){
-        this.mario_still_left = new Sprite({
-            context:        options.context,
-            image:          options.images[0],           
-            frameIndex:     options.frameIndex,
-            ticksPerFrame:  -1,
-            tickCount:      options.tickCount,
-            x:              options.x,
-            y:              options.y        
-        });
-        this.mario_still_right = new Sprite({
-            context:        options.context,
-            image:          options.images[1],           
-            frameIndex:     options.frameIndex,
-            ticksPerFrame:  -1,
-            tickCount:      options.tickCount,
-            x:              options.x,
-            y:              options.y        
-        });
-        this.mario_walking_left =  new Sprite({
-            context:        options.context,
-            image:          options.images[2],           
-            frameIndex:     options.frameIndex,
-            ticksPerFrame:  10,
-            tickCount:      options.tickCount,
-            x:              options.x,
-            y:              options.y        
-        });
-        this.mario_walking_right =  new Sprite({
-            context:        options.context,
-            image:          options.images[3],           
-            frameIndex:     options.frameIndex,
-            ticksPerFrame:  10,
-            tickCount:      options.tickCount,
-            x:              options.x,
-            y:              options.y        
-        });
+        this.mario_still_lt = new Sprite({ context: options.context, image: options.images[0], x: options.x, y: options.y });
+        this.mario_still_rt = new Sprite({ context: options.context, image: options.images[1], x: options.x, y: options.y });
+        this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], ticksPerFrame: 35, x: options.x, y: options.y });
+        this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], ticksPerFrame: 35, x: options.x, y: options.y });
     }
-
     render(action){
         switch (action){
             case MARIO_ACTIONS.WALK_LEFT: {
-                this.mario_walking_left.update();
-                this.mario_walking_left.render();
+                this.mario_walk_lt.update();
+                this.mario_walk_lt.render();
                 break;
             }
             case MARIO_ACTIONS.WALK_RIGHT: {
-                this.mario_walking_right.update();
-                this.mario_walking_right.render();
+                this.mario_walk_rt.update();
+                this.mario_walk_rt.render();
                 break;
             }
             case MARIO_ACTIONS.STILL_LEFT: {
-                this.mario_still_left.update();
-                this.mario_still_left.render();
+                this.mario_still_lt.update();
+                this.mario_still_lt.render();
                 break;
             }
             default: {
-                this.mario_still_right.update();
-                this.mario_still_right.render();
+                this.mario_still_rt.update();
+                this.mario_still_rt.render();
                 break;
             }
         }
