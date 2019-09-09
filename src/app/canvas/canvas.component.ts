@@ -1,6 +1,13 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostListener } from '@angular/core';
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
+import { renderComponent } from '@angular/core/src/render3';
+
+const MARIO_POSITION_X: number = 50;
+const MARIO_POSITION_Y: number = 650;
+const MAX_MOMENTUM: number = 5;
+const REFRESH_RATE: number = 1;
+const MARIO_WALK_SPEED: number = 3;
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -9,17 +16,16 @@ export enum KEY_CODE {
     CHAR_A = 65,
     CHAR_D = 68
 }
+
 export enum MARIO_ACTIONS {
     STILL_LEFT = 0,
     STILL_RIGHT = 1,
     WALK_LEFT = 2,
     WALK_RIGHT = 3,
+    JUMP_LEFT = 4,
+    JUMP_RIGHT = 5,
     JUMP = 4
 }
-const MARIO_POSITION_X: number = 40;
-const MARIO_POSITION_Y: number = 200;
-const MAX_MOMENTUM: number = 5;
-const REFRESH_RATE: number = 1;
 
 @Component({
   selector: 'myCanvas',
@@ -32,6 +38,10 @@ export class CanvasComponent implements AfterViewInit {
     @ViewChild('imgMarioWalkingLeft') imgMarioWalkLt: ElementRef<HTMLImageElement>;
     @ViewChild('imgMarioStillLeft') imgMarioStillLt: ElementRef<HTMLImageElement>;
     @ViewChild('imgMarioStillRight') imgMarioStillRt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioJumpRight') imgMarioJumpRt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgMarioJumpLeft') imgMarioJumpLt: ElementRef<HTMLImageElement>;
+    @ViewChild('imgBackground1_1') imgBackground1_1: ElementRef<HTMLImageElement>;
+    
     ctx: CanvasRenderingContext2D;
     xpos: number = 0;
     ypos: number = 0;
@@ -46,6 +56,7 @@ export class CanvasComponent implements AfterViewInit {
     jump_counter: number = 0;
     isdrawing = false;
     mario: Character;
+    bg: Background;
     lastAction: MARIO_ACTIONS;
 
     constructor() { 
@@ -86,16 +97,31 @@ export class CanvasComponent implements AfterViewInit {
             this.xpos += (this.walk_rt ? -1 : (this.walk_lt ? 1 : 0));
 
             //TODO: replace with this.background.render(this.lastAction)
-            this.draw_bg();
+            // this.draw_bg();
 
-            if (this.walk_rt)
-                this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
-            else if (this.walk_lt)
-                this.lastAction = MARIO_ACTIONS.WALK_LEFT;
-            else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) 
-                this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
-            else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) 
-                this.lastAction = MARIO_ACTIONS.STILL_LEFT;
+            if (this.jumping){
+                if (this.lastAction == MARIO_ACTIONS.STILL_RIGHT ||
+                    this.lastAction == MARIO_ACTIONS.WALK_RIGHT || 
+                    this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
+                    this.lastAction = MARIO_ACTIONS.JUMP_RIGHT
+                } else if (
+                    this.lastAction == MARIO_ACTIONS.STILL_LEFT ||
+                    this.lastAction == MARIO_ACTIONS.WALK_LEFT || 
+                    this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
+                    this.lastAction = MARIO_ACTIONS.JUMP_LEFT
+                }
+            } else {
+                if (this.walk_rt)
+                    this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
+                else if (this.walk_lt)
+                    this.lastAction = MARIO_ACTIONS.WALK_LEFT;
+                else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) 
+                    this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
+                else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) 
+                    this.lastAction = MARIO_ACTIONS.STILL_LEFT;
+            }
+
+            this.bg.render(this.lastAction);
 
             this.mario.render(this.lastAction);
     
@@ -108,11 +134,19 @@ export class CanvasComponent implements AfterViewInit {
     ngAfterViewInit() {    
         console.log("ngAfterViewInit()");
 
+        this.canvasE1.nativeElement.height = 800;
+        this.canvasE1.nativeElement.width = 800;
+
         this.ctx = this.canvasE1.nativeElement.getContext('2d');
+
         this.imgMarioStillLt.nativeElement.src = "assets/mario-still-left.png";
         this.imgMarioStillRt.nativeElement.src = "assets/mario-still-right.png";
         this.imgMarioWalkLt.nativeElement.src = "assets/mario-walking-left.png";
         this.imgMarioWalkRt.nativeElement.src = "assets/mario-walking-right.png";
+        this.imgMarioJumpLt.nativeElement.src = "assets/mario-jump-left.png";
+        this.imgMarioJumpRt.nativeElement.src = "assets/mario-jump-right.png";
+        this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
+        // this.imgBackground1_1.nativeElement.height = this.canvasE1.nativeElement.height;
 
         this.mario = new Character({
             context: this.ctx,
@@ -120,10 +154,24 @@ export class CanvasComponent implements AfterViewInit {
                 this.imgMarioStillLt.nativeElement,
                 this.imgMarioStillRt.nativeElement,
                 this.imgMarioWalkLt.nativeElement, 
-                this.imgMarioWalkRt.nativeElement
+                this.imgMarioWalkRt.nativeElement,
+                this.imgMarioJumpLt.nativeElement,
+                this.imgMarioJumpRt.nativeElement
              ],
             x: MARIO_POSITION_X,
             y: MARIO_POSITION_Y
+        });
+
+        this.bg = new Background({
+            context: this.ctx,
+            images: [ 
+                this.imgBackground1_1.nativeElement
+             ],
+             sourceWidth: this.canvasE1.nativeElement.width,
+             sourceHeight: this.canvasE1.nativeElement.height,
+             frameWidth: this.canvasE1.nativeElement.width,
+             frameHeight: this.canvasE1.nativeElement.height,
+
         });
         
         // window.requestAnimationFrame(this.gameLoop);
@@ -259,21 +307,21 @@ export class CanvasComponent implements AfterViewInit {
 
     draw_bg_1(){
 
-        // Set line width
-        this.ctx.lineWidth = 3;
+        // // Set line width
+        // this.ctx.lineWidth = 3;
 
-        // Wall
-        this.ctx.strokeRect(75 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1), 150, 110);
+        // // Wall
+        // this.ctx.strokeRect(75 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1), 150, 110);
 
-        // Door
-        this.ctx.fillRect(130 + (this.xpos * this.layer1_speed), 190 + (this.ypos * 1), 40, 60);
+        // // Door
+        // this.ctx.fillRect(130 + (this.xpos * this.layer1_speed), 190 + (this.ypos * 1), 40, 60);
 
-        // Roof
-        this.ctx.moveTo(50 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1));
-        this.ctx.lineTo(150 + (this.xpos * this.layer1_speed), 60 + (this.ypos * 1));
-        this.ctx.lineTo(250 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1));
-        this.ctx.closePath();
-        this.ctx.stroke();
+        // // Roof
+        // this.ctx.moveTo(50 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1));
+        // this.ctx.lineTo(150 + (this.xpos * this.layer1_speed), 60 + (this.ypos * 1));
+        // this.ctx.lineTo(250 + (this.xpos * this.layer1_speed), 140 + (this.ypos * 1));
+        // this.ctx.closePath();
+        // this.ctx.stroke();
     }
 
     draw_bg_2(){
@@ -314,19 +362,98 @@ export class CanvasComponent implements AfterViewInit {
     }
 }
 
+class Background {
+    bg_1_1: Sprite;
+    image: HTMLImageElement;
+
+    constructor(options){
+        this.bg_1_1 = new Sprite({ 
+            context:        options.context, 
+            image:          options.images[0], 
+            x:              options.x,
+            y:              options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth, 
+            frameHeight:    options.frameHeight,
+            numberOfFrames: Math.trunc(options.images[0] / options.frameWidth)
+        });
+    }
+
+    render = function(action){
+        switch (action){
+            case MARIO_ACTIONS.WALK_LEFT: {
+                this.bg_1_1.sourceX -= MARIO_WALK_SPEED;
+                // this.bg_1_1.update(action);
+                this.bg_1_1.render();
+                break;
+            }
+            case MARIO_ACTIONS.WALK_RIGHT: {
+                this.bg_1_1.sourceX += MARIO_WALK_SPEED;
+                // this.bg_1_1.update(action);
+                this.bg_1_1.render();
+                break;
+            }
+            case MARIO_ACTIONS.STILL_LEFT: {
+                //do nothing
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_RIGHT: {
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_LEFT: {
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    };
+}
+
 class Character {
     mario_still_lt: Sprite;
     mario_still_rt: Sprite;
     mario_walk_lt:  Sprite;
     mario_walk_rt:  Sprite;
+    mario_jump_lt:  Sprite;
+    mario_jump_rt:  Sprite;
 
     constructor(options){
-        this.mario_still_lt = new Sprite({ context: options.context, image: options.images[0], x: options.x, y: options.y });
-        this.mario_still_rt = new Sprite({ context: options.context, image: options.images[1], x: options.x, y: options.y });
-        this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], ticksPerFrame: 35, x: options.x, y: options.y });
-        this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], ticksPerFrame: 35, x: options.x, y: options.y });
+        this.mario_still_lt = new Sprite({ context: options.context, image: options.images[0], x: options.x, y: options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight });
+        this.mario_still_rt = new Sprite({ context: options.context, image: options.images[1], x: options.x, y: options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight });
+        this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], x: options.x, y: options.y,
+            ticksPerFrame:  10, 
+            sourceWidth:    options.sourceWidth     || 64, 
+            sourceHeight:   options.sourceHeight    || 64,
+            frameWidth:     options.frameWidth      || 64,
+            frameHeight:    options.frameHeight     || 64 });
+        this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], x: options.x, y: options.y,
+            ticksPerFrame:  10, 
+            sourceWidth:    options.sourceWidth     || 64, 
+            sourceHeight:   options.sourceHeight    || 64,
+            frameWidth:     options.frameWidth      || 64,
+            frameHeight:    options.frameHeight     || 64 });
+        this.mario_jump_lt  = new Sprite({ context: options.context, image: options.images[4], x: options.x, y: options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight });
+        this.mario_jump_rt  = new Sprite({ context: options.context, image: options.images[5], x: options.x, y: options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight });
     }
-    render(action){
+    render = function(action){
         switch (action){
             case MARIO_ACTIONS.WALK_LEFT: {
                 this.mario_walk_lt.update();
@@ -341,6 +468,16 @@ class Character {
             case MARIO_ACTIONS.STILL_LEFT: {
                 this.mario_still_lt.update();
                 this.mario_still_lt.render();
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_RIGHT: {
+                this.mario_jump_rt.update();
+                this.mario_jump_rt.render();
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_LEFT: {
+                this.mario_jump_lt.update();
+                this.mario_jump_lt.render();
                 break;
             }
             default: {
@@ -361,8 +498,12 @@ class Sprite {
     tickCount:      number = 0;
     x:              number = 0;
     y:              number = 0;
-    frameWidth:     number = 64;
+    frameWidth:     number = 0;
     frameHeight:    number = 0;
+    sourceWidth:    number = 0;
+    sourceHeight:   number = 0;
+    sourceX:        number = 0;
+    sourceY:        number = 0;
 
     constructor (options){
         this.ticksPerFrame = options.ticksPerFrame || 0;
@@ -370,10 +511,14 @@ class Sprite {
         this.image = options.image;
         this.x = options.x || 0;
         this.y = options.y || 0;
-        this.frameHeight = this.image.height;
-        this.numberOfFrames = options.image.width / this.frameWidth;
+        this.frameWidth = options.frameWidth || options.image.width;
+        this.frameHeight = options.frameHeight || options.image.height;
+        this.sourceWidth = options.sourceWidth || options.image.width;
+        this.sourceHeight = options.sourceHeight || options.image.height;
+        this.numberOfFrames = options.numberOfFrames || Math.trunc(options.image.width / options.frameWidth);
     }
 
+    //use to animate characters
     update = function () {
         this.tickCount += 1;
         if (this.tickCount > this.ticksPerFrame) {
@@ -385,23 +530,33 @@ class Sprite {
             } else {
                 this.frameIndex = 0;
             }
-        }
+        } 
+        this.sourceX = this.frameIndex * this.frameWidth;
     };
     render = function () {
         // Clear the canvas
-        this.context.clearRect(this.x, this.y, this.frameWidth, this.frameHeight);
+        // this.context.clearRect(this.x, this.y, this.frameWidth, this.frameHeight);
         
+        // console.log("sx: " + this.frameIndex + this.frameWidth +
+        //             ", sy: " + 0 +
+        //             ", sx: " + this.frameIndex + this.frameWidth +
+        //             ", sw: " + this.sourceWidth +
+        //             ", sh: " + this.sourceHeight +
+        //             ", dx: " + this.x +
+        //             ", dy: " + this.y +
+        //             ", dw: " + this.frameWidth +
+        //             ", dh: " + this.frameHeight );
         // Draw the animation
         this.context.drawImage(
-          this.image,                               // img  Source image object	Sprite sheet
-          this.frameIndex * this.frameWidth,        // sx	Source x	Frame index times frame width
-          0,                                        // sy	Source y	0
-          this.frameWidth,                          // sw	Source width	Frame width
-          this.frameHeight,                         // sh	Source height	Frame height 
-          this.x,                                   // dx	Destination x	0
-          this.y,                                   // dy	Destination y	0
-          this.frameWidth,                          // dw	Destination width	Frame width
-          this.frameHeight);                        // dh	Destination height	Frame height
+          this.image,                        // img  Source image object	Sprite sheet
+          this.sourceX,                      // sx	Source x	Frame index times frame width
+          this.sourceY,                      // sy	Source y	0
+          this.sourceWidth,                  // sw	Source width	Frame width
+          this.sourceHeight,                 // sh	Source height	Frame height 
+          this.x,                            // dx	Destination x	0
+          this.y,                            // dy	Destination y	0
+          this.frameWidth,                   // dw	Destination width	Frame width
+          this.frameHeight);                 // dh	Destination height	Frame height
     };      
 }
 
