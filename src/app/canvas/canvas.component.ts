@@ -16,7 +16,6 @@ export enum KEY_CODE {
     CHAR_A = 65,
     CHAR_D = 68
 }
-
 export enum MARIO_ACTIONS {
     STILL_LEFT = 0,
     STILL_RIGHT = 1,
@@ -233,6 +232,7 @@ export class CanvasComponent implements AfterViewInit {
         //when SPACE keydown event fires, set jumping = true
         //when player touches ground, set jumping = false
 
+        // https://hypertextbook.com/facts/2007/mariogravity.shtml
 
         if (this.ypos > 0){
             //affect gravity on the player
