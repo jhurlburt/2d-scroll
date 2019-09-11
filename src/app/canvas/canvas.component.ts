@@ -8,6 +8,10 @@ const MARIO_POSITION_Y: number = 650;
 const MAX_MOMENTUM: number = 5;
 const REFRESH_RATE: number = 1;
 const MARIO_WALK_SPEED: number = 3;
+const MARIO_JUMP_SPEED: number = 5;
+const FRAME_HEIGHT: number = 64;
+const FRAME_WIDTH: number = 64;
+const MARIO_MAX_JUMP_HEIGHT : number = FRAME_HEIGHT * 5;
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -17,13 +21,16 @@ export enum KEY_CODE {
     CHAR_D = 68
 }
 export enum MARIO_ACTIONS {
-    STILL_LEFT = 0,
-    STILL_RIGHT = 1,
-    WALK_LEFT = 2,
-    WALK_RIGHT = 3,
-    JUMP_LEFT = 4,
-    JUMP_RIGHT = 5,
-    JUMP = 4
+    STILL_LEFT ,
+    STILL_RIGHT,
+    WALK_LEFT,
+    WALK_RIGHT,
+    JUMP_LEFT,
+    JUMP_RIGHT,
+    FALL_LEFT,
+    FALL_RIGHT,
+    FALL_DOWN,
+    JUMP_UP
 }
 
 @Component({
@@ -49,9 +56,10 @@ export class CanvasComponent implements AfterViewInit {
     layer3_speed: number = 1;
     momentum: number = 0;
     move_up: boolean = false;
-    walk_lt: boolean = false;
-    walk_rt: boolean = false;
-    jumping: boolean = false;
+    key_walk_left: boolean = false;
+    key_walk_right: boolean = false;
+    key_jump: boolean = false;
+    cancel_jump: boolean = false;
     jump_counter: number = 0;
     isdrawing = false;
     mario: Character;
@@ -91,35 +99,40 @@ export class CanvasComponent implements AfterViewInit {
             if (this.isdrawing) return;
             this.isdrawing = true;
     
-            console.log("redraw: =>", (this.walk_lt || this.walk_rt || this.move_up));
+            console.log("redraw: =>", (this.key_walk_left || this.key_walk_right || this.move_up));
 
-            this.xpos += (this.walk_rt ? -1 : (this.walk_lt ? 1 : 0));
+            this.xpos += (this.key_walk_right ? -1 : (this.key_walk_left ? 1 : 0));
 
-            //TODO: replace with this.background.render(this.lastAction)
-            // this.draw_bg();
-
-            if (this.jumping){
+            if (this.key_jump){
                 if (this.lastAction == MARIO_ACTIONS.STILL_RIGHT ||
-                    this.lastAction == MARIO_ACTIONS.WALK_RIGHT || 
+                    this.lastAction == MARIO_ACTIONS.STILL_LEFT) {
+                    this.lastAction = MARIO_ACTIONS.JUMP_UP;
+
+                } else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || 
                     this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
-                    this.lastAction = MARIO_ACTIONS.JUMP_RIGHT
+                    this.lastAction = MARIO_ACTIONS.JUMP_RIGHT;
+
                 } else if (
-                    this.lastAction == MARIO_ACTIONS.STILL_LEFT ||
                     this.lastAction == MARIO_ACTIONS.WALK_LEFT || 
                     this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
-                    this.lastAction = MARIO_ACTIONS.JUMP_LEFT
+                    this.lastAction = MARIO_ACTIONS.JUMP_LEFT;
                 }
             } else {
-                if (this.walk_rt && this.bg.canMoveRight())
-                    this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
-                else if (this.walk_lt && this.bg.canMoveLeft())
+                if (this.key_walk_left && this.bg.canScrollLeft()) {
                     this.lastAction = MARIO_ACTIONS.WALK_LEFT;
-                else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT) 
-                    this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
-                else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) 
+
+                } else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT) {
                     this.lastAction = MARIO_ACTIONS.STILL_LEFT;
+
+                } else if (this.key_walk_right && this.bg.canScrollRight()) {
+                    this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
+    
+                } else {  
+                    this.lastAction = MARIO_ACTIONS.STILL_RIGHT;
+                }
             }
 
+            //if character is 
             this.bg.render(this.lastAction);
 
             this.mario.render(this.lastAction);
@@ -146,6 +159,10 @@ export class CanvasComponent implements AfterViewInit {
         this.imgMarioJumpRt.nativeElement.src = "assets/mario-jump-right.png";
         this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
         // this.imgBackground1_1.nativeElement.height = this.canvasE1.nativeElement.height;
+        // todo: 
+        // this.imgMarioStillRt.nativeElement.height = FRAME_HEIGHT/2;
+        // this.imgMarioStillRt.nativeElement.width = FRAME_WIDTH/2;
+        
 
         this.mario = new Character({
             context: this.ctx,
@@ -181,13 +198,13 @@ export class CanvasComponent implements AfterViewInit {
         console.log("window:keydown => %s", event.keyCode.toString());
 
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
-            this.walk_rt = true;
+            this.key_walk_right = true;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
-            this.walk_lt = true;
+            this.key_walk_left = true;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
-            this.jumping = true;
+            this.key_jump = true;
 
             //Rules of Jumping
             //1. movement gradually decreases over time
@@ -211,13 +228,13 @@ export class CanvasComponent implements AfterViewInit {
 
         // this.resetActions();
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
-            this.walk_rt = false;
+            this.key_walk_right = false;
 
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
-            this.walk_lt = false;
+            this.key_walk_left = false;
 
         } else if (event.keyCode == KEY_CODE.SPACE){
-            this.jumping = false;
+            this.key_jump = false;
         }
     }
 
@@ -241,51 +258,51 @@ export class CanvasComponent implements AfterViewInit {
         
         // height ascending: 5, 8, 10, 11
         // height descending: 10, 8, 6, 4, 2, 0
-        if (this.jumping && this.jump_counter == 0){
+        if (this.key_jump && this.jump_counter == 0){
             //begin the ascent
             this.ypos = this.ypos + 5;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 1){
+        } else if (this.key_jump && this.jump_counter == 1){
             this.ypos = this.ypos + 3;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 2){
+        } else if (this.key_jump && this.jump_counter == 2){
             this.ypos = this.ypos + 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 3){
+        } else if (this.key_jump && this.jump_counter == 3){
             this.ypos = this.ypos + 1;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 4){
+        } else if (this.key_jump && this.jump_counter == 4){
             this.ypos = this.ypos - 1;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 5){
+        } else if (this.key_jump && this.jump_counter == 5){
             this.ypos = this.ypos - 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 6){
+        } else if (this.key_jump && this.jump_counter == 6){
             this.ypos = this.ypos - 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 7){
+        } else if (this.key_jump && this.jump_counter == 7){
             this.ypos = this.ypos - 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 8){
+        } else if (this.key_jump && this.jump_counter == 8){
             this.ypos = this.ypos - 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 9){
+        } else if (this.key_jump && this.jump_counter == 9){
             this.ypos = this.ypos - 2;
             this.jump_counter += 1;
 
-        } else if (this.jumping && this.jump_counter == 10){
+        } else if (this.key_jump && this.jump_counter == 10){
             this.ypos = this.ypos - 2;
             this.jump_counter = 0;
-            this.jumping = false;
+            this.key_jump = false;
         }
     }
 
@@ -314,24 +331,43 @@ class Background {
             numberOfFrames: Math.trunc(options.images[0] / options.frameWidth)
         });
     }
-    canMoveRight = function(){
+    canScrollRight = function(){
         return (this.bg_1_1.sourceX < (this.bg_1_1.image.width - this.bg_1_1.frameWidth));
     }
-    canMoveLeft = function(){
+    canScrollLeft = function(){
         return (this.bg_1_1.sourceX > MARIO_POSITION_X) && (this.bg_1_1.sourceX - MARIO_WALK_SPEED) >= MARIO_POSITION_X
     }    
     update = function(action){
         switch (action){
             case MARIO_ACTIONS.WALK_LEFT: {
-                this.bg_1_1.sourceX = this.canMoveLeft() ? 
+                this.bg_1_1.sourceX = this.canScrollLeft() ? 
                     this.bg_1_1.sourceX - MARIO_WALK_SPEED : 
                     MARIO_POSITION_X;
                 break;
             }
             case MARIO_ACTIONS.WALK_RIGHT: {
-                this.bg_1_1.sourceX = this.canMoveRight() ? 
+                this.bg_1_1.sourceX = this.canScrollRight() ? 
                     this.bg_1_1.sourceX + MARIO_WALK_SPEED : 
                     this.bg_1_1.image.width - this.bg_1_1.frameWidth;
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_LEFT: {
+
+                //cancel jump
+
+                this.bg_1_1.sourceX = this.canScrollLeft() ? 
+                    this.bg_1_1.sourceX - MARIO_WALK_SPEED : 
+                    MARIO_POSITION_X;
+
+                if (this.this.bg_1_1.sourceY - MARIO_MAX_JUMP_HEIGHT < )
+                this.bg_1_1.sourceY = this.bg_1_1.sourceY - MARIO_JUMP_SPEED;
+                break;
+            }
+            case MARIO_ACTIONS.JUMP_RIGHT: {
+                this.bg_1_1.sourceX = this.canScrollRight() ? 
+                    this.bg_1_1.sourceX + MARIO_WALK_SPEED : 
+                    this.bg_1_1.image.width - this.bg_1_1.frameWidth;                
+                this.bg_1_1.sourceY = this.bg_1_1.sourceY - MARIO_JUMP_SPEED;
                 break;
             }
         };
@@ -393,16 +429,16 @@ class Character {
             frameHeight:    options.frameHeight });
         this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], x: options.x, y: options.y,
             ticksPerFrame:  10, 
-            sourceWidth:    options.sourceWidth     || 64, 
-            sourceHeight:   options.sourceHeight    || 64,
-            frameWidth:     options.frameWidth      || 64,
-            frameHeight:    options.frameHeight     || 64 });
+            sourceWidth:    options.sourceWidth     || FRAME_WIDTH, 
+            sourceHeight:   options.sourceHeight    || FRAME_HEIGHT,
+            frameWidth:     options.frameWidth      || FRAME_WIDTH,
+            frameHeight:    options.frameHeight     || FRAME_HEIGHT });
         this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], x: options.x, y: options.y,
             ticksPerFrame:  10, 
-            sourceWidth:    options.sourceWidth     || 64, 
-            sourceHeight:   options.sourceHeight    || 64,
-            frameWidth:     options.frameWidth      || 64,
-            frameHeight:    options.frameHeight     || 64 });
+            sourceWidth:    options.sourceWidth     || FRAME_WIDTH, 
+            sourceHeight:   options.sourceHeight    || FRAME_HEIGHT,
+            frameWidth:     options.frameWidth      || FRAME_WIDTH,
+            frameHeight:    options.frameHeight     || FRAME_HEIGHT });
         this.mario_jump_lt  = new Sprite({ context: options.context, image: options.images[4], x: options.x, y: options.y,
             sourceWidth:    options.sourceWidth, 
             sourceHeight:   options.sourceHeight,
