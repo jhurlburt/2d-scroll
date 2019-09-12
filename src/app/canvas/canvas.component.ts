@@ -104,6 +104,7 @@ export class CanvasComponent implements AfterViewInit {
                 this.mario.update(scroll, this.key_jump);
                 this.mario.render();
 
+                this.blocks[0].update(scroll, this.key_jump);
                 this.blocks[0].render();
         
                 this.isdrawing = false;                    
@@ -375,45 +376,10 @@ class Block {
             }
         }
         if (this.lastAction == MARIO_ACTIONS.WALK_LEFT || this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
-            this.level1.sourceX = (this.level1.sourceX - MARIO_WALK_SPEED) > MARIO_POSITION_X ? 
-                this.level1.sourceX - MARIO_WALK_SPEED : 
-                MARIO_POSITION_X;
+            this.myBlock.x = this.myBlock.x + MARIO_WALK_SPEED;
         }
         if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
-            this.level1.sourceX = (this.level1.sourceX + MARIO_WALK_SPEED) < (this.level1.image.width - this.level1.frameWidth) ? 
-                this.level1.sourceX + MARIO_WALK_SPEED : 
-                this.level1.image.width - this.level1.frameWidth;
-        }
-        if ((this.lastAction == MARIO_ACTIONS.JUMP_LEFT || 
-            this.lastAction == MARIO_ACTIONS.JUMP_RIGHT || 
-            this.lastAction == MARIO_ACTIONS.JUMP) &&
-            !this.isFalling) {
-            console.log("sx: " + this.level1.sourceX +
-                ", sy: " + this.level1.sourceY +
-                ", sw: " + this.level1.sourceWidth +
-                ", sh: " + this.level1.sourceHeight +
-                ", dx: " + this.level1.x +
-                ", dy: " + this.level1.y +
-                ", dw: " + this.level1.frameWidth +
-                ", dh: " + this.level1.frameHeight ); 
-
-            if (this.myBlock.sourceY <= 0 && 
-                this.myBlock.sourceY > MARIO_MAX_JUMP_HEIGHT){
-
-                if (this.myBlockmyBlock.sourceY - MARIO_JUMP_SPEED <= MARIO_MAX_JUMP_HEIGHT){
-                    this.myBlock.sourceY = MARIO_MAX_JUMP_HEIGHT;
-                    this.isFalling = true; //character is falling, cancel asc, begin falling
-                } else {
-                    this.myBlock.sourceY -= MARIO_JUMP_SPEED;
-                }
-            }
-        } else {
-            if (this.myBlock.sourceY + MARIO_FALL_SPEED >= 0){
-                this.myBlock.sourceY = 0;
-                this.isFalling = false;
-            } else {
-                this.myBlock.sourceY += MARIO_FALL_SPEED;
-            }
+            this.myBlock.x = this.myBlock.x - MARIO_WALK_SPEED;
         }
     };
     render = function(){
