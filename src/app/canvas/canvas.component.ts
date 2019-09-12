@@ -14,6 +14,8 @@ const FRAME_HEIGHT: number = 64;
 const FRAME_WIDTH: number = 64;
 const MARIO_MAX_JUMP_HEIGHT : number = 0 - (FRAME_HEIGHT * 5);
 const MARIO_TICKS_PER_FRAME: number = 18;
+const CANVAS_HEIGHT = 800;
+const CANVAS_WIDTH = 1200;
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -49,6 +51,7 @@ export class CanvasComponent implements AfterViewInit {
     @ViewChild('imgMarioJumpRight') imgMarioJumpRt: ElementRef<HTMLImageElement>;
     @ViewChild('imgMarioJumpLeft') imgMarioJumpLt: ElementRef<HTMLImageElement>;
     @ViewChild('imgBackground1_1') imgBackground1_1: ElementRef<HTMLImageElement>;
+    @ViewChild('imgBlock') imgBlock: ElementRef<HTMLImageElement>;
     
     key_walk_left: boolean = false;
     key_walk_right: boolean = false;
@@ -56,6 +59,7 @@ export class CanvasComponent implements AfterViewInit {
     isdrawing = false;
     mario: Character;
     bg: Background;
+    blocks: Array<Block>;
 
     constructor() { 
         // var lastTime = 0;
@@ -99,6 +103,8 @@ export class CanvasComponent implements AfterViewInit {
     
                 this.mario.update(scroll, this.key_jump);
                 this.mario.render();
+
+                this.blocks[0].render();
         
                 this.isdrawing = false;                    
             }
@@ -110,8 +116,8 @@ export class CanvasComponent implements AfterViewInit {
     ngAfterViewInit() {    
         console.log("ngAfterViewInit()");
 
-        this.canvasE1.nativeElement.height = 800;
-        this.canvasE1.nativeElement.width = 800;
+        this.canvasE1.nativeElement.height = CANVAS_HEIGHT;
+        this.canvasE1.nativeElement.width = CANVAS_WIDTH;
 
         this.imgMarioStillLt.nativeElement.src = "assets/mario-still-left.png";
         this.imgMarioStillRt.nativeElement.src = "assets/mario-still-right.png";
@@ -119,7 +125,6 @@ export class CanvasComponent implements AfterViewInit {
         this.imgMarioWalkRt.nativeElement.src = "assets/mario-walking-right.png";
         this.imgMarioJumpLt.nativeElement.src = "assets/mario-jump-left.png";
         this.imgMarioJumpRt.nativeElement.src = "assets/mario-jump-right.png";
-        this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
 
         this.mario = new Character({
             context: this.canvasE1.nativeElement.getContext('2d'),
@@ -135,6 +140,8 @@ export class CanvasComponent implements AfterViewInit {
             y: MARIO_POSITION_Y
         });
 
+        this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
+
         this.bg = new Background({
             context: this.canvasE1.nativeElement.getContext('2d'),
             images: [ 
@@ -145,6 +152,35 @@ export class CanvasComponent implements AfterViewInit {
              frameWidth: this.canvasE1.nativeElement.width,
              frameHeight: this.canvasE1.nativeElement.height,
         });
+
+        this.imgBlock.nativeElement.src = "assets/mystery-block.png";
+
+        this.blocks =  [
+            new Block({
+                context: this.canvasE1.nativeElement.getContext('2d'),
+                images: [
+                    this.imgBlock.nativeElement
+                ],
+                //x: 913,
+                x: 200,
+                y: 483,
+                sourceWidth: 61,
+                sourceHeight: 59,
+                frameWidth: 61,
+                frameHeight: 59
+            })
+        ];
+
+        // this.blocks = new Array<Block>();
+        // this.blocks.push
+        // {
+        //     new Block({
+        //         context: this.canvasE1.nativeElement.getContext('2d'),
+        //         images: [ 
+        //             this.imgBlock.nativeElement
+        //          ]    
+        //     })
+        // };
         
         // window.requestAnimationFrame(this.gameLoop);
         this.gameLoop();
@@ -285,6 +321,103 @@ class Background {
     };
     render = function(){
         this.level1.render();
+    };
+}
+
+class Block {
+    myBlock: Sprite;
+    lastAction: MARIO_ACTIONS.STAND_RIGHT;
+
+    constructor (options){
+        this.myBlock = new Sprite({ 
+            context:        options.context, 
+            image:          options.images[0], 
+            x:              options.x, 
+            y:              options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight });
+    }
+    update = function(scroll: number, jump: boolean){
+        if (jump){
+            if (this.lastAction == MARIO_ACTIONS.STAND_RIGHT ||
+                this.lastAction == MARIO_ACTIONS.STAND_LEFT) {
+                this.lastAction = MARIO_ACTIONS.JUMP;
+
+            } else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || 
+                this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
+                this.lastAction = MARIO_ACTIONS.JUMP_RIGHT;
+
+            } else if (
+                this.lastAction == MARIO_ACTIONS.WALK_LEFT || 
+                this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
+                this.lastAction = MARIO_ACTIONS.JUMP_LEFT;
+            }
+        } else {
+            //If we are not JUMPING then we must be FALLING
+            if (scroll > 0) {
+                this.lastAction = MARIO_ACTIONS.WALK_LEFT;
+
+            } else if (scroll < 0) {
+                this.lastAction = MARIO_ACTIONS.WALK_RIGHT;
+
+            } else if (this.lastAction == MARIO_ACTIONS.WALK_LEFT || 
+                this.lastAction == MARIO_ACTIONS.STAND_LEFT) {
+                this.lastAction = MARIO_ACTIONS.STAND_LEFT;
+
+            } else if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || 
+                this.lastAction == MARIO_ACTIONS.STAND_RIGHT) {
+                this.lastAction = MARIO_ACTIONS.STAND_RIGHT;
+
+            } else {  
+                this.lastAction = MARIO_ACTIONS.STAND_RIGHT;
+            }
+        }
+        if (this.lastAction == MARIO_ACTIONS.WALK_LEFT || this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
+            this.level1.sourceX = (this.level1.sourceX - MARIO_WALK_SPEED) > MARIO_POSITION_X ? 
+                this.level1.sourceX - MARIO_WALK_SPEED : 
+                MARIO_POSITION_X;
+        }
+        if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
+            this.level1.sourceX = (this.level1.sourceX + MARIO_WALK_SPEED) < (this.level1.image.width - this.level1.frameWidth) ? 
+                this.level1.sourceX + MARIO_WALK_SPEED : 
+                this.level1.image.width - this.level1.frameWidth;
+        }
+        if ((this.lastAction == MARIO_ACTIONS.JUMP_LEFT || 
+            this.lastAction == MARIO_ACTIONS.JUMP_RIGHT || 
+            this.lastAction == MARIO_ACTIONS.JUMP) &&
+            !this.isFalling) {
+            console.log("sx: " + this.level1.sourceX +
+                ", sy: " + this.level1.sourceY +
+                ", sw: " + this.level1.sourceWidth +
+                ", sh: " + this.level1.sourceHeight +
+                ", dx: " + this.level1.x +
+                ", dy: " + this.level1.y +
+                ", dw: " + this.level1.frameWidth +
+                ", dh: " + this.level1.frameHeight ); 
+
+            if (this.myBlock.sourceY <= 0 && 
+                this.myBlock.sourceY > MARIO_MAX_JUMP_HEIGHT){
+
+                if (this.myBlockmyBlock.sourceY - MARIO_JUMP_SPEED <= MARIO_MAX_JUMP_HEIGHT){
+                    this.myBlock.sourceY = MARIO_MAX_JUMP_HEIGHT;
+                    this.isFalling = true; //character is falling, cancel asc, begin falling
+                } else {
+                    this.myBlock.sourceY -= MARIO_JUMP_SPEED;
+                }
+            }
+        } else {
+            if (this.myBlock.sourceY + MARIO_FALL_SPEED >= 0){
+                this.myBlock.sourceY = 0;
+                this.isFalling = false;
+            } else {
+                this.myBlock.sourceY += MARIO_FALL_SPEED;
+            }
+        }
+    };
+    render = function(){
+        this.myBlock.render();
     };
 }
 
