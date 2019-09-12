@@ -240,7 +240,16 @@ class Background {
         return (this.level1.sourceX < (this.level1.image.width - this.level1.frameWidth));
     };
     canScrollLeft = function(){
-        return (this.level1.sourceX > MARIO_POSITION_X) && (this.level1.sourceX - MARIO_WALK_SPEED) >= MARIO_POSITION_X
+        console.log("sx: " + this.level1.sourceX +
+        ", sy: " + this.level1.sourceY +
+        ", sw: " + this.level1.sourceWidth +
+        ", sh: " + this.level1.sourceHeight +
+        ", dx: " + this.level1.x +
+        ", dy: " + this.level1.y +
+        ", dw: " + this.level1.frameWidth +
+        ", dh: " + this.level1.frameHeight ); 
+        // return (this.level1.sourceX > MARIO_POSITION_X) && (this.level1.sourceX - MARIO_WALK_SPEED) >= MARIO_POSITION_X
+        return (this.level1.sourceX > 0) && ((this.level1.sourceX - MARIO_WALK_SPEED) >= 0);
     };  
     update = function(scroll: number, jump: boolean){
         // this.x += scroll;
