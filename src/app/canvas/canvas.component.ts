@@ -4,20 +4,6 @@ import { log, debuglog } from 'util';
 import { renderComponent } from '@angular/core/src/render3';
 import { maybeQueueResolutionOfComponentResources } from '@angular/core/src/metadata/resource_loading';
 
-const MARIO_POSITION_X: number = 200;
-const MARIO_POSITION_Y: number = 650;
-const MAX_MOMENTUM: number = 5;
-const REFRESH_RATE: number = 1;
-const MARIO_WALK_SPEED: number = 2;
-const MARIO_JUMP_SPEED: number = 4;
-const MARIO_FALL_SPEED: number = 4;
-const FRAME_HEIGHT: number = 64;
-const FRAME_WIDTH: number = 64;
-const MARIO_MAX_JUMP_HEIGHT : number = 0 - (FRAME_HEIGHT * 5);
-const MARIO_TICKS_PER_FRAME: number = 18;
-const CANVAS_HEIGHT = 800;
-const CANVAS_WIDTH = 1200;
-
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
     LEFT_ARROW = 37,
@@ -38,6 +24,22 @@ export enum MARIO_ACTIONS {
     JUMP
 }
 
+const REFRESH_RATE: number = 1;
+const CHAR_POSITION_X: number = 200;
+const CHAR_POSITION_Y: number = 650;
+// const MAX_MOMENTUM: number = 5;
+const CHAR_WALK_SPEED: number = 2;
+const CHAR_JUMP_SPEED: number = 4;
+const CHAR_FALL_SPEED: number = 4;
+const CHAR_HEIGHT: number = 64;
+const CHAR_WIDTH: number = 64;
+const CHAR_MAX_JUMP_HEIGHT : number = 0 - (CHAR_HEIGHT * 5);
+const CHAR_TICKS_PER_FRAME: number = 18;
+const CANVAS_HEIGHT = 800;
+const CANVAS_WIDTH = 1200;
+const PLATFORM_HEIGHT_1 = 483;
+const MYSTERY_WIDTH = 61;
+const MYSTERY_HEIGHT = 59;
 @Component({
   selector: 'myCanvas',
   templateUrl: './canvas.component.html',
@@ -63,28 +65,6 @@ export class CanvasComponent implements AfterViewInit {
     blocks: Array<Block>;
 
     constructor() { 
-        // var lastTime = 0;
-        // var vendors = ['ms', 'moz', 'webkit', 'o'];
-        // for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-        //     window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-        //     window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-        //                                || window[vendors[x]+'CancelRequestAnimationFrame'];
-        // }
-     
-        // if (!window.requestAnimationFrame)
-        //     window.requestAnimationFrame = function(callback, element) {
-        //         var currTime = new Date().getTime();
-        //         var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-        //         var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-        //           timeToCall);
-        //         lastTime = currTime + timeToCall;
-        //         return id;
-        //     };
-     
-        // if (!window.cancelAnimationFrame)
-        //     window.cancelAnimationFrame = function(id) {
-        //         clearTimeout(id);
-        //     };
     }
 
     gameLoop(){
@@ -102,6 +82,12 @@ export class CanvasComponent implements AfterViewInit {
                 this.bg.update(scroll, this.key_jump);
                 this.bg.render();
     
+                //collision detection
+                //compare mario to each object in blocks
+                //if bounding boxes overlap then collision is true
+                
+
+
                 this.mario.update(scroll, this.key_jump);
                 this.mario.render();
 
@@ -138,8 +124,8 @@ export class CanvasComponent implements AfterViewInit {
                 this.imgMarioJumpLt.nativeElement,
                 this.imgMarioJumpRt.nativeElement
              ],
-            x: MARIO_POSITION_X,
-            y: MARIO_POSITION_Y
+            x: CHAR_POSITION_X,
+            y: CHAR_POSITION_Y
         });
 
         this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
@@ -164,11 +150,11 @@ export class CanvasComponent implements AfterViewInit {
                     this.imgBlock.nativeElement
                 ],                
                 x: 913, //x: 913,
-                y: 483,
-                sourceWidth: 61,
-                sourceHeight: 59,
-                frameWidth: 61,
-                frameHeight: 59
+                y: PLATFORM_HEIGHT_1,
+                sourceWidth: MYSTERY_WIDTH,
+                sourceHeight: MYSTERY_HEIGHT,
+                frameWidth: MYSTERY_WIDTH,
+                frameHeight: MYSTERY_HEIGHT
             })
         ];
 
@@ -250,7 +236,7 @@ class Background {
         // ", dw: " + this.level1.frameWidth +
         // ", dh: " + this.level1.frameHeight ); 
 
-        return (this.level1.sourceX - MARIO_WALK_SPEED >= 0);
+        return (this.level1.sourceX - CHAR_WALK_SPEED >= 0);
 
         // return (this.level1.sourceX > MARIO_POSITION_X) && (this.level1.sourceX - MARIO_WALK_SPEED) >= MARIO_POSITION_X
         // return (this.level1.sourceX > 0) && ((this.level1.sourceX - MARIO_WALK_SPEED) >= 0);
@@ -261,11 +247,11 @@ class Background {
 
         if (this.lastAction == MARIO_ACTIONS.WALK_LEFT || this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
             if (scroll != 0) 
-                this.level1.sourceX = (this.level1.sourceX - MARIO_WALK_SPEED) > 0 ? (this.level1.sourceX - MARIO_WALK_SPEED) : 0;
+                this.level1.sourceX = (this.level1.sourceX - CHAR_WALK_SPEED) > 0 ? (this.level1.sourceX - CHAR_WALK_SPEED) : 0;
         }
         if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
             if (scroll != 0) 
-                this.level1.sourceX += MARIO_WALK_SPEED;
+                this.level1.sourceX += CHAR_WALK_SPEED;
         }
         if ((this.lastAction == MARIO_ACTIONS.JUMP_LEFT || 
             this.lastAction == MARIO_ACTIONS.JUMP_RIGHT || 
@@ -281,21 +267,21 @@ class Background {
             //     ", dh: " + this.level1.frameHeight ); 
 
             if (this.level1.sourceY <= 0 && 
-                this.level1.sourceY > MARIO_MAX_JUMP_HEIGHT){
+                this.level1.sourceY > CHAR_MAX_JUMP_HEIGHT){
 
-                if (this.level1.sourceY - MARIO_JUMP_SPEED <= MARIO_MAX_JUMP_HEIGHT){
-                    this.level1.sourceY = MARIO_MAX_JUMP_HEIGHT;
+                if (this.level1.sourceY - CHAR_JUMP_SPEED <= CHAR_MAX_JUMP_HEIGHT){
+                    this.level1.sourceY = CHAR_MAX_JUMP_HEIGHT;
                     this.isFalling = true; //character is falling, cancel asc, begin falling
                 } else {
-                    this.level1.sourceY -= MARIO_JUMP_SPEED;
+                    this.level1.sourceY -= CHAR_JUMP_SPEED;
                 }
             }
         } else {
-            if (this.level1.sourceY + MARIO_FALL_SPEED >= 0){
+            if (this.level1.sourceY + CHAR_FALL_SPEED >= 0){
                 this.level1.sourceY = 0;
                 this.isFalling = false;
             } else {
-                this.level1.sourceY += MARIO_FALL_SPEED;
+                this.level1.sourceY += CHAR_FALL_SPEED;
             }
         }
     };
@@ -310,7 +296,6 @@ class Block {
     isFalling: boolean = false;
     helper: CharacterHelper;
     originalY: number;
-    // myOptions: any;
 
     constructor (options){        
         this.myBlock = new Sprite({ 
@@ -318,8 +303,6 @@ class Block {
             image:          options.images[0], 
             x:              options.x, 
             y:              options.y,
-            sourceX:        options.sourceX,
-            sourceY:        options.sourceY,
             sourceWidth:    options.sourceWidth, 
             sourceHeight:   options.sourceHeight,
             frameWidth:     options.frameWidth,
@@ -332,10 +315,10 @@ class Block {
         this.lastAction = this.helper.getAction(this.lastAction, scroll, jump);
 
         if (this.lastAction == MARIO_ACTIONS.WALK_LEFT || this.lastAction == MARIO_ACTIONS.JUMP_LEFT){
-            this.myBlock.x += (scroll != 0) ? MARIO_WALK_SPEED : 0;
+            this.myBlock.x += (scroll != 0) ? CHAR_WALK_SPEED : 0;
         }
         if (this.lastAction == MARIO_ACTIONS.WALK_RIGHT || this.lastAction == MARIO_ACTIONS.JUMP_RIGHT){
-            this.myBlock.x -= (scroll != 0) ? MARIO_WALK_SPEED : 0;
+            this.myBlock.x -= (scroll != 0) ? CHAR_WALK_SPEED : 0;
         }
         if ((this.lastAction == MARIO_ACTIONS.JUMP_LEFT || 
             this.lastAction == MARIO_ACTIONS.JUMP_RIGHT || 
@@ -350,20 +333,20 @@ class Block {
             //     ", dw: " + this.myBlock.frameWidth +
             //     ", dh: " + this.myBlock.frameHeight ); 
 
-            console.log("this.originalY: " + this.originalY + ", this.myBlock.y: " + this.myBlock.y + ", MARIO_MAX_JUMP_HEIGHT: " + MARIO_MAX_JUMP_HEIGHT)
-            if ((this.myBlock.y + MARIO_JUMP_SPEED) >= (this.originalY + Math.abs(MARIO_MAX_JUMP_HEIGHT))){
-                console.log("(this.originalY + MARIO_MAX_JUMP_HEIGHT) >= (this.myBlock.y + MARIO_JUMP_SPEED)");
-                this.myBlock.y = this.originalY + Math.abs(MARIO_MAX_JUMP_HEIGHT);
+            // console.log("this.originalY: " + this.originalY + ", this.myBlock.y: " + this.myBlock.y + ", MARIO_MAX_JUMP_HEIGHT: " + MARIO_MAX_JUMP_HEIGHT)
+            if ((this.myBlock.y + CHAR_JUMP_SPEED) >= (this.originalY + Math.abs(CHAR_MAX_JUMP_HEIGHT))){
+                // console.log("(this.originalY + MARIO_MAX_JUMP_HEIGHT) >= (this.myBlock.y + MARIO_JUMP_SPEED)");
+                this.myBlock.y = this.originalY + Math.abs(CHAR_MAX_JUMP_HEIGHT);
                 this.isFalling = true;
             } else {
-                this.myBlock.y += MARIO_JUMP_SPEED;
+                this.myBlock.y += CHAR_JUMP_SPEED;
             }
         } else {
-            if ((this.myBlock.y - MARIO_FALL_SPEED) <= this.originalY){
+            if ((this.myBlock.y - CHAR_FALL_SPEED) <= this.originalY){
                 this.myBlock.y = this.originalY;
                 this.isFalling = false;
             } else {
-                this.myBlock.y -= MARIO_FALL_SPEED;
+                this.myBlock.y -= CHAR_FALL_SPEED;
             }
         }    
     };
@@ -461,17 +444,17 @@ class Character {
             frameWidth:     options.frameWidth,
             frameHeight:    options.frameHeight });
         this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], x: options.x, y: options.y,
-            ticksPerFrame:  MARIO_TICKS_PER_FRAME, 
-            sourceWidth:    options.sourceWidth     || FRAME_WIDTH, 
-            sourceHeight:   options.sourceHeight    || FRAME_HEIGHT,
-            frameWidth:     options.frameWidth      || FRAME_WIDTH,
-            frameHeight:    options.frameHeight     || FRAME_HEIGHT });
+            ticksPerFrame:  CHAR_TICKS_PER_FRAME, 
+            sourceWidth:    options.sourceWidth     || CHAR_WIDTH, 
+            sourceHeight:   options.sourceHeight    || CHAR_HEIGHT,
+            frameWidth:     options.frameWidth      || CHAR_WIDTH,
+            frameHeight:    options.frameHeight     || CHAR_HEIGHT });
         this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], x: options.x, y: options.y,
-            ticksPerFrame:  MARIO_TICKS_PER_FRAME, 
-            sourceWidth:    options.sourceWidth     || FRAME_WIDTH, 
-            sourceHeight:   options.sourceHeight    || FRAME_HEIGHT,
-            frameWidth:     options.frameWidth      || FRAME_WIDTH,
-            frameHeight:    options.frameHeight     || FRAME_HEIGHT });
+            ticksPerFrame:  CHAR_TICKS_PER_FRAME, 
+            sourceWidth:    options.sourceWidth     || CHAR_WIDTH, 
+            sourceHeight:   options.sourceHeight    || CHAR_HEIGHT,
+            frameWidth:     options.frameWidth      || CHAR_WIDTH,
+            frameHeight:    options.frameHeight     || CHAR_HEIGHT });
         this.mario_jump_lt  = new Sprite({ context: options.context, image: options.images[4], x: options.x, y: options.y,
             sourceWidth:    options.sourceWidth, 
             sourceHeight:   options.sourceHeight,
