@@ -60,8 +60,8 @@ export class CanvasComponent implements AfterViewInit {
     key_walk_right: boolean = false;
     key_jump: boolean = false;
     isdrawing = false;
-    mario: Character;
     bg: Background;
+    mario: Character;
     blocks: Array<Block>;
 
     constructor() { 
@@ -79,21 +79,33 @@ export class CanvasComponent implements AfterViewInit {
                     (this.key_walk_right && this.bg.canScrollRight()) ? -1 :
                     (this.key_walk_left && this.bg.canScrollLeft()) ? 1 : 0
     
-                this.bg.update(scroll, this.key_jump);
-                this.bg.render();
-    
-                //collision detection
-                //compare mario to each object in blocks
-                //if bounding boxes overlap then collision is true
-                
-
-
+                //=-=-=- Update Objects =-=-=-//
+                this.bg.update(scroll, this.key_jump);    
                 this.mario.update(scroll, this.key_jump);
-                this.mario.render();
+                this.blocks.forEach(element => {
+                    element.update(scroll, this.key_jump);
+                    
+                });
 
-                this.blocks[0].update(scroll, this.key_jump);
-                this.blocks[0].render();
-        
+                //=-=-=- Collision Detection =-=-=-//
+                var obj1 = this.mario.boundingBox;
+
+                this.blocks.forEach(element => {
+                    var obj2 = element.boundingBox;
+
+                    if (((obj1.x + obj1.frameWidth >= obj2.x) && (obj1.x + obj1.frameWidth <= obj2.x + obj2.x + obj2.frameWidth)) &&
+                        ((obj1.y + obj1.frameHeight >= obj2.y) && (obj1.y + obj1.frameHeight <= obj2.y + obj2.frameHeight))){
+                        console.log("Collision detected!")
+                    }                        
+                });
+
+                //=-=-=- Render Objects =-=-=-//
+                this.bg.render();
+                this.mario.render();
+                this.blocks.forEach(element => {
+                    element.render();
+
+                });
                 this.isdrawing = false;                    
             }
             
@@ -296,6 +308,7 @@ class Block {
     isFalling: boolean = false;
     helper: CharacterHelper;
     originalY: number;
+    boundingBox: Sprite;
 
     constructor (options){        
         this.myBlock = new Sprite({ 
@@ -307,7 +320,8 @@ class Block {
             sourceHeight:   options.sourceHeight,
             frameWidth:     options.frameWidth,
             frameHeight:    options.frameHeight }); 
-        this.originalY = options.y;      
+        this.originalY = options.y;
+        this.boundingBox = this.myBlock;
     }
 
     update = function(scroll: number, jump: boolean){
@@ -349,9 +363,11 @@ class Block {
                 this.myBlock.y -= CHAR_FALL_SPEED;
             }
         }    
+        this.boundingBox = this.myBlock;
+
     };
     render = function(){
-        this.myBlock.render();
+        this.boundingBox.render();
     };
 }
 
@@ -431,13 +447,14 @@ class Character {
     mario_jump_rt:  Sprite;
     lastAction: MARIO_ACTIONS.STAND_RIGHT;
     helper: CharacterHelper;
+    boundingBox: Sprite;
 
     constructor(options){
         this.mario_still_lt = new Sprite({ context: options.context, image: options.images[0], x: options.x, y: options.y,
             sourceWidth:    options.sourceWidth, 
             sourceHeight:   options.sourceHeight,
             frameWidth:     options.frameWidth,
-            frameHeight:    options.frameHeight });
+            frameHeight:    options.frameHeight });            
         this.mario_still_rt = new Sprite({ context: options.context, image: options.images[1], x: options.x, y: options.y,
             sourceWidth:    options.sourceWidth, 
             sourceHeight:   options.sourceHeight,
@@ -470,48 +487,34 @@ class Character {
     update = function(scroll: number, jump: boolean){
         if (this.helper == null) this.helper = new CharacterHelper();
         this.lastAction = this.helper.getAction(this.lastAction, scroll, jump);
-    };
-    render = function(){
+
         switch (this.lastAction){
             case MARIO_ACTIONS.WALK_LEFT: {
-                this.mario_walk_lt.update();
-                this.mario_walk_lt.render();
+                this.boundingBox = this.mario_walk_lt;
                 break;
             }
             case MARIO_ACTIONS.WALK_RIGHT: {
-                this.mario_walk_rt.update();
-                this.mario_walk_rt.render();
+                this.boundingBox = this.mario_walk_rt;
                 break;
             }
             case MARIO_ACTIONS.STAND_LEFT: {
-                this.mario_still_lt.update();
-                this.mario_still_lt.render();
+                this.boundingBox = this.mario_still_lt;
                 break;
             }
             case MARIO_ACTIONS.STAND_RIGHT: {
-                this.mario_still_rt.update();
-                this.mario_still_rt.render();
+                this.boundingBox = this.mario_still_rt;
                 break;
             }
             case MARIO_ACTIONS.JUMP_LEFT: {
-                this.mario_jump_lt.update();
-                this.mario_jump_lt.render();
+                this.boundingBox = this.mario_jump_lt;
                 break;
             }
            case MARIO_ACTIONS.JUMP_RIGHT: {
-                this.mario_jump_rt.update();
-                this.mario_jump_rt.render();
+                this.boundingBox = this.mario_jump_rt;
                 break;
             }
             case MARIO_ACTIONS.JUMP: {
-                if (this.lastAction == MARIO_ACTIONS.STAND_LEFT){
-                    this.mario_jump_lt.update();
-                    this.mario_jump_lt.render();
-
-                } else {
-                    this.mario_jump_rt.update();
-                    this.mario_jump_rt.render();
-                }
+                this.boundingBox = (this.lastAction == MARIO_ACTIONS.STAND_LEFT) ? this.mario_jump_lt : this.mario_jump_rt;
                 break;
             }
             default: {
@@ -519,6 +522,10 @@ class Character {
                 break;
             }
         }
+        this.boundingBox.update();
+    };
+    render = function(){
+        this.boundingBox.render();
     }
 }
 
