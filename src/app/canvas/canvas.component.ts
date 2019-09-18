@@ -252,21 +252,25 @@ class Background {
         if (((action == MARIO_ACTIONS.WALK_LEFT) || (action == MARIO_ACTIONS.JUMP_LEFT)) && ( scroll != 0 )) {
             horz = ((this.level1.sourceX - CHAR_WALK_SPEED) > 0) ? CHAR_WALK_SPEED : this.level1.sourceX;
 
-        } else if ((action == MARIO_ACTIONS.WALK_RIGHT || action == MARIO_ACTIONS.JUMP_RIGHT) && (scroll != 0)) {            
+        } else if ((action == MARIO_ACTIONS.WALK_RIGHT || action == MARIO_ACTIONS.JUMP_RIGHT) && ( scroll != 0 )) {            
             horz = 0 - CHAR_WALK_SPEED;
         }
         //VERTICAL SCROLLING
         if (mario.isJumping() && !this.isFalling) {
+
             var minimumY = this.platform_y - CHAR_MAX_JUMP_HEIGHT;
             vert = CHAR_JUMP_SPEED;
             if ((this.level1.sourceY + vert) < minimumY) {
-                vert = Math.abs(minimumY) - Math.abs(this.level1.sourceY);
+                vert = this.level1.sourceY - minimumY;
+                this.isFalling = true;
             }
+
         } else {
+
             var maximumY = this.platform_y;
             vert = 0 - CHAR_FALL_SPEED;
             if ((this.level1.sourceY - vert) > maximumY) {
-                vert = Math.abs(this.level1.sourceY) - Math.abs(maximumY);
+                vert = this.level1.sourceY - maximumY;                
                 this.isFalling = false;
             }
         }
@@ -285,33 +289,37 @@ class Background {
             
             //Assumption: If MARIO's HEAD intersecting with BLOCK floor then collision 
             //Assumption: If MARIO's FEET intersecting with BLOCK ceiling then collision 
-            if ((char_ceiling < block_floor) && (char_ceiling > block_ceiling)){    //CHAR ascending to BLOCK
+            if ((char_ceiling <= block_floor) && (char_floor > block_floor)){    //CHAR ascending to BLOCK
+                //Assumption: collisionIntersectY > 0
                 collisionIntersectY = block_floor - char_ceiling; //Remove the overlap between the ceiling and floor
 
-            } else if ((char_floor > block_ceiling) && (char_ceiling < block_floor)){    //CHAR descending to BLOCK
+            } else if ((char_floor >= block_ceiling) && (char_ceiling < block_ceiling)){    //CHAR descending to BLOCK
+                //Assumption: collisionIntersectY < 0 
                 collisionIntersectY = block_ceiling - char_floor; //Remove the overlap between the ceiling and floor
             }
-            if ((char_rt > block_lt) && (char_lt < block_rt)) {
+            if ((char_rt >= block_lt) && (char_lt < block_rt)) {
                 collisionIntersectX = block_lt - char_rt;
 
-            } else if ((char_lt < block_rt) && (char_rt > block_lt)) {
+            } else if ((char_lt <= block_rt) && (char_rt > block_lt)) {
                 collisionIntersectX = block_rt - char_lt;                
             }
         });
 
         if (vert < 0 && collisionIntersectY < 0) {
+            // this.platform_y = 0;
             if (collisionIntersectX != 0) {
                 console.log("vert orig: " + vert);
                 console.log("horz: " + horz);
                 console.log("collisionIntersectX: " + collisionIntersectX);
                 console.log("collisionIntersectY: " + collisionIntersectY);
                 console.log("Descending and colliding with object: stop descent");
+                
                 vert -= collisionIntersectY;
                 console.log("vert: " + vert);
-                this.isFalling = false;
+
                 this.platform_y = this.level1.sourceY -= vert;
-            }
-        
+                this.isFalling = false;
+            }        
         }
         if (vert > 0 && collisionIntersectY > 0) {
             // console.log("horz: " + horz);
