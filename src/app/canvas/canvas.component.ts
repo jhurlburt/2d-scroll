@@ -66,6 +66,7 @@ export class CanvasComponent implements AfterViewInit {
     bg: Background;
     mario: Character;
     blocks: Array<Block>;
+    helper: Helper;
 
     constructor() { 
     }
@@ -78,10 +79,6 @@ export class CanvasComponent implements AfterViewInit {
             if (!this.isdrawing) {
                 this.isdrawing = true;
 
-                // var scroll = 
-                //     (this.key_walk_right && this.bg.canScrollRight()) ? -1 :
-                //     (this.key_walk_left && this.bg.canScrollLeft()) ? 1 : 0
-
                 var scroll = 
                     (this.key_walk_right)   ?  this.bg.canScrollRight() :
                     (this.key_walk_left)    ?  this.bg.canScrollLeft() : 0;
@@ -90,11 +87,30 @@ export class CanvasComponent implements AfterViewInit {
                 //     (this.key_jump) ? this.bg.canScrollUp() :
                 //     (this.bg.isFalling) ? this.bg.canScrollDown() : 0;
 
-                var vert = 
-                    (this.mario.isFalling)  ? this.bg.canScrollDown() :
-                    (this.key_jump)         ? this.bg.canScrollUp() : 0;
+                if (this.helper == null) this.helper = new Helper();
+                var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
+        
+                //Update MARIO SPRITE ANIMATION
+                this.mario.update(action);
 
-                    //=-=-=- Update Objects =-=-=-//
+                if (this.key_jump && !this.mario.isFalling){
+                    this.mario.action = 
+
+                }
+                var vert = 0;
+                if (this.mario.isJumping()){
+                    vert = this.bg.canScrollUp();
+                    if (vert == 0){
+                        this.mario.isFalling = true;
+                    }
+                } else {
+                    vert = this.bg.canScrollDown();
+                    if (vert == 0){
+                        this.mario.isFalling = false;
+                    }
+                }
+                
+                //=-=-=- Update Objects =-=-=-//
                 this.bg.update(scroll, vert, this.mario, this.blocks); 
                 // this.mario.update(scroll, this.key_jump);
                 // this.blocks.forEach(element => {
@@ -301,7 +317,7 @@ export class CanvasComponent implements AfterViewInit {
 
 class Background {
     level1: Sprite;
-    // isFalling: boolean = false;
+    isFalling: boolean = false;
     helper: Helper;
     platform_y: number = 0;
     hasCollided: boolean = false;
@@ -331,14 +347,27 @@ class Background {
         var leftEdge = 0;
         return WALK_SPEED > this.level1.sourceX ? leftEdge - this.level1.sourceX : 0-WALK_SPEED; 
     };
-    canScrollUp = function(){
-        var topEdge = this.platformY + MAX_JUMP;
-        return this.level1.sourceY + JUMP_SPEED > topEdge ? 
+    canScrollUp = function(){                
+        var topEdge = this.platform_y - MAX_JUMP;
+        console.log("topEdge:" + topEdge);
+        console.log("this.level1.sourceY:" + this.level1.sourceY);
+        console.log("this.platformY:" + this.platform_y);
+
+        // this.isFalling = (this.level1.sourceY - JUMP_SPEED < topEdge);
+        console.log("return: " + (this.level1.sourceY - JUMP_SPEED < topEdge ? 
+            this.level1.sourceY - topEdge:
+            0-JUMP_SPEED));  
+        return this.level1.sourceY - JUMP_SPEED < topEdge ? 
             this.level1.sourceY - topEdge:
             0-JUMP_SPEED;
     };
     canScrollDown = function(){
-        var bottomEdge = this.platformY;
+        var bottomEdge = this.platform_y;
+        console.log("bottomEdge:" + bottomEdge);
+        console.log("this.level1.sourceY:" + this.level1.sourceY);
+        console.log("this.platformY:" + this.platform_y);
+        // this.isFalling = (this.level1.sourceY + FALL_SPEED > bottomEdge);            
+
         return this.level1.sourceY + FALL_SPEED > bottomEdge ? this.level1.sourceY - bottomEdge : FALL_SPEED;
     };
     update = function(scroll: number, vert: number, mario: Character = null, blocks: Array<Block> = null){
@@ -353,6 +382,9 @@ class Background {
 
         //Update MARIO SPRITE ANIMATION
         mario.update(action);
+
+        if (!this.isFalling && vert == 0)
+            this.isFalling = true;
 
         //MARIO CAN BE: STANDING, JUMPING, FALLING
         this.level1.sourceX += scroll;
