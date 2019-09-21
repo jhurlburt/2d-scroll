@@ -25,7 +25,7 @@ export enum ACTION {
     JUMP
 }
 
-const REFRESH: number = 1;
+const REFRESH: number = 5;
 const POSITION_X: number = 200;
 const POSITION_Y: number = 650;
 const WALK_SPEED: number = 2;
@@ -73,32 +73,29 @@ export class CanvasComponent implements AfterViewInit {
 
     gameLoop(){
         console.log("gameLoop()");
-
+        if (this.helper == null) this.helper = new Helper();
+        //BEGIN GAME LOOP
         setInterval(() => {
-
             if (!this.isdrawing) {
+                //Set isDrawing (thread contention prevention)
                 this.isdrawing = true;
-
+                //Get HORIZONTAL movement
                 var scroll = 
-                    (this.key_walk_right)   ?  this.bg.canScrollRight() :
-                    (this.key_walk_left)    ?  this.bg.canScrollLeft() : 0;
-
-                // var vert = 
-                //     (this.key_jump) ? this.bg.canScrollUp() :
-                //     (this.bg.isFalling) ? this.bg.canScrollDown() : 0;
-
-                if (this.helper == null) this.helper = new Helper();
+                    (this.key_walk_right)   ? this.bg.canScrollRight()  :
+                    (this.key_walk_left)    ? this.bg.canScrollLeft()   : 0;
+                //Get VERTICAL movement
+                var vert = this.key_jump    ? this.bg.canScrollUp()     : 0;
+                //DEBUGGING!
+                // if (vert != 0){
+                    // console.log("vert: " + vert);
+                    // console.log("this.bg.canScrollUp(): " + this.bg.canScrollUp());
+                // }
+                //Get NEW MARIO ACTION
                 var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
-        
                 //Update MARIO SPRITE ANIMATION
                 this.mario.update(action);
-
-                if (this.key_jump && !this.mario.isFalling){
-                    this.mario.action = 
-
-                }
-                var vert = 0;
-                if (this.mario.isJumping()){
+                //Get VERTICAL movement
+                if (this.key_jump && this.mario.isJumping()){
                     vert = this.bg.canScrollUp();
                     if (vert == 0){
                         this.mario.isFalling = true;
@@ -108,46 +105,21 @@ export class CanvasComponent implements AfterViewInit {
                     if (vert == 0){
                         this.mario.isFalling = false;
                     }
-                }
-                
-                //=-=-=- Update Objects =-=-=-//
+                }                
+                //UPDATE BG
                 this.bg.update(scroll, vert, this.mario, this.blocks); 
-                // this.mario.update(scroll, this.key_jump);
-                // this.blocks.forEach(element => {
-                //     element.update(scroll, this.key_jump);
-                    
-                // });
 
-                // //=-=-=- Collision Detection =-=-=-//
-                // var obj1 = this.mario.boundingBox;
-
-                // this.blocks.forEach(element => {
-                //     var obj2 = element.boundingBox;
-
-                //     if (((obj1.x + obj1.frameWidth >= obj2.x) && (obj1.x + obj1.frameWidth <= obj2.x + obj2.x + obj2.frameWidth)) &&
-                //         ((obj1.y + obj1.frameHeight >= obj2.y) && (obj1.y + obj1.frameHeight <= obj2.y + obj2.frameHeight))){
-                //         console.log("Collision detected!");
-
-                //         // if (this.key_jump) {                            
-                //         //     // this.cancel_key_jump = true;
-                //         // }
-                //         // this.mario.update(scroll, this.key_jump);
-
-                //     }                        
-                // });
-
-                //=-=-=- Render Objects =-=-=-//
+                //RENDER ALL
                 this.bg.render();
                 this.mario.render();
                 this.blocks.forEach(element => {
                     element.render();
-
                 });
                 this.isdrawing = false;                    
             }
             
         }, REFRESH);
-        // window.requestAnimationFrame(this.gameLoop);
+        //END GAME LOOP
     }
 
     ngAfterViewInit() {    
@@ -349,23 +321,26 @@ class Background {
     };
     canScrollUp = function(){                
         var topEdge = this.platform_y - MAX_JUMP;
-        console.log("topEdge:" + topEdge);
-        console.log("this.level1.sourceY:" + this.level1.sourceY);
-        console.log("this.platformY:" + this.platform_y);
+        console.log("topEdge:" + topEdge);                          //-320
+        console.log("this.level1.sourceY:" + this.level1.sourceY);  //-316
+        console.log("this.platformY:" + this.platform_y);           // 0
 
         // this.isFalling = (this.level1.sourceY - JUMP_SPEED < topEdge);
-        console.log("return: " + (this.level1.sourceY - JUMP_SPEED < topEdge ? 
-            this.level1.sourceY - topEdge:
-            0-JUMP_SPEED));  
-        return this.level1.sourceY - JUMP_SPEED < topEdge ? 
-            this.level1.sourceY - topEdge:
+        // console.log("return: " + (this.level1.sourceY - JUMP_SPEED < topEdge ? 
+        //     this.level1.sourceY - topEdge:
+        //     0-JUMP_SPEED));  
+        // -316 - (4) < -320
+        var vert = this.level1.sourceY - JUMP_SPEED < topEdge ? 
+            this.level1.sourceY - topEdge :
             0-JUMP_SPEED;
+        console.log("vert: " + vert);
+        return vert;
     };
     canScrollDown = function(){
         var bottomEdge = this.platform_y;
-        console.log("bottomEdge:" + bottomEdge);
-        console.log("this.level1.sourceY:" + this.level1.sourceY);
-        console.log("this.platformY:" + this.platform_y);
+        // console.log("bottomEdge:" + bottomEdge);
+        // console.log("this.level1.sourceY:" + this.level1.sourceY);
+        // console.log("this.platformY:" + this.platform_y);
         // this.isFalling = (this.level1.sourceY + FALL_SPEED > bottomEdge);            
 
         return this.level1.sourceY + FALL_SPEED > bottomEdge ? this.level1.sourceY - bottomEdge : FALL_SPEED;
@@ -376,15 +351,6 @@ class Background {
             originalY = this.level1.sourceY,
             originalX = this.level1.sourceX,
             action: ACTION;
-
-        if (this.helper == null) this.helper = new Helper();
-        action = this.helper.getAction(mario.lastAction, scroll, vert);
-
-        //Update MARIO SPRITE ANIMATION
-        mario.update(action);
-
-        if (!this.isFalling && vert == 0)
-            this.isFalling = true;
 
         //MARIO CAN BE: STANDING, JUMPING, FALLING
         this.level1.sourceX += scroll;
