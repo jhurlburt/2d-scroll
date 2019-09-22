@@ -81,10 +81,18 @@ export class CanvasComponent implements AfterViewInit {
                 this.isdrawing = true;
                 //Get HORIZONTAL movement
                 var scroll = 
-                    (this.key_walk_right)   ? this.bg.canScrollRight()  :
-                    (this.key_walk_left)    ? this.bg.canScrollLeft()   : 0;
+                    (this.key_walk_right) ? this.bg.canScrollRight() :
+                    (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
+
                 //Get VERTICAL movement
-                var vert = this.key_jump    ? this.bg.canScrollUp()     : 0;
+                var vert = 0;
+                if (this.key_jump && !this.mario.isFalling){
+                    vert = this.bg.canScrollUp();
+                    this.mario.isFalling = (vert == 0);
+                } else {
+                    vert = this.bg.canScrollDown();
+                    this.mario.isFalling = !(vert == 0);
+                }
                 //DEBUGGING!
                 // if (vert != 0){
                     // console.log("vert: " + vert);
@@ -92,29 +100,21 @@ export class CanvasComponent implements AfterViewInit {
                 // }
                 //Get NEW MARIO ACTION
                 var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
-                //Update MARIO SPRITE ANIMATION
+                //UPDATE MARIO SPRITE ANIMATION
                 this.mario.update(action);
-                //Get VERTICAL movement
-                if (this.key_jump && this.mario.isJumping()){
-                    vert = this.bg.canScrollUp();
-                    if (vert == 0){
-                        this.mario.isFalling = true;
-                    }
-                } else {
-                    vert = this.bg.canScrollDown();
-                    if (vert == 0){
-                        this.mario.isFalling = false;
-                    }
-                }                
+                //UPDATE FG
+                this.blocks.forEach(element => {
+                    //FG elements should move opposite the BG element            
+                    element.update(0-scroll, 0-vert, this.bg.platform_y);
+                });        
                 //UPDATE BG
                 this.bg.update(scroll, vert, this.mario, this.blocks); 
-
                 //RENDER ALL
-                this.bg.render();
                 this.mario.render();
                 this.blocks.forEach(element => {
                     element.render();
                 });
+                this.bg.render();
                 this.isdrawing = false;                    
             }
             
@@ -325,11 +325,6 @@ class Background {
         console.log("this.level1.sourceY:" + this.level1.sourceY);  //-316
         console.log("this.platformY:" + this.platform_y);           // 0
 
-        // this.isFalling = (this.level1.sourceY - JUMP_SPEED < topEdge);
-        // console.log("return: " + (this.level1.sourceY - JUMP_SPEED < topEdge ? 
-        //     this.level1.sourceY - topEdge:
-        //     0-JUMP_SPEED));  
-        // -316 - (4) < -320
         var vert = this.level1.sourceY - JUMP_SPEED < topEdge ? 
             this.level1.sourceY - topEdge :
             0-JUMP_SPEED;
@@ -355,10 +350,10 @@ class Background {
         //MARIO CAN BE: STANDING, JUMPING, FALLING
         this.level1.sourceX += scroll;
         this.level1.sourceY += vert;
-        blocks.forEach(element => {
-            //FG elements should move opposite the BG element            
-            element.update(0-scroll, 0-vert, this.platformY);
-        });
+        // blocks.forEach(element => {
+        //     //FG elements should move opposite the BG element            
+        //     element.update(0-scroll, 0-vert, this.platformY);
+        // });
 
         //VERTICAL SCROLLING
         if (mario.isJumping()) {
