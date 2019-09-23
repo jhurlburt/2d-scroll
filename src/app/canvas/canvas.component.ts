@@ -25,7 +25,7 @@ export enum ACTION {
     JUMP
 }
 
-const REFRESH: number = 5;
+const REFRESH: number = 1;
 const POSITION_X: number = 200;
 const POSITION_Y: number = 650;
 const WALK_SPEED: number = 2;
@@ -79,6 +79,7 @@ export class CanvasComponent implements AfterViewInit {
             if (!this.isdrawing) {
                 //Set isDrawing (thread contention prevention)
                 this.isdrawing = true;
+                
                 //Get HORIZONTAL movement
                 var scroll = 
                     (this.key_walk_right) ? this.bg.canScrollRight() :
@@ -86,13 +87,24 @@ export class CanvasComponent implements AfterViewInit {
 
                 //Get VERTICAL movement
                 var vert = 0;
-                if (this.key_jump && !this.mario.isFalling){
-                    vert = this.bg.canScrollUp();
+                if (this.key_jump && !this.mario.isFalling) {
+                    var isCollided = this.helper.detectCollision(this.mario, this.blocks);
+                    if (!isCollided){
+                        // console.log("isCollided: " + isCollided);
+                        vert = this.bg.canScrollUp();
+                    }
                     this.mario.isFalling = (vert == 0);
                 } else {
+
+                    var isCollided = this.helper.detectCollision(this.mario, this.blocks);
+                    console.log("isCollided: " + isCollided);
+                    // if (isCollided){
+                    //     vert = this.bg.canScrollDown();
+                    // }
                     vert = this.bg.canScrollDown();
                     this.mario.isFalling = !(vert == 0);
                 }
+
                 //DEBUGGING!
                 // if (vert != 0){
                     // console.log("vert: " + vert);
@@ -102,19 +114,23 @@ export class CanvasComponent implements AfterViewInit {
                 var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
                 //UPDATE MARIO SPRITE ANIMATION
                 this.mario.update(action);
+
                 //UPDATE FG
                 this.blocks.forEach(element => {
-                    //FG elements should move opposite the BG element            
+                    //FG elements should move opposite the BG element
                     element.update(0-scroll, 0-vert, this.bg.platform_y);
-                });        
+                });
+
                 //UPDATE BG
-                this.bg.update(scroll, vert, this.mario, this.blocks); 
-                //RENDER ALL
-                this.mario.render();
+                this.bg.update(scroll, vert, this.mario, this.blocks);
+
+                //RENDER ALL, FROM BACK TO FRONT
+                this.bg.render();
                 this.blocks.forEach(element => {
                     element.render();
                 });
-                this.bg.render();
+                this.mario.render();
+
                 this.isdrawing = false;                    
             }
             
@@ -319,16 +335,17 @@ class Background {
         var leftEdge = 0;
         return WALK_SPEED > this.level1.sourceX ? leftEdge - this.level1.sourceX : 0-WALK_SPEED; 
     };
-    canScrollUp = function(){                
+    canScrollUp = function(){
         var topEdge = this.platform_y - MAX_JUMP;
-        console.log("topEdge:" + topEdge);                          //-320
-        console.log("this.level1.sourceY:" + this.level1.sourceY);  //-316
-        console.log("this.platformY:" + this.platform_y);           // 0
+        // console.log("topEdge:" + topEdge);                          //-320
+        // console.log("this.level1.sourceY:" + this.level1.sourceY);  //-316
+        // console.log("this.platformY:" + this.platform_y);           // 0
 
         var vert = this.level1.sourceY - JUMP_SPEED < topEdge ? 
             this.level1.sourceY - topEdge :
             0-JUMP_SPEED;
-        console.log("vert: " + vert);
+
+        // console.log("vert: " + vert);
         return vert;
     };
     canScrollDown = function(){
@@ -341,50 +358,111 @@ class Background {
         return this.level1.sourceY + FALL_SPEED > bottomEdge ? this.level1.sourceY - bottomEdge : FALL_SPEED;
     };
     update = function(scroll: number, vert: number, mario: Character = null, blocks: Array<Block> = null){
-        var collisionX = 0,
-            collisionY = 0,
-            originalY = this.level1.sourceY,
-            originalX = this.level1.sourceX,
-            action: ACTION;
-
-        //MARIO CAN BE: STANDING, JUMPING, FALLING
         this.level1.sourceX += scroll;
         this.level1.sourceY += vert;
-        // blocks.forEach(element => {
-        //     //FG elements should move opposite the BG element            
-        //     element.update(0-scroll, 0-vert, this.platformY);
-        // });
+    };
+    render = function(){
+        this.level1.render();
+    };
+}
 
-        //VERTICAL SCROLLING
-        if (mario.isJumping()) {
-            // var minimumY = this.platform_y - MAX_JUMP;            
-            // this.level1.sourceY -= JUMP_SPEED;            
-            // if (this.level1.sourceY < minimumY) {
-            //     this.level1.sourceY = minimumY;
-            //     mario.isFalling = true;
-            // } else {
-            //     blocks.forEach(element => {
-            //         element.update(0, 2, this.platformY);
-            //     });    
-            // }
-        } else {
-            // var maximumY = this.platform_y;
-            // var maximumY = 0;
+class Block {
+    boundingBox:Sprite;
+    lastAction: ACTION.STAND_RIGHT;
+    originalY:  number;
+    platform_y: number;
 
-            // if (this.level1.sourceY > maximumY) {
-            //     this.level1.sourceY = maximumY;
-            //     mario.isFalling = false; //Stop falling
+    constructor (options){        
+        this.boundingBox = new Sprite({ 
+            context:        options.context, 
+            image:          options.images[0], 
+            x:              options.x, 
+            y:              options.y,
+            sourceWidth:    options.sourceWidth, 
+            sourceHeight:   options.sourceHeight,
+            frameWidth:     options.frameWidth,
+            frameHeight:    options.frameHeight }); 
+        this.originalY = options.y;
+        // this.boundingBox = this.myBlock;
+    }
 
-            // } else {
-            //     //Continue falling
-            //     this.level1.sourceY += FALL_SPEED;
-            //     blocks.forEach(element => {
-            //         element.update(0, 0+FALL_SPEED, this.platformY);
-            //     });    
-            // }
+    toString = function(){
+        var result = "";
+        if (this.boundingBox != null){
+            result = this.boundingBox.toString();
         }
-        //Check for collisions, if collided then increase LVL Y
-        // blocks.forEach(element => {
+        return result;
+    };
+    update = function(hor: number, vert: number, platform_y: number){
+        // this.boundingBox = this.myBlock;
+        this.platform_y     = platform_y;
+        this.boundingBox.x  += hor;
+        this.boundingBox.y  += vert;
+    };
+    render = function(){
+        this.boundingBox.render();
+    };
+}
+
+class Helper {
+    getAction = function(lastAction: ACTION = ACTION.STAND_RIGHT, scroll: number = 0, vert: number = 0){
+
+        if (vert < 0 && scroll < 0) {
+            return ACTION.JUMP_LEFT;
+        
+        } else if (vert < 0 && scroll > 0) {
+            return ACTION.JUMP_RIGHT;
+
+        } else if (vert < 0 && scroll == 0) {
+            return (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT) ?
+                ACTION.JUMP_LEFT :
+                ACTION.JUMP_RIGHT;
+
+        } else if (scroll < 0) {
+            return ACTION.WALK_LEFT;
+
+        } else if (scroll > 0) {
+            return ACTION.WALK_RIGHT;
+
+        } else if (scroll == 0) {
+            return (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT) ?
+                ACTION.STAND_LEFT :
+                ACTION.STAND_RIGHT;
+        }
+    };
+
+    detectCollision = function(char: Character, blocks: Block[]){
+        var hasCollided = false;
+        if (char != null){
+            var obj1: Sprite = char.boundingBox;
+
+            blocks.forEach(element => {
+                var obj2: Sprite = element.boundingBox,
+                    char_lt     = obj1.x,
+                    char_rt     = obj1.x + obj1.frameWidth,
+                    char_bot    = obj1.y,
+                    char_top    = obj1.y - obj1.frameHeight,
+                    block_lt    = obj2.x,
+                    block_rt    = obj2.x + obj2.frameWidth,
+                    block_bot   = obj2.y,
+                    block_top   = obj2.y - obj2.frameHeight;
+
+                if (((char_rt >= block_lt) && (char_lt < block_rt)) ||
+                    ((char_lt <= block_rt) && (char_rt > block_rt))){
+                    // console.log("horizontal collision");
+
+                    if (((char_top <= block_bot) && (char_bot > block_bot)) ||
+                        ((char_bot >= block_top) && (char_top < block_top))) {
+                        // console.log("vertical collision");
+                        hasCollided = true;
+                    }
+                }
+            });        
+        }
+        return hasCollided;
+    };
+}
+
         //     var obj1            = mario.boundingBox;
         //     var obj2            = element.boundingBox;
         //     var char_lt         = obj1.x;
@@ -411,106 +489,7 @@ class Background {
         //         this.platform_y = this.level1.sourceY; //Terr Firma!!!
         //         // console.log("block_ceiling:" + block_ceiling + ",char_floor:" + char_floor);
         //     }
-        // });
-    };
-    render = function(){
-        this.level1.render();
-    };
-}
 
-class Block {
-    boundingBox:Sprite;
-    lastAction: ACTION.STAND_RIGHT;
-    // isFalling:  boolean = false;
-    // helper:     Helper;
-    originalY:  number;
-    // boundingBox: Sprite;
-    platform_y: number;
-
-    constructor (options){        
-        this.boundingBox = new Sprite({ 
-            context:        options.context, 
-            image:          options.images[0], 
-            x:              options.x, 
-            y:              options.y,
-            sourceWidth:    options.sourceWidth, 
-            sourceHeight:   options.sourceHeight,
-            frameWidth:     options.frameWidth,
-            frameHeight:    options.frameHeight }); 
-        this.originalY = options.y;
-        // this.boundingBox = this.myBlock;
-    }
-
-    toString = function(){
-        if (this.boundingBox != null){
-            return this.boundingBox.toString();
-        }
-        return "";
-    };
-    update = function(hor: number, vert: number, platform_y: number){
-        // this.boundingBox = this.myBlock;
-        this.platform_y     = platform_y;
-        this.boundingBox.x  += hor;
-        this.boundingBox.y  += vert;
-    };
-    render = function(){
-        this.boundingBox.render();
-    };
-}
-
-class Helper {
-    getAction = function(lastAction: ACTION = ACTION.STAND_RIGHT, scroll: number = 0, vert: number = 0){
-
-        if (vert < 0 && scroll < 0) {
-            return ACTION.JUMP_LEFT;
-        
-        } else if (vert < 0 && scroll > 0) {
-            return ACTION.JUMP_RIGHT;
-
-        } else if (vert < 0 && scroll == 0) {
-            if (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT){
-                return ACTION.JUMP_LEFT;
-            } else {
-                return ACTION.JUMP_RIGHT;
-            }
-        } else if (scroll < 0) {
-            return ACTION.WALK_LEFT;
-
-        } else if (scroll > 0) {
-            return ACTION.WALK_RIGHT;
-
-        } else if (scroll == 0) {
-            if (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT){
-                return ACTION.STAND_LEFT;
-            } else {
-                return ACTION.STAND_RIGHT;
-            }
-        }
-    };
-
-    detectCollision = function(char: Character, blocks: Block[]){
-
-        //=-=-=- Collision Detection =-=-=-//
-        if (char != null){
-            var obj1: Sprite = char.boundingBox;
-
-            blocks.forEach(element => {
-                var obj2 = element.boundingBox;
-                if ((( obj1.x + obj1.frameWidth > obj2.x) && 
-                      (obj1.x < obj2.x + obj2.frameWidth)) &&
-                    (( obj1.y - obj1.frameHeight < obj2.y) &&
-                      (obj1.y - obj1.frameHeight > obj2.y - obj2.frameHeight))){
-                    
-                        console.log("Collision detected!");
-                        console.log("mario => " + obj1.toString());
-                        console.log("block => " + obj2.toString());
-
-                        return true;    
-                }                        
-            });        
-        }
-    };
-}
 
 class Character {
     mario_still_lt: Sprite;
