@@ -1,6 +1,6 @@
 <canvas #canvasE1 tabindex="1"></canvas>
 <img #imgMarioStillLeft style='display: none;' />
-<img #imgMarioStillRight style='display: none;' />
+<img #imgMarioStillRight style='display: none;' (load)="afterLoading()" />
 <img #imgMarioWalkingLeft style='display: none;' />
 <img #imgMarioWalkingRight style='display: none;' />
 <img #imgMarioJumpRight style='display: none;' />

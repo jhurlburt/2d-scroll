@@ -28,12 +28,13 @@ const REFRESH: number = 5;
 const POSITION_X: number = 200;
 const POSITION_Y: number = 650;
 const WALK_SPEED: number = 2;
-const JUMP_SPEED: number = 2;
-const FALL_SPEED: number = 3;
+const JUMP_SPEED: number = 3;
+const FALL_SPEED: number = 4;
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MAX_JUMP : number = HEIGHT * 5;
-const TPF: number = 18;
+const CHAR_TPF: number = 18;
+const MYSTERY_TPF: number = 30;
 const CANVAS_HEIGHT = 800;
 const CANVAS_WIDTH = 1200;
 const PLATFORM_HEIGHT_1 = 484;
@@ -96,13 +97,13 @@ export class CanvasComponent implements AfterViewInit, OnInit {
                     this.mario.isFalling = (vert == 0);
                 } else {
                     //IS FALLING
-                    // var isCollided = this.helper.detectCollision(this.mario, this.blocks, "bottom");
-                    // console.log("isCollided: " + isCollided);
-                    // if (isCollided){
-                    //     this.bg.setPlatform();
-                    // } else {
-                    //     this.bg.clearPlatform();
-                    // }
+                    var isCollided = this.helper.detectCollision(this.mario, this.blocks, "bottom");
+                    console.log("isCollided: " + isCollided);
+                    if (isCollided){
+                        this.bg.setPlatform();
+                    } else {
+                        this.bg.clearPlatform();
+                    }
                     vert = this.bg.canScrollDown();
                     this.mario.isFalling = !(vert == 0);
                 }
@@ -140,10 +141,10 @@ export class CanvasComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit() {
-        this.init();
     }
 
     ngAfterViewInit() {
+        this.init();
     }
 
     init() {
@@ -186,7 +187,7 @@ export class CanvasComponent implements AfterViewInit, OnInit {
              frameHeight: this.canvasE1.nativeElement.height,
         });
     
-        this.imgBlock.nativeElement.src = "assets/mystery-block.png";
+        this.imgBlock.nativeElement.src = "assets/block_flashing_ow.png";
         this.imgBrick.nativeElement.src = "assets/brick-block.png";
     
         this.blocks =  [
@@ -200,7 +201,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
                 sourceWidth: MYSTERY_WIDTH,
                 sourceHeight: MYSTERY_HEIGHT,
                 frameWidth: MYSTERY_WIDTH,
-                frameHeight: MYSTERY_HEIGHT
+                frameHeight: MYSTERY_HEIGHT,
+                ticksPerFrame: MYSTERY_TPF
             }),
             new Block({
                 context: this.canvasE1.nativeElement.getContext('2d'),
@@ -224,7 +226,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
                 sourceWidth: MYSTERY_WIDTH,
                 sourceHeight: MYSTERY_HEIGHT,
                 frameWidth: MYSTERY_WIDTH,
-                frameHeight: MYSTERY_HEIGHT
+                frameHeight: MYSTERY_HEIGHT,
+                ticksPerFrame: MYSTERY_TPF
             }),
             new Block({
                 context: this.canvasE1.nativeElement.getContext('2d'),
@@ -248,7 +251,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
                 sourceWidth: MYSTERY_WIDTH,
                 sourceHeight: MYSTERY_HEIGHT,
                 frameWidth: MYSTERY_WIDTH,
-                frameHeight: MYSTERY_HEIGHT
+                frameHeight: MYSTERY_HEIGHT,
+                ticksPerFrame: MYSTERY_TPF
             }),
             new Block({
                 context: this.canvasE1.nativeElement.getContext('2d'),
@@ -272,7 +276,8 @@ export class CanvasComponent implements AfterViewInit, OnInit {
                 sourceWidth: MYSTERY_WIDTH,
                 sourceHeight: MYSTERY_HEIGHT,
                 frameWidth: MYSTERY_WIDTH,
-                frameHeight: MYSTERY_HEIGHT
+                frameHeight: MYSTERY_HEIGHT,
+                ticksPerFrame: MYSTERY_TPF
             })
         ];
     }
@@ -331,9 +336,7 @@ class Background {
             WALK_SPEED;
     };
     canScrollLeft = function(){
-        // return this.level1.sourceX > 0; 
-        var leftEdge = 0;
-        return WALK_SPEED > this.level1.sourceX ? leftEdge - this.level1.sourceX : 0-WALK_SPEED; 
+        return WALK_SPEED > this.level1.sourceX ? 0 - this.level1.sourceX : 0-WALK_SPEED; 
     };
     canScrollUp = function(){
         var topEdge = this.platform_y - MAX_JUMP;
@@ -342,19 +345,19 @@ class Background {
         // console.log("this.platformY:" + this.platform_y);           // 0
 
         var vert = this.level1.sourceY - JUMP_SPEED < topEdge ? 
-            this.level1.sourceY - topEdge :
+            topEdge - this.level1.sourceY :                         //     this.level1.sourceY - topEdge :
             0-JUMP_SPEED;
 
-        // console.log("vert: " + vert);
         return vert;
     };
     canScrollDown = function(){
-        console.log("this.level1.sourceY:" + this.level1.sourceY);
-        console.log("this.platformY:" + this.platform_y);
+        // console.log("this.level1.sourceY:" + this.level1.sourceY);
+        // console.log("this.platformY:" + this.platform_y);
         // this.isFalling = (this.level1.sourceY + FALL_SPEED > bottomEdge);            
 
-        // -4 + 3 > 0 ? -4 - 0 : 4
-        return this.level1.sourceY + FALL_SPEED > this.platform_y ? this.level1.sourceY - this.platform_y : FALL_SPEED;
+        // -4 + 3 > 0 ? -4 - 0 : 4 //  4
+        // -1 + 3 > 0 ? -1 - 0 : 4 // -1
+        return this.level1.sourceY + FALL_SPEED > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : FALL_SPEED;
     };
     setPlatform = function(){
         this.platform_y = this.level1.sourceY;
@@ -383,10 +386,11 @@ class Block {
             image:          options.images[0], 
             x:              options.x, 
             y:              options.y,
-            sourceWidth:    options.sourceWidth, 
-            sourceHeight:   options.sourceHeight,
-            frameWidth:     options.frameWidth,
-            frameHeight:    options.frameHeight }); 
+            ticksPerFrame:  options.ticksPerFrame, 
+            sourceWidth:    options.sourceWidth     || MYSTERY_WIDTH, 
+            sourceHeight:   options.sourceHeight    || MYSTERY_HEIGHT,
+            frameWidth:     options.frameWidth      || MYSTERY_WIDTH,     
+            frameHeight:    options.frameHeight     || MYSTERY_HEIGHT }); 
         this.originalY = options.y;
     }
 
@@ -402,6 +406,7 @@ class Block {
         this.platform_y     = platform_y;
         this.boundingBox.x  += hor;
         this.boundingBox.y  += vert;
+        this.boundingBox.update();
     };
     render = function(){
         this.boundingBox.render();
@@ -457,11 +462,12 @@ class Helper {
 
                     // console.log("vertical collision");
                     if (top_bottom == "top"){
-                        if ((char_top <= block_bot) && (char_bot > block_bot)) {
+                        if ((char_top + JUMP_SPEED <= block_bot) && (char_bot > block_bot)) {
                             hasCollided = true;
                         }
                     } else {
-                        if ((char_bot >= block_top) && (char_top < block_top)) {
+                        //400 + 4 >= 400 && 350 < 400
+                        if ((char_bot + FALL_SPEED >= block_top) && (char_top < block_top)) {
                             hasCollided = true;
                         }
                     }
@@ -495,13 +501,13 @@ class Character {
             frameWidth:     options.frameWidth,
             frameHeight:    options.frameHeight });
         this.mario_walk_lt  = new Sprite({ context: options.context, image: options.images[2], x: options.x, y: options.y,
-            ticksPerFrame:  TPF, 
+            ticksPerFrame:  CHAR_TPF, 
             sourceWidth:    options.sourceWidth     || WIDTH, 
             sourceHeight:   options.sourceHeight    || HEIGHT,
             frameWidth:     options.frameWidth      || WIDTH,
             frameHeight:    options.frameHeight     || HEIGHT });
         this.mario_walk_rt  = new Sprite({ context: options.context, image: options.images[3], x: options.x, y: options.y,
-            ticksPerFrame:  TPF, 
+            ticksPerFrame:  CHAR_TPF, 
             sourceWidth:    options.sourceWidth     || WIDTH, 
             sourceHeight:   options.sourceHeight    || HEIGHT,
             frameWidth:     options.frameWidth      || WIDTH,
