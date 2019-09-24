@@ -2,8 +2,8 @@ import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostLi
 import { removeDebugNodeFromIndex } from '@angular/core/src/debug/debug_node';
 import { log, debuglog } from 'util';
 import { renderComponent } from '@angular/core/src/render3';
-import { maybeQueueResolutionOfComponentResources } from '@angular/core/src/metadata/resource_loading';
-import { HOST_ATTR } from '@angular/platform-browser/src/dom/dom_renderer';
+// import { maybeQueueResolutionOfComponentResources } from '@angular/core/src/metadata/resource_loading';
+// import { HOST_ATTR } from '@angular/platform-browser/src/dom/dom_renderer';
 
 export enum KEY_CODE {
     RIGHT_ARROW = 39,
@@ -24,13 +24,12 @@ export enum ACTION {
     FALL_DOWN,
     JUMP
 }
-
-const REFRESH: number = 1;
+const REFRESH: number = 5;
 const POSITION_X: number = 200;
 const POSITION_Y: number = 650;
 const WALK_SPEED: number = 2;
-const JUMP_SPEED: number = 4;
-const FALL_SPEED: number = 4;
+const JUMP_SPEED: number = 2;
+const FALL_SPEED: number = 3;
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MAX_JUMP : number = HEIGHT * 5;
@@ -47,7 +46,7 @@ const MYSTERY_HEIGHT = 58;
   templateUrl: './canvas.component.html',
   styleUrls: ['./canvas.component.css']
 })
-export class CanvasComponent implements AfterViewInit {
+export class CanvasComponent implements AfterViewInit, OnInit {
     @ViewChild('canvasE1') canvasE1: ElementRef<HTMLCanvasElement>;
     @ViewChild('imgMarioWalkingRight') imgMarioWalkRt: ElementRef<HTMLImageElement>;
     @ViewChild('imgMarioWalkingLeft') imgMarioWalkLt: ElementRef<HTMLImageElement>;
@@ -88,6 +87,7 @@ export class CanvasComponent implements AfterViewInit {
                 //Get VERTICAL movement
                 var vert = 0;
                 if (this.key_jump && !this.mario.isFalling) {
+                    //IS JUMPING
                     var isCollided = this.helper.detectCollision(this.mario, this.blocks);
                     if (!isCollided){
                         // console.log("isCollided: " + isCollided);
@@ -95,21 +95,17 @@ export class CanvasComponent implements AfterViewInit {
                     }
                     this.mario.isFalling = (vert == 0);
                 } else {
-
-                    var isCollided = this.helper.detectCollision(this.mario, this.blocks);
-                    console.log("isCollided: " + isCollided);
+                    //IS FALLING
+                    // var isCollided = this.helper.detectCollision(this.mario, this.blocks, "bottom");
+                    // console.log("isCollided: " + isCollided);
                     // if (isCollided){
-                    //     vert = this.bg.canScrollDown();
+                    //     this.bg.setPlatform();
+                    // } else {
+                    //     this.bg.clearPlatform();
                     // }
                     vert = this.bg.canScrollDown();
                     this.mario.isFalling = !(vert == 0);
                 }
-
-                //DEBUGGING!
-                // if (vert != 0){
-                    // console.log("vert: " + vert);
-                    // console.log("this.bg.canScrollUp(): " + this.bg.canScrollUp());
-                // }
                 //Get NEW MARIO ACTION
                 var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
                 //UPDATE MARIO SPRITE ANIMATION
@@ -138,19 +134,31 @@ export class CanvasComponent implements AfterViewInit {
         //END GAME LOOP
     }
 
-    ngAfterViewInit() {    
+    afterLoading(){
+        //Don't begin the loop until MARIO arrives to the party
+        this.gameLoop();
+    }
+
+    ngOnInit() {
+        this.init();
+    }
+
+    ngAfterViewInit() {
+    }
+
+    init() {
         console.log("ngAfterViewInit()");
 
         this.canvasE1.nativeElement.height = CANVAS_HEIGHT;
         this.canvasE1.nativeElement.width = CANVAS_WIDTH;
-
+    
         this.imgMarioStillLt.nativeElement.src = "assets/mario-still-left.png";
         this.imgMarioStillRt.nativeElement.src = "assets/mario-still-right.png";
         this.imgMarioWalkLt.nativeElement.src = "assets/mario-walking-left.png";
         this.imgMarioWalkRt.nativeElement.src = "assets/mario-walking-right.png";
         this.imgMarioJumpLt.nativeElement.src = "assets/mario-jump-left.png";
         this.imgMarioJumpRt.nativeElement.src = "assets/mario-jump-right.png";
-
+    
         this.mario = new Character({
             context: this.canvasE1.nativeElement.getContext('2d'),
             images: [ 
@@ -164,9 +172,9 @@ export class CanvasComponent implements AfterViewInit {
             x: POSITION_X,
             y: POSITION_Y
         });
-
+    
         this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
-
+    
         this.bg = new Background({
             context: this.canvasE1.nativeElement.getContext('2d'),
             images: [ 
@@ -177,10 +185,10 @@ export class CanvasComponent implements AfterViewInit {
              frameWidth: this.canvasE1.nativeElement.width,
              frameHeight: this.canvasE1.nativeElement.height,
         });
-
+    
         this.imgBlock.nativeElement.src = "assets/mystery-block.png";
         this.imgBrick.nativeElement.src = "assets/brick-block.png";
-
+    
         this.blocks =  [
             new Block({
                 context: this.canvasE1.nativeElement.getContext('2d'),
@@ -267,9 +275,6 @@ export class CanvasComponent implements AfterViewInit {
                 frameHeight: MYSTERY_HEIGHT
             })
         ];
-
-        // window.requestAnimationFrame(this.gameLoop);
-        this.gameLoop();
     }
 
     @HostListener('window:keydown', ['$event'])
@@ -278,25 +283,20 @@ export class CanvasComponent implements AfterViewInit {
 
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
             this.key_walk_right = true;
-
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
             this.key_walk_left = true;
-
         } else if (event.keyCode == KEY_CODE.SPACE){
             this.key_jump = true;
         }
     }
-
 
     @HostListener('window:keyup', ['$event'])
     keyUpEvent(event: KeyboardEvent){
 
         if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D){
             this.key_walk_right = false;
-
         } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A){
             this.key_walk_left = false;
-
         } else if (event.keyCode == KEY_CODE.SPACE){
             this.key_jump = false;
         }
@@ -349,13 +349,18 @@ class Background {
         return vert;
     };
     canScrollDown = function(){
-        var bottomEdge = this.platform_y;
-        // console.log("bottomEdge:" + bottomEdge);
-        // console.log("this.level1.sourceY:" + this.level1.sourceY);
-        // console.log("this.platformY:" + this.platform_y);
+        console.log("this.level1.sourceY:" + this.level1.sourceY);
+        console.log("this.platformY:" + this.platform_y);
         // this.isFalling = (this.level1.sourceY + FALL_SPEED > bottomEdge);            
 
-        return this.level1.sourceY + FALL_SPEED > bottomEdge ? this.level1.sourceY - bottomEdge : FALL_SPEED;
+        // -4 + 3 > 0 ? -4 - 0 : 4
+        return this.level1.sourceY + FALL_SPEED > this.platform_y ? this.level1.sourceY - this.platform_y : FALL_SPEED;
+    };
+    setPlatform = function(){
+        this.platform_y = this.level1.sourceY;
+    };
+    clearPlatform = function(){
+        this.platform_y = 0;
     };
     update = function(scroll: number, vert: number, mario: Character = null, blocks: Array<Block> = null){
         this.level1.sourceX += scroll;
@@ -383,7 +388,6 @@ class Block {
             frameWidth:     options.frameWidth,
             frameHeight:    options.frameHeight }); 
         this.originalY = options.y;
-        // this.boundingBox = this.myBlock;
     }
 
     toString = function(){
@@ -431,7 +435,7 @@ class Helper {
         }
     };
 
-    detectCollision = function(char: Character, blocks: Block[]){
+    detectCollision = function(char: Character, blocks: Block[], top_bottom: string = "top"){
         var hasCollided = false;
         if (char != null){
             var obj1: Sprite = char.boundingBox;
@@ -447,14 +451,19 @@ class Helper {
                     block_bot   = obj2.y,
                     block_top   = obj2.y - obj2.frameHeight;
 
+                // console.log("horizontal collision");
                 if (((char_rt >= block_lt) && (char_lt < block_rt)) ||
                     ((char_lt <= block_rt) && (char_rt > block_rt))){
-                    // console.log("horizontal collision");
 
-                    if (((char_top <= block_bot) && (char_bot > block_bot)) ||
-                        ((char_bot >= block_top) && (char_top < block_top))) {
-                        // console.log("vertical collision");
-                        hasCollided = true;
+                    // console.log("vertical collision");
+                    if (top_bottom == "top"){
+                        if ((char_top <= block_bot) && (char_bot > block_bot)) {
+                            hasCollided = true;
+                        }
+                    } else {
+                        if ((char_bot >= block_top) && (char_top < block_top)) {
+                            hasCollided = true;
+                        }
                     }
                 }
             });        
@@ -462,34 +471,6 @@ class Helper {
         return hasCollided;
     };
 }
-
-        //     var obj1            = mario.boundingBox;
-        //     var obj2            = element.boundingBox;
-        //     var char_lt         = obj1.x;
-        //     var char_rt         = obj1.x + obj1.frameWidth;                     
-        //     var char_floor      = obj1.y;                     
-        //     var char_ceiling    = obj1.y - obj1.frameHeight;
-        //     var block_lt        = obj2.x;                    //Predicted position
-        //     var block_rt        = obj2.x + obj2.frameWidth;  //Predicted position
-        //     var block_floor     = obj2.y;                    //Predicted position
-        //     var block_ceiling   = obj2.y - obj2.frameHeight; //Predicted position
-            
-        //     //Assumption: If MARIO's HEAD intersecting with BLOCK floor then collision 
-        //     //Assumption: If MARIO's FEET intersecting with BLOCK ceiling then collision 
-        //     if ((char_ceiling <= block_floor) && (char_floor > block_floor)){    //CHAR ascending to BLOCK
-        //         //Assumption: collisionIntersectY > 0
-        //         // collisionY = block_floor - char_ceiling; //Remove the overlap between the ceiling and floor
-        //         mario.isFalling = true; 
-
-        //     } else if ((char_floor >= block_ceiling) && (char_ceiling < block_ceiling)){    //CHAR descending to BLOCK
-        //         //Assumption: collisionIntersectY < 0 
-        //         // collisionY = block_ceiling - char_floor; //Remove the overlap between the ceiling and floor
-        //         //block_ceiling:648,char_floor:650
-        //         mario.isFalling = false; 
-        //         this.platform_y = this.level1.sourceY; //Terr Firma!!!
-        //         // console.log("block_ceiling:" + block_ceiling + ",char_floor:" + char_floor);
-        //     }
-
 
 class Character {
     mario_still_lt: Sprite;
