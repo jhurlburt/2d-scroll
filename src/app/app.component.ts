@@ -93,7 +93,7 @@ export class AppComponent implements AfterViewInit, OnInit {
             this.bg.setPlatform();
           } else {
             this.bg.clearPlatform();
-          }xcv|B 
+          }
           vert = this.bg.canScrollDown();
           this.mario.isFalling = !(vert == 0);
         }
