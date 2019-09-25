@@ -1,0 +1,11 @@
+TODO
+
+Mario Movement:
+1. Can move to left edge of screen
+    a. Never scroll when moving left
+2. Can move to center of screen until last frame
+    a. When at center, begin horizontal scrolling to maintain position while moving right
+    b. When at center, stop horizontal scrolling while moving left
+    
+Obstacles:
+1. Add invisible barrier around pipe to stop movement

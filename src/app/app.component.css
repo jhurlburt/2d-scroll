@@ -1,1 +1,5 @@
 div.canvas { text-align: center };
+canvas {
+    border: 3px solid #ccc;
+    margin: 20px;
+}
