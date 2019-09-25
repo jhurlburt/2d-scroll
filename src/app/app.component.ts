@@ -78,61 +78,38 @@ export class AppComponent implements AfterViewInit, OnInit {
         this.isdrawing = true;
 
         //Get HORIZONTAL movement
-        var vert = 0,
+        var vert = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
 
-  
-        //Get VERTICAL movement
-        if (this.key_jump && !this.mario.isFalling) {
-          
-          
-          //IS JUMPING
-          var isCollided = this.helper.detectCollision(this.mario, this.blocks);
-          // var isCollided = this.helper.detectCollision(this.mario, this.blocks) ||
-          //   this.helper.detectCollisionPipes(this.mario, this.pipes, scroll, vert);
-            
-          if (!isCollided) {
-            // console.log("isCollided: " + isCollided);
-            vert = this.bg.canScrollUp();
-          }
+        //IS JUMPING
+        if (vert < 0){
+          if (this.helper.detectCollision(this.mario, this.blocks)) vert = 0;               
           this.mario.isFalling = (vert == 0);
 
-        } else {
+        } else if (vert >= 0) {
           //IS FALLING
-          var isCollided = this.helper.detectCollision(this.mario, this.blocks, "bottom");
-          // var isCollided = this.helper.detectCollision(this.mario, this.blocks, "bottom") ||
-          //   this.helper.detectCollisionPipes(this.mario, this.pipes, scroll, vert);
-          // console.log("isCollided: " + isCollided);
-          if (isCollided) {
+          if (this.helper.detectCollision(this.mario, this.blocks, "bottom") ||
+              this.helper.detectCollision(this.mario, this.pipes, "bottom")) {
             this.bg.setPlatform();
           } else {
             this.bg.clearPlatform();
-          }
+          }xcv|B 
           vert = this.bg.canScrollDown();
           this.mario.isFalling = !(vert == 0);
         }
 
-
-        
         if (scroll > 0 && this.helper.collideWithBoundingBox(this.mario, this.pipes, scroll, vert)){
           console.log("walk right: " + scroll);
-          scroll = 0;
+          //scroll = 0;
 
         } else if (scroll < 0 && this.helper.collideWithBoundingBox(this.mario, this.pipes, scroll, vert)){
           console.log("walk left: " + scroll);
-          scroll = 0;
+          //scroll = 0;
         }
 
-
-
-
-
-
-
-
         //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
-        var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
-        this.mario.update(action);
+        // var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
+        this.mario.update(this.helper.getAction(this.mario.lastAction, scroll, vert));
 
         //UPDATE FG/BG
         this.blocks.forEach(element => {
@@ -143,7 +120,6 @@ export class AppComponent implements AfterViewInit, OnInit {
           element.update(0 - scroll, 0 - vert);
         });
         this.bg.update(scroll, vert, this.mario, this.blocks);
-
 
         //RENDER ALL, FROM BACK TO FRONT
         this.bg.render();
@@ -198,7 +174,6 @@ export class AppComponent implements AfterViewInit, OnInit {
     });
 
     this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
-
     this.bg = new Background({
       context: this.canvasE1.nativeElement.getContext('2d'),
       images: [this.imgBackground1_1.nativeElement],
@@ -208,22 +183,22 @@ export class AppComponent implements AfterViewInit, OnInit {
       frameHeight: this.canvasE1.nativeElement.height,
     });
 
-    this.imgBlock.nativeElement.src = "assets/block_flashing_ow.png";
-    this.imgBrick.nativeElement.src = "assets/brick-block.png";
-
+    //614 - H = Y
     this.pipes = [
       new StandPipe({
         context: this.canvasE1.nativeElement.getContext('2d'),
         images: [ null ],
-        x: 1595,
-        y: 598,
+        x: 1595, //1595
+        y: 650, //598
         sourceWidth: 120,
         sourceHeight: 115,
         frameWidth: 120,
-        frameHeight: 115  
+        frameHeight: 115
       })
     ];
 
+    this.imgBlock.nativeElement.src = "assets/block_flashing_ow.png";
+    this.imgBrick.nativeElement.src = "assets/brick-block.png";
     this.blocks = [
       new Block({
         context: this.canvasE1.nativeElement.getContext('2d'),
@@ -360,10 +335,6 @@ class Background {
   };
   canScrollUp = function () {
     var topEdge = this.platform_y - MAX_JUMP;
-    // console.log("topEdge:" + topEdge);                          //-320
-    // console.log("this.level1.sourceY:" + this.level1.sourceY);  //-316
-    // console.log("this.platformY:" + this.platform_y);           // 0
-
     var vert = this.level1.sourceY - JUMP_SPEED < topEdge ?
       topEdge - this.level1.sourceY :                         //     this.level1.sourceY - topEdge :
       0 - JUMP_SPEED;
@@ -371,12 +342,6 @@ class Background {
     return vert;
   };
   canScrollDown = function () {
-    // console.log("this.level1.sourceY:" + this.level1.sourceY);
-    // console.log("this.platformY:" + this.platform_y);
-    // this.isFalling = (this.level1.sourceY + FALL_SPEED > bottomEdge);            
-
-    // -4 + 3 > 0 ? -4 - 0 : 4 //  4
-    // -1 + 3 > 0 ? -1 - 0 : 4 // -1
     return this.level1.sourceY + FALL_SPEED > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : FALL_SPEED;
   };
   setPlatform = function () {
@@ -518,10 +483,7 @@ class Helper {
     return hasCollided;
   };
 
-  detectCollision = function (
-    char: Character, 
-    blocks: BoundingBox[], 
-    top_bottom: string = "top") {
+  detectCollision = function (char: Character, blocks: BoundingBox[], top_bottom: string = "top") {
     var hasCollided = false;
 
     if (char != null) {
@@ -534,9 +496,9 @@ class Helper {
           char_bot = obj1.y,
           char_top = obj1.y - obj1.frameHeight,
           block_lt = obj2.x,
-          block_rt = obj2.x + obj2.frameWidth,
+          block_rt = block_lt + obj2.frameWidth,
           block_bot = obj2.y,
-          block_top = obj2.y - obj2.frameHeight;
+          block_top = block_bot - obj2.frameHeight;
 
         // console.log("horizontal collision");
         if (((char_rt >= block_lt) && (char_lt < block_rt)) ||
