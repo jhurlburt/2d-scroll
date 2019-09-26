@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, Output, HostListener } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnInit, HostListener } from '@angular/core';
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -61,8 +61,8 @@ export class AppComponent implements AfterViewInit, OnInit {
   isdrawing = false;
   bg: Background;
   mario: Character;
-  blocks: Array<Block>;
-  pipes: Array<StandPipe>;
+  blocks: BoundingBox[];
+  pipes: BoundingBox[];
   helper: Helper;
 
   constructor() {
@@ -77,49 +77,66 @@ export class AppComponent implements AfterViewInit, OnInit {
         //Set isDrawing (thread contention prevention)
         this.isdrawing = true;
 
-        //Get HORIZONTAL movement
+        //Get movement
+        //ABF (ALWAYS BE FALLING) unless jumping of course
+        //ABS (ALWAYS BE STANDING) unless walking of course
         var vert = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
 
         //IS JUMPING
         if (vert < 0){
-          if (this.helper.detectCollision(this.mario, this.blocks)) vert = 0;               
-          this.mario.isFalling = (vert == 0);
+          // var coll1 = this.helper.collideWithBoundingBox(this.mario, this.blocks, vert, scroll);
+          // if (coll1.hasCollidedX && coll1.hasCollidedY){
+          //   vert = 0;               
+          // }
+
+          if (this.helper.collideWithBoundingBox1(this.mario, this.blocks, vert, scroll)) {
+            vert = 0; //If I collided then end the jump
+          }
+          this.mario.isFalling = (vert == 0); //If jump is ended then I am falling
 
         } else if (vert >= 0) {
           //IS FALLING
-          if (this.helper.detectCollision(this.mario, this.blocks, "bottom") ||
-              this.helper.detectCollision(this.mario, this.pipes, "bottom")) {
+          // coll1 = this.helper.collideWithBoundingBox(this.mario, this.blocks, vert, scroll);
+          // var coll2 = this.helper.collideWithBoundingBox(this.mario, this.pipes, vert, scroll);
+          // if ((coll1.hasCollidedX && coll1.hasCollidedY) ||
+          //     (coll2.hasCollidedX && coll2.hasCollidedY)){
+          //   this.bg.setPlatform();
+          // } else {
+          //   this.bg.clearPlatform();
+          // } 
+
+          //I will fall until I collide
+          if (this.helper.collideWithBoundingBox1(this.mario, this.blocks, vert, scroll) ||
+              this.helper.collideWithBoundingBox1(this.mario, this.pipes, vert, scroll)) {
+            
+            //I collided so make this my new platform
             this.bg.setPlatform();
           } else {
+            //I did not collide so clear the platform - should this be moved to when jump is cancelled???
             this.bg.clearPlatform();
           }
+          //Check to see if I can continue to fall - if platform was set then function should return 0
           vert = this.bg.canScrollDown();
-          this.mario.isFalling = !(vert == 0);
+
+          this.mario.isFalling = !(vert == 0); //If fall is ended then I am not falling
         }
 
-        if (scroll > 0 && this.helper.collideWithBoundingBox(this.mario, this.pipes, scroll, vert)){
-          console.log("walk right: " + scroll);
-          //scroll = 0;
-
-        } else if (scroll < 0 && this.helper.collideWithBoundingBox(this.mario, this.pipes, scroll, vert)){
-          console.log("walk left: " + scroll);
-          //scroll = 0;
+        var coll1 = this.helper.collideWithBoundingBox2(this.mario, this.pipes, vert, scroll);
+        if (coll1.hasCollidedX && coll1.hasCollidedY){
+          scroll = 0;
         }
-
         //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
-        // var action = this.helper.getAction(this.mario.lastAction, scroll, vert);
-        this.mario.update(this.helper.getAction(this.mario.lastAction, scroll, vert));
+        this.mario.update(this.helper.getAction(this.mario.lastAction, vert, scroll));
 
         //UPDATE FG/BG
-        this.blocks.forEach(element => {
-          //FG elements should move opposite the BG element
-          element.update(0 - scroll, 0 - vert, this.bg.platform_y);
+        this.blocks.forEach(element => {          
+          element.update(0 - scroll, 0 - vert, this.bg.platform_y); //FG elements move opposite the BG element
         });
         this.pipes.forEach(element => {
-          element.update(0 - scroll, 0 - vert);
+          element.update(0 - scroll, 0 - vert, this.bg.platform_y); //FG elements should move opposite the BG element
         });
-        this.bg.update(scroll, vert, this.mario, this.blocks);
+        this.bg.update(scroll, vert);
 
         //RENDER ALL, FROM BACK TO FRONT
         this.bg.render();
@@ -174,6 +191,7 @@ export class AppComponent implements AfterViewInit, OnInit {
     });
 
     this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
+
     this.bg = new Background({
       context: this.canvasE1.nativeElement.getContext('2d'),
       images: [this.imgBackground1_1.nativeElement],
@@ -197,8 +215,6 @@ export class AppComponent implements AfterViewInit, OnInit {
       })
     ];
 
-    this.imgBlock.nativeElement.src = "assets/block_flashing_ow.png";
-    this.imgBrick.nativeElement.src = "assets/brick-block.png";
     this.blocks = [
       new Block({
         context: this.canvasE1.nativeElement.getContext('2d'),
@@ -267,6 +283,8 @@ export class AppComponent implements AfterViewInit, OnInit {
 
 interface BoundingBox {
   boundingBox: Sprite;  
+  update(hor: number, vert: number, platform_y: number): void;
+  render(): void;
 }
 
 class StandPipe implements BoundingBox {
@@ -294,7 +312,7 @@ class StandPipe implements BoundingBox {
     }
     return result;
   };
-  update = function (hor: number, vert: number) {
+  update = function (hor: number, vert: number, platform_y: number = 0) {
     this.boundingBox.x += hor;
     this.boundingBox.y += vert;
     this.boundingBox.update();
@@ -350,7 +368,7 @@ class Background {
   clearPlatform = function () {
     this.platform_y = 0;
   };
-  update = function (scroll: number, vert: number, mario: Character = null, blocks: Array<Block> = null) {
+  update = function (scroll: number, vert: number) {
     this.level1.sourceX += scroll;
     this.level1.sourceY += vert;
   };
@@ -400,7 +418,7 @@ class Block implements BoundingBox {
 }
 
 class Helper {
-  getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, scroll: number = 0, vert: number = 0) {
+  getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
 
     if (vert < 0 && scroll < 0) {
       return ACTION.JUMP_LEFT;
@@ -426,8 +444,67 @@ class Helper {
     }
   };
 
-  collideWithBoundingBox = function (char: Character, objects: BoundingBox[], scroll: number = 0, vert: number = 0) {
-    var hasCollided = false;
+  collideWithBoundingBox1 = function (char: BoundingBox, blocks: BoundingBox[], vert: number = 0, scroll: number = 0) {
+    var hasCollided = false,
+        hasCollidedX = false,
+        hasCollidedY = false;
+
+    if (char != null) {
+      var obj1: Sprite = char.boundingBox;
+
+      blocks.forEach(element => {
+        var obj2: Sprite = element.boundingBox,
+          char_top = obj1.y - obj1.frameHeight,
+          char_bot = obj1.y,
+          char_rt = obj1.x + obj1.frameWidth,
+          char_lt = obj1.x,
+          block_top = obj2.y - obj2.frameHeight,
+          block_bot = obj2.y,
+          block_rt = obj2.x + obj2.frameWidth,
+          block_lt = obj2.x;
+  
+        // console.log("horizontal collision");
+        if (((char_rt >= block_lt) && (char_lt < block_rt)) ||
+            ((char_lt <= block_rt) && (char_rt > block_rt))) {
+
+          // console.log("vertical collision");
+          if (vert < 0) {
+            // if ((char_top - JUMP_SPEED <= block_bot) && (char_bot > block_bot)) {
+            if ((char_top + vert <= block_bot) && (char_bot > block_bot)) {
+              // console.log(char_top+":"+block_bot+":"+JUMP_SPEED);
+              hasCollided = true;
+            }
+          } else {
+            //400 + 4 >= 400 && 350 < 400
+            // if ((char_bot + FALL_SPEED >= block_top) && (char_top < block_top)) {
+            if ((char_bot + vert >= block_top) && (char_top < block_top)) {
+              hasCollided = true;
+            }
+          }
+        }
+        // hasCollidedX = ((char_rt + scroll > block_lt) && (char_lt < block_lt)) ||
+        //                 ((char_lt + scroll < block_rt) && (char_rt > block_rt));
+        // if (scroll >= 0){            
+        //   hasCollidedX = ((char_rt + scroll > block_lt) && (char_lt < block_lt));//Detect collision - CHAR RT SIDE
+        // } else if (scroll < 0){            
+        //   hasCollidedX = ((char_lt + scroll < block_rt) && (char_rt > block_rt));//Detect collision - CHAR LT SIDE
+        // }
+        // hasCollidedY = ((char_bot + vert > block_top) && (char_top < block_top)) ||
+        //                 ((char_top + vert < block_bot) && (char_bot > block_bot));
+        // if (vert >= 0) {
+        //   hasCollidedY = ((char_bot + vert > block_top) && (char_top < block_bot));//Detect collision - CHAR BOT SIDE
+        // } else if (vert < 0) {
+        //   hasCollidedY = ((char_top + vert < block_bot) && (char_bot > block_top));//Detect collision - CHAR TOP SIDE
+        // }
+      });
+    }
+    return hasCollided;
+  };
+
+  collideWithBoundingBox2 = function (char: BoundingBox, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
+    var hasCollidedX = false,
+        hasCollidedY = false;
+    
     if (char != null) {
       var obj1: Sprite = char.boundingBox;
 
@@ -442,88 +519,72 @@ class Helper {
         block_rt = obj2.x + obj2.frameWidth,
         block_lt = obj2.x;
 
-          if (scroll > 0){
-            //Detect collision - CHAR RT SIDE
-            if ((char_rt + scroll >= block_lt) && (char_lt < block_lt)) {
-              if ((char_bot + FALL_SPEED >= block_top) && (char_top < block_bot)) {
-                hasCollided = true;
+        //Assumption: 2 bounding boxes CANNOT occupy the same space
 
-              } else if ((char_top - JUMP_SPEED <= block_bot) && (char_bot > block_top)) {
-                hasCollided = true;
-              }
-            }
-          } else if (scroll < 0){
-            //Detect collision - CHAR LT SIDE
-            if ((char_lt - scroll <= block_rt) && (char_rt > block_rt)) {
-              if ((char_bot + FALL_SPEED >= block_top) && (char_top < block_bot)) {
-                hasCollided = true;
-                
-              } else if ((char_top - JUMP_SPEED <= block_bot) && (char_bot > block_top)) {
-                hasCollided = true;
-              }
-            }  
-          }
-
-          // console.log("vertical collision");
-          // if (vert > 0) {
-          //   if ((char_top - vert <= block_bot) && (char_bot > block_bot)) {
-          //     hasCollided = true;
-          //     console.log("vertical collision1");
-          //   }
-          // } else {
-          //   if ((char_bot + vert >= block_top) && (char_top < block_top)) {
-          //     hasCollided = true;
-          //     console.log("vertical collision2");
-          //     console.log("vert: " + vert);
-          //   }
-          // }
-          
-      });
-    }
-    return hasCollided;
-  };
-
-  detectCollision = function (char: Character, blocks: BoundingBox[], top_bottom: string = "top") {
-    var hasCollided = false;
-
-    if (char != null) {
-      var obj1: Sprite = char.boundingBox;
-
-      blocks.forEach(element => {
-        var obj2: Sprite = element.boundingBox,
-          char_lt = obj1.x,
-          char_rt = obj1.x + obj1.frameWidth,
-          char_bot = obj1.y,
-          char_top = obj1.y - obj1.frameHeight,
-          block_lt = obj2.x,
-          block_rt = block_lt + obj2.frameWidth,
-          block_bot = obj2.y,
-          block_top = block_bot - obj2.frameHeight;
-
-        // console.log("horizontal collision");
-        if (((char_rt >= block_lt) && (char_lt < block_rt)) ||
-          ((char_lt <= block_rt) && (char_rt > block_rt))) {
-
-          // console.log("vertical collision");
-          if (top_bottom == "top") {
-            if ((char_top - JUMP_SPEED <= block_bot) && (char_bot > block_bot)) {
-              // console.log(char_top+":"+block_bot+":"+JUMP_SPEED);
-              hasCollided = true;
-            }
-          } else {
-            //400 + 4 >= 400 && 350 < 400
-            if ((char_bot + FALL_SPEED >= block_top) && (char_top < block_top)) {
-              hasCollided = true;
-            }
-          }
+        if (scroll >= 0){            
+          hasCollidedX = ((char_rt + scroll > block_lt) && (char_lt < block_lt));//Detect collision - CHAR RT SIDE
+        } else if (scroll < 0){            
+          hasCollidedX = ((char_lt - scroll < block_rt) && (char_rt > block_rt));//Detect collision - CHAR LT SIDE
         }
+        if (vert >= 0) {
+          hasCollidedY = ((char_bot + vert > block_top) && (char_top < block_bot));//Detect collision - CHAR BOT SIDE
+        } else if (vert < 0) {
+          hasCollidedY = ((char_top + vert < block_bot) && (char_bot > block_top));//Detect collision - CHAR TOP SIDE
+
+          // var isDebugging = true;
+          // if (isDebugging && (hasCollidedY || hasCollidedX)){
+
+          //   console.log("hasCollidedY " + hasCollidedY); //false
+          //   console.log("hasCollidedX " + hasCollidedX); //true
+
+          //   console.log("vert " + vert); //0
+          //   console.log("char_top " + char_top); //586 - (-3) IS char_top - vert < block_bot = YES
+          //   console.log("char_bot " + char_bot); //650        IS char_bot > block_top = YES
+          //   console.log("char_rt " + char_rt); //264
+          //   console.log("char_lt " + char_lt); //200
+
+          //   console.log("block_top " + block_top); //535, 612
+          //   console.log("block_bot " + block_bot); //650, 670
+          //   console.log("block_rt " + block_rt); //321, 719
+          //   console.log("block_lt " + block_lt); //201, 661
+
+          // }
+        }
+        // var isDebugging = true;
+        // if (isDebugging && (hasCollidedY || hasCollidedX)){
+
+        //   // if ((char_top - JUMP_SPEED <= block_bot) && (char_bot > block_bot)) {
+        //   //   // console.log(char_top+":"+block_bot+":"+JUMP_SPEED);
+        //   //   hasCollided = true;
+        //   // }
+
+
+        //   isDebugging = false;
+        //   console.log("hasCollidedY " + hasCollidedY); //false
+        //   console.log("hasCollidedX " + hasCollidedX); //true
+
+        //   console.log("vert " + vert); //0
+        //   console.log("char_top " + char_top); //586 - (-3) IS char_top - vert < block_bot = YES
+        //   console.log("char_bot " + char_bot); //650        IS char_bot > block_top = YES
+        //   console.log("char_rt " + char_rt); //264
+        //   console.log("char_lt " + char_lt); //200
+
+        //   console.log("block_top " + block_top); //535, 612
+        //   console.log("block_bot " + block_bot); //650, 670
+        //   console.log("block_rt " + block_rt); //321, 719
+        //   console.log("block_lt " + block_lt); //201, 661
+        // }
       });
     }
-    return hasCollided;
+    return { 
+      hasCollidedX: hasCollidedX, 
+      hasCollidedY: hasCollidedY 
+    };
   };
+
 }
 
-class Character {
+class Character implements BoundingBox {
   mario_still_lt: Sprite;
   mario_still_rt: Sprite;
   mario_walk_lt: Sprite;
