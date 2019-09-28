@@ -63,72 +63,69 @@ export class AppComponent implements AfterViewInit, OnInit {
   mario: Character;
   blocks: BoundingBox[];
   pipes: BoundingBox[];
-  helper: Helper;
+  collided: BoundingBox[];
+  // helper: Helper;
 
   constructor() {
   }
 
   gameLoop() {
     console.log("gameLoop()");
-    if (this.helper == null) this.helper = new Helper();
-    //BEGIN GAME LOOP
+
     setInterval(() => {
       if (!this.isdrawing) {
         //Set isDrawing (thread contention prevention)
         this.isdrawing = true;
+        this.collided = []; //reset
 
-        //Get movement
-        //ABF (ALWAYS BE FALLING) unless jumping of course
-        //ABS (ALWAYS BE STANDING) unless walking of course
         var vert = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
-
-        //IS JUMPING
-        if (vert < 0){
-          // var coll1 = this.helper.collideWithBoundingBox(this.mario, this.blocks, vert, scroll);
-          // if (coll1.hasCollidedX && coll1.hasCollidedY){
-          //   vert = 0;               
-          // }
-
-          if (this.helper.collideWithBoundingBox1(this.mario, this.blocks, vert, scroll)) {
-            vert = 0; //If I collided then end the jump
+          
+        this.blocks.forEach(element => {
+          if (Helper.collideWithBoundingBox1a(this.mario, [ element ], vert, scroll)) {
+            this.collided.push( element );
+            return;
           }
-          this.mario.isFalling = (vert == 0); //If jump is ended then I am falling
+        });
+        this.pipes.forEach(element => {
+          if (Helper.collideWithBoundingBox1a(this.mario, [ element ], vert, scroll)) {
+            this.collided.push( element );
+            return;
+          }
+        });
+        
+        this.mario.isFalling = false;
+        if (vert < 0) {                     //IS JUMPING
+          if (this.collided.length > 0) {   //IS COLLIDED
+            this.mario.isFalling = true;    //IS FALLING
+            vert = scroll = 0;
+          }
+        } else if (vert >= 0) {             //IS FALLIN
+          if (this.collided.length > 0){    //IS COLLIDED
+            this.bg.setPlatform();          //SET PLATFORM
 
-        } else if (vert >= 0) {
-          //IS FALLING
-          // coll1 = this.helper.collideWithBoundingBox(this.mario, this.blocks, vert, scroll);
-          // var coll2 = this.helper.collideWithBoundingBox(this.mario, this.pipes, vert, scroll);
-          // if ((coll1.hasCollidedX && coll1.hasCollidedY) ||
-          //     (coll2.hasCollidedX && coll2.hasCollidedY)){
-          //   this.bg.setPlatform();
-          // } else {
-          //   this.bg.clearPlatform();
-          // } 
-
-          //I will fall until I collide
-          if (this.helper.collideWithBoundingBox1(this.mario, this.blocks, vert, scroll) ||
-              this.helper.collideWithBoundingBox1(this.mario, this.pipes, vert, scroll)) {
-            
-            //I collided so make this my new platform
-            this.bg.setPlatform();
+            console.log("this.bg.platform_y: " + this.bg.platform_y);
+            console.log("this.collided[0].boundingBox.y: " + this.collided[0].boundingBox.y); 
+            console.log("this.collided[0].boundingBox.frameHeight: " + this.collided[0].boundingBox.frameHeight); 
+            console.log("this.mario.boundingBox.y: " + (this.mario.boundingBox.y)); 
+            console.log("this.mario.boundingBox.frameHeight: " + (this.mario.boundingBox.frameHeight)); 
+            // if (this.collided[0].boundingBox.y - this.collided[0].boundingBox.frameHeight > this.mario.boundingBox.y) {
+            //     scroll = 0;
+            // }
+            if (this.collided[0].boundingBox.y == this.mario.boundingBox.y) {
+                scroll = 0;
+            }
           } else {
-            //I did not collide so clear the platform - should this be moved to when jump is cancelled???
-            this.bg.clearPlatform();
+            this.bg.clearPlatform();        //CLEAR PLATFORM
           }
-          //Check to see if I can continue to fall - if platform was set then function should return 0
+          console.log("vert:" + vert);
+          //this.level1.sourceY + vert > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : vert;
           vert = this.bg.canScrollDown();
+          this.mario.isFalling = !(vert == 0);
+        }        
 
-          this.mario.isFalling = !(vert == 0); //If fall is ended then I am not falling
-        }
-
-        var coll1 = this.helper.collideWithBoundingBox2(this.mario, this.pipes, vert, scroll);
-        if (coll1.hasCollidedX && coll1.hasCollidedY){
-          scroll = 0;
-        }
         //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
-        this.mario.update(this.helper.getAction(this.mario.lastAction, vert, scroll));
-
+        this.mario.update(Helper.getAction(this.mario.lastAction, vert, scroll));
         //UPDATE FG/BG
         this.blocks.forEach(element => {          
           element.update(0 - scroll, 0 - vert, this.bg.platform_y); //FG elements move opposite the BG element
@@ -253,6 +250,8 @@ export class AppComponent implements AfterViewInit, OnInit {
         y: PLATFORM_HEIGHT_2
       })
     ];
+    this.collided = [];
+
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -282,13 +281,34 @@ export class AppComponent implements AfterViewInit, OnInit {
 }
 
 interface BoundingBox {
-  boundingBox: Sprite;  
+  boundingBox: Sprite;
+  platform_y: number;
+  id: string;
+  name: string;
+  hasCollidedTop: boolean;
+  hasCollidedBottom: boolean;
+  hasCollidedLeft: boolean;
+  hasCollidedRight: boolean;
+  collisionObjectName: string;
+  collisionObjectId: number;
+
   update(hor: number, vert: number, platform_y: number): void;
   render(): void;
+  hasCollided(): boolean;
+  resetCollided(): void;
 }
 
 class StandPipe implements BoundingBox {
   boundingBox: Sprite;
+  platform_y: number;
+  id: string;
+  name: string = "StandPipe";
+  hasCollidedTop: boolean = false;
+  hasCollidedBottom: boolean = false;
+  hasCollidedLeft: boolean = false;
+  hasCollidedRight: boolean = false;
+  collisionObjectName: string = "";
+  collisionObjectId: number = 0;
 
   constructor(options) {
     this.boundingBox = new Sprite({
@@ -303,6 +323,7 @@ class StandPipe implements BoundingBox {
       frameHeight: options.frameHeight,
       numberOfFrames: 1
     });
+    this.id = Helper.newGuid();
   }
 
   toString = function () {
@@ -313,6 +334,7 @@ class StandPipe implements BoundingBox {
     return result;
   };
   update = function (hor: number, vert: number, platform_y: number = 0) {
+    this.platform_y = platform_y;
     this.boundingBox.x += hor;
     this.boundingBox.y += vert;
     this.boundingBox.update();
@@ -320,6 +342,16 @@ class StandPipe implements BoundingBox {
   render = function () {
     this.boundingBox.render();
   };
+  hasCollided = function() {
+    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+  };
+  resetCollided = function() {
+    this.hasCollidedBottom = false;
+    this.hasCollidedTop = false;
+    this.hasCollidedLeft = false;
+    this.hasCollidedRight = false;
+  };
+
 }
 class Background {
   level1: Sprite;
@@ -345,22 +377,18 @@ class Background {
     // return (this.level1.sourceX < (this.level1.image.width - this.level1.frameWidth));
     var rightEdge = this.level1.image.width - this.level1.frameWidth;
     return this.level1.sourceX + WALK_SPEED > rightEdge ?
-      rightEdge - this.level1.sourceX :
-      WALK_SPEED;
+      rightEdge - this.level1.sourceX : WALK_SPEED;
   };
   canScrollLeft = function () {
     return WALK_SPEED > this.level1.sourceX ? 0 - this.level1.sourceX : 0 - WALK_SPEED;
   };
-  canScrollUp = function () {
-    var topEdge = this.platform_y - MAX_JUMP;
-    var vert = this.level1.sourceY - JUMP_SPEED < topEdge ?
-      topEdge - this.level1.sourceY :                         //     this.level1.sourceY - topEdge :
-      0 - JUMP_SPEED;
-
+  canScrollUp = function (vert: number = JUMP_SPEED,  max: number = MAX_JUMP) {
+    var topEdge = this.platform_y - max;
+    var vert = this.level1.sourceY - vert < topEdge ? topEdge - this.level1.sourceY : 0 - vert;
     return vert;
   };
-  canScrollDown = function () {
-    return this.level1.sourceY + FALL_SPEED > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : FALL_SPEED;
+  canScrollDown = function (vert: number = FALL_SPEED) {
+    return this.level1.sourceY + vert > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : vert;
   };
   setPlatform = function () {
     this.platform_y = this.level1.sourceY;
@@ -382,6 +410,14 @@ class Block implements BoundingBox {
   lastAction: ACTION.STAND_RIGHT;
   originalY: number;
   platform_y: number;
+  id: string;
+  name: string = "Block";
+  hasCollidedTop: boolean = false;
+  hasCollidedBottom: boolean = false;
+  hasCollidedLeft: boolean = false;
+  hasCollidedRight: boolean = false;
+  collisionObjectName: string = "";
+  collisionObjectId: number = 0;
 
   constructor(options) {
     this.boundingBox = new Sprite({
@@ -396,6 +432,7 @@ class Block implements BoundingBox {
       frameHeight: options.frameHeight || MYSTERY_HEIGHT
     });
     this.originalY = options.y;
+    this.id = Helper.newGuid();
   }
 
   toString = function () {
@@ -415,10 +452,27 @@ class Block implements BoundingBox {
   render = function () {
     this.boundingBox.render();
   };
+  hasCollided = function() {
+    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+  };
+  resetCollided = function() {
+    this.hasCollidedBottom = false;
+    this.hasCollidedTop = false;
+    this.hasCollidedLeft = false;
+    this.hasCollidedRight = false;
+  };
 }
 
 class Helper {
-  getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
+
+  static newGuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0,
+        v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };  
+  static getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
 
     if (vert < 0 && scroll < 0) {
       return ACTION.JUMP_LEFT;
@@ -444,7 +498,7 @@ class Helper {
     }
   };
 
-  collideWithBoundingBox1 = function (char: BoundingBox, blocks: BoundingBox[], vert: number = 0, scroll: number = 0) {
+  static collideWithBoundingBox1 = function (char: Character, blocks: BoundingBox[], vert: number = 0, scroll: number = 0) {
     var hasCollided = false,
         hasCollidedX = false,
         hasCollidedY = false;
@@ -501,7 +555,95 @@ class Helper {
     return hasCollided;
   };
 
-  collideWithBoundingBox2 = function (char: BoundingBox, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
+  static collideWithBoundingBox1a = function (char: Character, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
+    var hasCollided = false,
+        hasCollidedTop = false,
+        hasCollidedBot = false,
+        hasCollidedLt = false,
+        hasCollidedRt = false;
+    
+    if (char != null) {
+      var obj1: Sprite = char.boundingBox,
+        char_top = obj1.y - obj1.frameHeight,
+        char_bot = obj1.y,
+        char_rt = obj1.x + obj1.frameWidth,
+        char_lt = obj1.x;
+
+      objects.forEach(element => {
+        hasCollidedTop = false;        
+        hasCollidedBot = false;        
+        hasCollidedLt = false;
+        hasCollidedRt = false;
+
+        if (!hasCollided){
+          var obj2: Sprite = element.boundingBox,
+            block_top = obj2.y - obj2.frameHeight,
+            block_bot = obj2.y,
+            block_rt = obj2.x + obj2.frameWidth,
+            block_lt = obj2.x;
+
+          //Assumption: 2 bounding boxes CANNOT occupy the same space
+          // if (element.name == "StandPipe"){
+          //   console.log("vert " + vert); //0
+          //   console.log("char_top " + char_top); //586 - (-3) IS char_top - vert < block_bot = YES
+          //   console.log("char_bot " + char_bot); //650        IS char_bot > block_top = YES
+          //   console.log("char_rt " + char_rt); //264
+          //   console.log("char_lt " + char_lt); //200
+          //   console.log("block_top " + block_top); //535, 612
+          //   console.log("block_bot " + block_bot); //650, 670
+          //   console.log("block_rt " + block_rt); //321, 719
+          //   console.log("block_lt " + block_lt); //201, 661  
+          // }  
+
+          if (((char_rt + scroll > block_lt) && (char_rt + scroll < block_rt))) {
+              hasCollidedLt = true;
+              element.hasCollidedLeft = true;
+          }
+          if (((char_lt + scroll < block_rt) && (char_lt + scroll > block_lt))) {
+              hasCollidedRt = true;
+              element.hasCollidedRight = true;
+          }
+          // console.log("vertical collision");
+          if (vert < 0) {
+            if ((char_top + vert <= block_bot) && (char_top + vert >= block_bot)) {
+              hasCollidedBot = true;
+              element.hasCollidedBottom = true;
+            }
+          } else {
+            if ((char_bot + vert >= block_top) && (char_bot + vert <= block_bot)) {
+              hasCollidedTop = true;
+              element.hasCollidedTop = true;
+
+              // if (element.name == "StandPipe"){
+              //   console.log("vert " + vert); //0
+              //   console.log("char_top " + char_top); //586 - (-3) IS char_top - vert < block_bot = YES
+              //   console.log("char_bot " + char_bot); //650        IS char_bot > block_top = YES
+              //   console.log("char_rt " + char_rt); //264
+              //   console.log("char_lt " + char_lt); //200
+              //   console.log("block_top " + block_top); //535, 612
+              //   console.log("block_bot " + block_bot); //650, 670
+              //   console.log("block_rt " + block_rt); //321, 719
+              //   console.log("block_lt " + block_lt); //201, 661  
+              // }  
+
+            }
+          } 
+          hasCollided = (hasCollidedTop || hasCollidedBot) && (hasCollidedLt || hasCollidedRt);
+        } 
+
+        // if (vert > 0 && ((char_bot + vert >= block_top) && (char_bot + vert < block_bot))) {
+        //   hasCollidedY = true;
+
+        // } else if (vert <= 0 && ((char_top + vert <= block_bot) && (char_top + vert > block_top))) {
+        //   hasCollidedY = true;
+        // }
+      });
+    }
+    // return {hasCollidedX: hasCollidedX, hasCollidedY: hasCollidedY};
+    return hasCollided;
+  };
+
+  static collideWithBoundingBox2 = function (char: Character, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
     var hasCollidedX = false,
         hasCollidedY = false;
     
@@ -585,62 +727,69 @@ class Helper {
 }
 
 class Character implements BoundingBox {
-  mario_still_lt: Sprite;
-  mario_still_rt: Sprite;
-  mario_walk_lt: Sprite;
-  mario_walk_rt: Sprite;
-  mario_jump_lt: Sprite;
-  mario_jump_rt: Sprite;
+  marios: Sprite[];
   boundingBox: Sprite;
   lastAction: ACTION = ACTION.STAND_RIGHT;
   isFalling: boolean = false;
+  id: string;
+  name: string = "Character";
+  platform_y: number;
+  hasCollidedTop: boolean = false;
+  hasCollidedBottom: boolean = false;
+  hasCollidedLeft: boolean = false;
+  hasCollidedRight: boolean = false;
+  collisionObjectName: string = "";
+  collisionObjectId: number = 0;
 
   constructor(options) {
-    this.mario_still_lt = new Sprite({
-      context: options.context, image: options.images[0], x: options.x, y: options.y,
-      sourceWidth: options.sourceWidth,
-      sourceHeight: options.sourceHeight,
-      frameWidth: options.frameWidth,
-      frameHeight: options.frameHeight
-    });
-    this.mario_still_rt = new Sprite({
-      context: options.context, image: options.images[1], x: options.x, y: options.y,
-      sourceWidth: options.sourceWidth,
-      sourceHeight: options.sourceHeight,
-      frameWidth: options.frameWidth,
-      frameHeight: options.frameHeight
-    });
-    this.mario_walk_lt = new Sprite({
-      context: options.context, image: options.images[2], x: options.x, y: options.y,
-      ticksPerFrame: CHAR_TPF,
-      sourceWidth: options.sourceWidth || WIDTH,
-      sourceHeight: options.sourceHeight || HEIGHT,
-      frameWidth: options.frameWidth || WIDTH,
-      frameHeight: options.frameHeight || HEIGHT
-    });
-    this.mario_walk_rt = new Sprite({
-      context: options.context, image: options.images[3], x: options.x, y: options.y,
-      ticksPerFrame: CHAR_TPF,
-      sourceWidth: options.sourceWidth || WIDTH,
-      sourceHeight: options.sourceHeight || HEIGHT,
-      frameWidth: options.frameWidth || WIDTH,
-      frameHeight: options.frameHeight || HEIGHT
-    });
-    this.mario_jump_lt = new Sprite({
-      context: options.context, image: options.images[4], x: options.x, y: options.y,
-      sourceWidth: options.sourceWidth,
-      sourceHeight: options.sourceHeight,
-      frameWidth: options.frameWidth,
-      frameHeight: options.frameHeight
-    });
-    this.mario_jump_rt = new Sprite({
-      context: options.context, image: options.images[5], x: options.x, y: options.y,
-      sourceWidth: options.sourceWidth,
-      sourceHeight: options.sourceHeight,
-      frameWidth: options.frameWidth,
-      frameHeight: options.frameHeight
-    });
-    this.boundingBox = this.mario_still_rt;
+    this.marios = [
+      new Sprite({
+        context: options.context, image: options.images[0], x: options.x, y: options.y,
+        sourceWidth: options.sourceWidth,
+        sourceHeight: options.sourceHeight,
+        frameWidth: options.frameWidth,
+        frameHeight: options.frameHeight
+      }),
+      new Sprite({
+        context: options.context, image: options.images[1], x: options.x, y: options.y,
+        sourceWidth: options.sourceWidth,
+        sourceHeight: options.sourceHeight,
+        frameWidth: options.frameWidth,
+        frameHeight: options.frameHeight
+      }),
+      new Sprite({
+        context: options.context, image: options.images[2], x: options.x, y: options.y,
+        ticksPerFrame: CHAR_TPF,
+        sourceWidth: options.sourceWidth || WIDTH,
+        sourceHeight: options.sourceHeight || HEIGHT,
+        frameWidth: options.frameWidth || WIDTH,
+        frameHeight: options.frameHeight || HEIGHT
+      }),
+      new Sprite({
+        context: options.context, image: options.images[3], x: options.x, y: options.y,
+        ticksPerFrame: CHAR_TPF,
+        sourceWidth: options.sourceWidth || WIDTH,
+        sourceHeight: options.sourceHeight || HEIGHT,
+        frameWidth: options.frameWidth || WIDTH,
+        frameHeight: options.frameHeight || HEIGHT
+      }),
+      new Sprite({
+        context: options.context, image: options.images[4], x: options.x, y: options.y,
+        sourceWidth: options.sourceWidth,
+        sourceHeight: options.sourceHeight,
+        frameWidth: options.frameWidth,
+        frameHeight: options.frameHeight
+      }),
+      new Sprite({
+        context: options.context, image: options.images[5], x: options.x, y: options.y,
+        sourceWidth: options.sourceWidth,
+        sourceHeight: options.sourceHeight,
+        frameWidth: options.frameWidth,
+        frameHeight: options.frameHeight
+      })
+    ];
+    this.boundingBox = this.marios[ACTION.STAND_RIGHT];
+    this.id = Helper.newGuid();
   }
 
   toString = function () {
@@ -659,25 +808,25 @@ class Character implements BoundingBox {
   update = function (action: ACTION = ACTION.STAND_RIGHT) {
     switch (action) {
       case ACTION.WALK_LEFT: {
-        this.boundingBox = this.mario_walk_lt;
+        this.boundingBox = this.marios[ACTION.WALK_LEFT];
         break;
       } case ACTION.WALK_RIGHT: {
-        this.boundingBox = this.mario_walk_rt;
+        this.boundingBox = this.marios[ACTION.WALK_RIGHT];
         break;
       } case ACTION.STAND_LEFT: {
-        this.boundingBox = this.mario_still_lt;
+        this.boundingBox = this.marios[ACTION.STAND_LEFT];
         break;
       } case ACTION.STAND_RIGHT: {
-        this.boundingBox = this.mario_still_rt;
+        this.boundingBox = this.marios[ACTION.STAND_RIGHT];
         break;
       } case ACTION.JUMP_LEFT: {
-        this.boundingBox = this.mario_jump_lt;
+        this.boundingBox = this.marios[ACTION.JUMP_LEFT];
         break;
       } case ACTION.JUMP_RIGHT: {
-        this.boundingBox = this.mario_jump_rt;
+        this.boundingBox = this.marios[ACTION.JUMP_RIGHT];
         break;
       } case ACTION.JUMP: {
-        this.boundingBox = (this.lastAction == ACTION.STAND_LEFT) ? this.mario_jump_lt : this.mario_jump_rt;
+        this.boundingBox = (this.lastAction == ACTION.STAND_LEFT) ? this.marios[ACTION.JUMP_LEFT] : this.marios[ACTION.JUMP_RIGHT];
         break;
       } default: {
         console.log("switch (action) == default");
@@ -690,6 +839,17 @@ class Character implements BoundingBox {
   render = function () {
     this.boundingBox.render();
   };
+  hasCollided = function() {
+    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+  };
+  resetCollided = function() {
+    this.hasCollidedBottom = false;
+    this.hasCollidedTop = false;
+    this.hasCollidedLeft = false;
+    this.hasCollidedRight = false;
+  };
+
+
 }
 
 class Sprite {
