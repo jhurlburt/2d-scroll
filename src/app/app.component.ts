@@ -97,18 +97,37 @@ export class AppComponent implements AfterViewInit, OnInit {
         this.mario.isFalling = false;
         if (vert < 0) {                     //IS JUMPING
           if (this.collided.length > 0) {   //IS COLLIDED
+
+            var counter = vert;
+            while (++counter < 0){          //IS JUMPING ASC (-4, -3, -2)
+              this.collided.forEach(element => {
+                if (Helper.collideWithBoundingBox1a(this.mario, [ element ], counter, scroll)) {
+                  vert = counter;           //IS COLLIDED, SET VERT = COUNTER
+                }
+              });
+            }
             this.mario.isFalling = true;    //IS FALLING
-            vert = scroll = 0;
           }
-        } else if (vert >= 0) {             //IS FALLIN
+        } else if (vert >= 0) {             //IS FALLING
           if (this.collided.length > 0){    //IS COLLIDED
+
+            var counter = 0;
+            var hasCollided = false;
+            while ((counter < vert) && !hasCollided){
+              this.collided.forEach(element => {
+                hasCollided = Helper.collideWithBoundingBox1a(this.mario, [ element ], counter, scroll);
+              });
+              counter++;
+            }
+            vert = counter;
+            if (vert != 0) console.log("vert: " + vert); 
             this.bg.setPlatform();          //SET PLATFORM
 
-            console.log("this.bg.platform_y: " + this.bg.platform_y);
-            console.log("this.collided[0].boundingBox.y: " + this.collided[0].boundingBox.y); 
-            console.log("this.collided[0].boundingBox.frameHeight: " + this.collided[0].boundingBox.frameHeight); 
-            console.log("this.mario.boundingBox.y: " + (this.mario.boundingBox.y)); 
-            console.log("this.mario.boundingBox.frameHeight: " + (this.mario.boundingBox.frameHeight)); 
+            // console.log("this.bg.platform_y: " + this.bg.platform_y);
+            // console.log("this.collided[0].boundingBox.y: " + this.collided[0].boundingBox.y); 
+            // console.log("this.collided[0].boundingBox.frameHeight: " + this.collided[0].boundingBox.frameHeight); 
+            // console.log("this.mario.boundingBox.y: " + (this.mario.boundingBox.y)); 
+            // console.log("this.mario.boundingBox.frameHeight: " + (this.mario.boundingBox.frameHeight)); 
             // if (this.collided[0].boundingBox.y - this.collided[0].boundingBox.frameHeight > this.mario.boundingBox.y) {
             //     scroll = 0;
             // }
@@ -118,7 +137,7 @@ export class AppComponent implements AfterViewInit, OnInit {
           } else {
             this.bg.clearPlatform();        //CLEAR PLATFORM
           }
-          console.log("vert:" + vert);
+          // console.log("vert:" + vert);
           //this.level1.sourceY + vert > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : vert;
           vert = this.bg.canScrollDown();
           this.mario.isFalling = !(vert == 0);
@@ -388,7 +407,7 @@ class Background {
     return vert;
   };
   canScrollDown = function (vert: number = FALL_SPEED) {
-    return this.level1.sourceY + vert > this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : vert;
+    return this.level1.sourceY + vert >= this.platform_y ? Math.abs(this.level1.sourceY - this.platform_y) : vert;
   };
   setPlatform = function () {
     this.platform_y = this.level1.sourceY;
