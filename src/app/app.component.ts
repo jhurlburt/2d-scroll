@@ -19,23 +19,26 @@ export enum ACTION {
   FALL_DOWN,
   JUMP
 }
-const REFRESH: number = 5;
-const POSITION_X: number = 200;
-const POSITION_Y: number = 650;
-const WALK_SPEED: number = 2;
-const JUMP_SPEED: number = -3;
-const FALL_SPEED: number = 4;
-const HEIGHT: number = 64;
-const WIDTH: number = 64;
-const MAX_JUMP: number = HEIGHT * 5;
-const CHAR_TPF: number = 18;
-const MYSTERY_TPF: number = 30;
-const CANVAS_HEIGHT: number = 800;
-const CANVAS_WIDTH: number = 1200;
-const PLATFORM_HEIGHT_1: number = 484;
-const PLATFORM_HEIGHT_2: number = PLATFORM_HEIGHT_1 - 228;
-const MYSTERY_WIDTH: number = 58;
-const MYSTERY_HEIGHT: number = 58;
+
+class Constants {
+  static readonly REFRESH: number = 5;
+  static readonly POSITION_X: number = 200;
+  static readonly POSITION_Y: number = 650;
+  static readonly WALK_SPEED: number = 2;
+  static readonly JUMP_SPEED: number = -3;
+  static readonly FALL_SPEED: number = 4;
+  static readonly HEIGHT: number = 64;
+  static readonly WIDTH: number = 64;
+  static readonly MAX_JUMP: number = Constants.HEIGHT * 5;
+  static readonly CHAR_TPF: number = 18;
+  static readonly MYSTERY_TPF: number = 30;
+  static readonly CANVAS_HEIGHT: number = 800;
+  static readonly CANVAS_WIDTH: number = 1200;
+  static readonly PLATFORM_HEIGHT_1: number = 484;
+  static readonly PLATFORM_HEIGHT_2: number = Constants.PLATFORM_HEIGHT_1 - 228;
+  static readonly MYSTERY_WIDTH: number = 58;
+  static readonly MYSTERY_HEIGHT: number = 58;
+}
 
 @Component({
   selector: 'app-root',
@@ -52,6 +55,8 @@ export class AppComponent implements AfterViewInit, OnInit {
   @ViewChild('imgMarioJumpLeft') imgMarioJumpLt: ElementRef<HTMLImageElement>;
   @ViewChild('imgBackground1_1') imgBackground1_1: ElementRef<HTMLImageElement>;
   @ViewChild('imgBlock') imgBlock: ElementRef<HTMLImageElement>;
+  @ViewChild('imgBlock_hit') imgBlock_hit: ElementRef<HTMLImageElement>;
+  @ViewChild('imgBlock_after') imgBlock_after: ElementRef<HTMLImageElement>;
   @ViewChild('imgBrick') imgBrick: ElementRef<HTMLImageElement>;
 
   title = 'Super Mario Brothers';
@@ -64,7 +69,6 @@ export class AppComponent implements AfterViewInit, OnInit {
   blocks: BoundingBox[];
   pipes: BoundingBox[];
   collided: BoundingBox[];
-  // helper: Helper;
 
   constructor() {
   }
@@ -76,7 +80,7 @@ export class AppComponent implements AfterViewInit, OnInit {
       if (!this.isdrawing) {
         //Set isDrawing (thread contention prevention)
         this.isdrawing = true;
-        this.collided = []; //reset
+        this.collided = [];
 
         var vert = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
@@ -95,13 +99,13 @@ export class AppComponent implements AfterViewInit, OnInit {
         });
         
         this.mario.isFalling = false;
-        if (vert < 0) {                     //IS JUMPING
+        
+        if (vert < 0) {                     //IS JUMPING          
           if (this.collided.length > 0) {   //IS COLLIDED
             this.collided.forEach(element => {
               var hasCollided = false;
               var counter = 0;
-
-              while ((counter > vert) && !hasCollided) {
+              while ((counter >= vert) && !hasCollided) {
                 hasCollided = Helper.collideWithBox(this.mario, [ element ], counter, scroll);
                 if (!hasCollided) counter--;
               }
@@ -109,29 +113,26 @@ export class AppComponent implements AfterViewInit, OnInit {
             });
             this.mario.isFalling = true;    //IS FALLING
           }
-        } else if (vert >= 0) {             //IS FALLING
 
-          console.log("vert 1:" + vert);
+        } else if (vert >= 0) {             //IS FALLING
           if (this.collided.length > 0){    //IS COLLIDED
             this.collided.forEach(element => {
               var hasCollided = false;
               var counter = 0;
-
-              while ((counter < vert) && !hasCollided){
+              while ((counter <= vert) && !hasCollided){
                 hasCollided = Helper.collideWithBox(this.mario, [ element ], counter, scroll);
                 if (!hasCollided) counter++;
               }
               vert = counter;
             });            
             this.bg.setPlatform();          //SET PLATFORM
-
+            //TODO: Compare box to mario (top AND bottom and inbetween) 
             if (this.collided[0].boundingBox.y == this.mario.boundingBox.y) {
                 scroll = 0;
             }
           } else {
             this.bg.clearPlatform();        //CLEAR PLATFORM
           }
-          console.log("vert 2:" + vert);
           this.mario.isFalling = !(vert == 0);
         }        
 
@@ -155,7 +156,7 @@ export class AppComponent implements AfterViewInit, OnInit {
 
         this.isdrawing = false;
       }
-    }, REFRESH);
+    }, Constants.REFRESH);
   }
 
   afterLoading() {
@@ -173,95 +174,47 @@ export class AppComponent implements AfterViewInit, OnInit {
   init() {
     console.log("ngAfterViewInit()");
 
-    this.canvasE1.nativeElement.height = CANVAS_HEIGHT;
-    this.canvasE1.nativeElement.width = CANVAS_WIDTH;
+    this.canvasE1.nativeElement.height = Constants.CANVAS_HEIGHT;
+    this.canvasE1.nativeElement.width = Constants.CANVAS_WIDTH;
 
+    this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
     this.imgMarioStillLt.nativeElement.src = "assets/mario-still-left.png";
     this.imgMarioStillRt.nativeElement.src = "assets/mario-still-right.png";
     this.imgMarioWalkLt.nativeElement.src = "assets/mario-walking-left.png";
     this.imgMarioWalkRt.nativeElement.src = "assets/mario-walking-right.png";
     this.imgMarioJumpLt.nativeElement.src = "assets/mario-jump-left.png";
     this.imgMarioJumpRt.nativeElement.src = "assets/mario-jump-right.png";
+    this.imgBlock.nativeElement.src = "assets/block_flashing_ow.png";
+    this.imgBrick.nativeElement.src = "assets/brick-block.png";
+    // this.imgBlock_hit.nativeElement.src = "assets/block_hit_ow.png";
+    // this.imgBlock_after.nativeElement.src = "assets/block_after_ow.png";
 
-    this.mario = new Character({
-      context: this.canvasE1.nativeElement.getContext('2d'),
-      images: [
-        this.imgMarioStillLt.nativeElement,
-        this.imgMarioStillRt.nativeElement,
-        this.imgMarioWalkLt.nativeElement,
-        this.imgMarioWalkRt.nativeElement,
-        this.imgMarioJumpLt.nativeElement,
-        this.imgMarioJumpRt.nativeElement
-      ],
-      x: POSITION_X,
-      y: POSITION_Y
+    this.mario = new Character({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+        this.imgMarioStillLt.nativeElement, this.imgMarioStillRt.nativeElement,
+        this.imgMarioWalkLt.nativeElement, this.imgMarioWalkRt.nativeElement,
+        this.imgMarioJumpLt.nativeElement, this.imgMarioJumpRt.nativeElement
+      ], x: Constants.POSITION_X, y: Constants.POSITION_Y
     });
 
-    this.imgBackground1_1.nativeElement.src = "assets/bg-1-1.png";
-
-    this.bg = new Background({
-      context: this.canvasE1.nativeElement.getContext('2d'),
-      images: [this.imgBackground1_1.nativeElement],
-      sourceWidth: this.canvasE1.nativeElement.width,
-      sourceHeight: this.canvasE1.nativeElement.height,
-      frameWidth: this.canvasE1.nativeElement.width,
-      frameHeight: this.canvasE1.nativeElement.height,
+    this.bg = new Background({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBackground1_1.nativeElement],
+      sourceWidth: this.canvasE1.nativeElement.width, sourceHeight: this.canvasE1.nativeElement.height,
+      frameWidth: this.canvasE1.nativeElement.width, frameHeight: this.canvasE1.nativeElement.height,
     });
 
     //614 - H = Y
     this.pipes = [
-      new StandPipe({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [ null ],
-        x: 1595, //1595
-        y: 650, //598
-        sourceWidth: 120,
-        sourceHeight: 115,
-        frameWidth: 120,
-        frameHeight: 115
-      })
+      new StandPipe({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ null ], x: 1595, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 115 })
     ];
-
     this.blocks = [
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBlock.nativeElement],
-        x: 914
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBrick.nativeElement],
-        x: 1141
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBlock.nativeElement],
-        x: 1141 + MYSTERY_WIDTH
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBrick.nativeElement],
-        x: 1141 + MYSTERY_WIDTH * 2
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBlock.nativeElement],
-        x: 1141 + MYSTERY_WIDTH * 3
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBrick.nativeElement],
-        x: 1141 + MYSTERY_WIDTH * 4
-      }),
-      new Block({
-        context: this.canvasE1.nativeElement.getContext('2d'),
-        images: [this.imgBlock.nativeElement],
-        x: 1141 + MYSTERY_WIDTH * 2, //x: 913,
-        y: PLATFORM_HEIGHT_2
-      })
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBrick.nativeElement], name: "Brick", x: 1141 }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBrick.nativeElement], name: "Brick", x: 1141 + Constants.MYSTERY_WIDTH * 2 }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBrick.nativeElement], name: "Brick", x: 1141 + Constants.MYSTERY_WIDTH * 4 }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement], name: "Question", x: 914 }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement], name: "Question", x: 1141 + Constants.MYSTERY_WIDTH }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement], name: "Question", x: 1141 + Constants.MYSTERY_WIDTH * 3 }),
+      new Block({ context: this.canvasE1.nativeElement.getContext('2d'), images: [this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement], name: "Question", x: 1141 + Constants.MYSTERY_WIDTH * 2,  y: Constants.PLATFORM_HEIGHT_2 })
     ];
     this.collided = [];
-
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -306,6 +259,7 @@ interface BoundingBox {
   render(): void;
   hasCollided(): boolean;
   resetCollided(): void;
+  toString(): string;
 }
 
 class StandPipe implements BoundingBox {
@@ -343,18 +297,22 @@ class StandPipe implements BoundingBox {
     }
     return result;
   };
+
   update = function (hor: number, vert: number, platform_y: number = 0) {
     this.platform_y = platform_y;
     this.boundingBox.x += hor;
     this.boundingBox.y += vert;
     this.boundingBox.update();
   };
+
   render = function () {
     this.boundingBox.render();
   };
+
   hasCollided = function() {
-    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+    return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
   };
+
   resetCollided = function() {
     this.hasCollidedBottom = false;
     this.hasCollidedTop = false;
@@ -363,6 +321,7 @@ class StandPipe implements BoundingBox {
   };
 
 }
+
 class Background {
   level1: Sprite;
   isFalling: boolean = false;
@@ -383,33 +342,41 @@ class Background {
       numberOfFrames: Math.trunc(options.images[0] / options.frameWidth)
     });
   }
-  canScrollRight = function (scroll: number = WALK_SPEED) {
+
+  canScrollRight = function (scroll: number = Constants.WALK_SPEED) {
     var rightEdge = this.level1.image.width - this.level1.frameWidth;
     return this.level1.sourceX + scroll > rightEdge ? rightEdge - this.level1.sourceX : scroll;
   };
-  canScrollLeft = function (scroll: number = 0 - WALK_SPEED) {
+
+  canScrollLeft = function (scroll: number = 0 - Constants.WALK_SPEED) {
     var leftEdge = 0;
     return this.level1.sourceX + scroll < leftEdge ? leftEdge - this.level1.sourceX : scroll;
   };
-  canScrollUp = function (vert: number = JUMP_SPEED,  max: number = MAX_JUMP) {
+
+  canScrollUp = function (vert: number = Constants.JUMP_SPEED,  max: number = Constants.MAX_JUMP) {
     var topEdge = this.platform_y - max; //-1, -10, -100, -200
     var vert = this.level1.sourceY + vert < topEdge ? this.level1.sourceY - topEdge : vert; //-201 => 
     return vert; 
   };
-  canScrollDown = function (vert: number = FALL_SPEED) {
+
+  canScrollDown = function (vert: number = Constants.FALL_SPEED) {
     var bottomEdge = this.platform_y;
     return this.level1.sourceY + vert > bottomEdge ? this.level1.sourceY - bottomEdge : vert; //-1
   };
+
   setPlatform = function () {
     this.platform_y = this.level1.sourceY;
   };
+
   clearPlatform = function () {
     this.platform_y = 0;
   };
+
   update = function (scroll: number, vert: number) {
     this.level1.sourceX += scroll;
     this.level1.sourceY += vert;
   };
+
   render = function () {
     this.level1.render();
   };
@@ -418,53 +385,101 @@ class Background {
 class Block implements BoundingBox {
   boundingBox: Sprite;
   lastAction: ACTION.STAND_RIGHT;
-  originalY: number;
   platform_y: number;
   id: string;
-  name: string = "Block";
+  name: string;
   hasCollidedTop: boolean = false;
   hasCollidedBottom: boolean = false;
   hasCollidedLeft: boolean = false;
   hasCollidedRight: boolean = false;
   collisionObjectName: string = "";
   collisionObjectId: number = 0;
+  step: number = 0;
+  offset: number = 0;
+  images: HTMLImageElement[];
+  canUpdate: boolean = true;
 
   constructor(options) {
-    this.boundingBox = new Sprite({
-      context: options.context,
-      image: options.images[0],
-      x: options.x,
-      y: options.y || PLATFORM_HEIGHT_1,
-      ticksPerFrame: options.ticksPerFrame || MYSTERY_TPF,
-      sourceWidth: options.sourceWidth || MYSTERY_WIDTH,
-      sourceHeight: options.sourceHeight || MYSTERY_HEIGHT,
-      frameWidth: options.frameWidth || MYSTERY_WIDTH,
-      frameHeight: options.frameHeight || MYSTERY_HEIGHT
-    });
-    this.originalY = options.y;
     this.id = Helper.newGuid();
+    this.name = options.name || "Block";
+    this.images = options.images;
+    this.boundingBox = new Sprite({
+      context:        options.context,
+      image:          options.images[0],
+      x:              options.x,
+      y:              options.y || Constants.PLATFORM_HEIGHT_1,
+      ticksPerFrame:  options.ticksPerFrame || Constants.MYSTERY_TPF,
+      sourceWidth:    options.sourceWidth || Constants.MYSTERY_WIDTH,
+      sourceHeight:   options.sourceHeight || Constants.MYSTERY_HEIGHT,
+      frameWidth:     options.frameWidth || Constants.MYSTERY_WIDTH,
+      frameHeight:    options.frameHeight || Constants.MYSTERY_HEIGHT
+    });
   }
 
   toString = function () {
     var result = "";
     if (this.boundingBox != null) {
-      result = this.boundingBox.toString();
-    }
+      result = this.boundingBox.toString();      
+    }    
+    result = result + ", hasCollidedLeft: " + this.hasCollidedLeft +
+      ", hasCollidedRight: " + this.hasCollidedRight +
+      ", hasCollidedTop: " + this.hasCollidedTop +
+      ", hasCollidedBottom: " + this.hasCollidedBottom;
     return result;
   };
+
   update = function (hor: number, vert: number, platform_y: number) {
-    // this.boundingBox = this.myBlock;
+    if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
+      console.log(this.toString());
+      this.boundingBox.stopUpdate();
+      this.boundingBox.image = this.images[1];
+
+      //TODO: Animate
+      //Block types: coin, mushroom
+      //If type is coin then animate coin, add to score
+      //If type is mushroom then add mushroom to scene
+    }
     this.platform_y = platform_y;
     this.boundingBox.x += hor;
-    this.boundingBox.y += vert;
+    this.boundingBox.y += vert;    
     this.boundingBox.update();
   };
+
+  animate = function () {
+    if (this.step == 0){
+      this.offset += 10;
+      this.step++;
+    
+    } else if (this.step == 1){
+      this.offset += 10;
+      this.step++;
+
+    } else if (this.step == 2){
+      this.offset += 10;
+      this.step++;
+
+    } else if (this.step == 3){
+      this.offset -= 10;
+      this.step++;
+
+    } else if (this.step == 4){
+      this.offset -= 10;
+      this.step++;
+
+    } else {
+      this.offset -= 10;
+      this.step = 0;
+    }
+  };
+
   render = function () {
     this.boundingBox.render();
   };
+
   hasCollided = function() {
-    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+    return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
   };
+
   resetCollided = function() {
     this.hasCollidedBottom = false;
     this.hasCollidedTop = false;
@@ -474,7 +489,6 @@ class Block implements BoundingBox {
 }
 
 class Helper {
-
   static newGuid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       var r = Math.random() * 16 | 0,
@@ -482,8 +496,8 @@ class Helper {
       return v.toString(16);
     });
   };  
-  static getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
 
+  static getAction = function (lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
     if (vert < 0 && scroll < 0) {
       return ACTION.JUMP_LEFT;
 
@@ -528,24 +542,20 @@ class Helper {
             block_rt = obj2.x + obj2.frameWidth,
             block_lt = obj2.x;
 
-          if (scroll > 0){
-            if (((char_rt + scroll >= block_lt) && (char_lt + scroll < block_rt))) {
-              element.hasCollidedLeft = true;
-            }
-          } else {
-            if (((char_lt + scroll <= block_rt) && (char_rt + scroll > block_lt))) {
-              element.hasCollidedRight = true;
-            }
+          if (((char_rt + scroll >= block_lt) && (char_lt + scroll < block_rt))) {
+            element.hasCollidedLeft = true;
+
+          } else if (((char_lt + scroll <= block_rt) && (char_rt + scroll > block_lt))) {
+            element.hasCollidedRight = true;
           }
-          if (vert < 0) {
-            if ((char_top + vert <= block_bot) && (char_bot + vert >= block_top)) {
-              element.hasCollidedBottom = true;
-            }
-          } else {
-            if ((char_bot + vert >= block_top) && (char_bot + vert <= block_bot)) {
-              element.hasCollidedTop = true;
-            }
-          } 
+          if ((char_top + vert <= block_bot) && (char_bot + vert >= block_bot)) {
+            element.hasCollidedBottom = true;
+            // console.log("element.hasCollidedBottom = true");
+
+          } else if ((char_bot + vert >= block_top) && (char_bot + vert <= block_bot)) {
+            element.hasCollidedTop = true;
+            // console.log("element.hasCollidedTop = true");
+          }
           hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
         } 
       });
@@ -587,19 +597,19 @@ class Character implements BoundingBox {
       }),
       new Sprite({
         context: options.context, image: options.images[2], x: options.x, y: options.y,
-        ticksPerFrame: CHAR_TPF,
-        sourceWidth: options.sourceWidth || WIDTH,
-        sourceHeight: options.sourceHeight || HEIGHT,
-        frameWidth: options.frameWidth || WIDTH,
-        frameHeight: options.frameHeight || HEIGHT
+        ticksPerFrame: Constants.CHAR_TPF,
+        sourceWidth: options.sourceWidth || Constants.WIDTH,
+        sourceHeight: options.sourceHeight || Constants.HEIGHT,
+        frameWidth: options.frameWidth || Constants.WIDTH,
+        frameHeight: options.frameHeight || Constants.HEIGHT
       }),
       new Sprite({
         context: options.context, image: options.images[3], x: options.x, y: options.y,
-        ticksPerFrame: CHAR_TPF,
-        sourceWidth: options.sourceWidth || WIDTH,
-        sourceHeight: options.sourceHeight || HEIGHT,
-        frameWidth: options.frameWidth || WIDTH,
-        frameHeight: options.frameHeight || HEIGHT
+        ticksPerFrame: Constants.CHAR_TPF,
+        sourceWidth: options.sourceWidth || Constants.WIDTH,
+        sourceHeight: options.sourceHeight || Constants.HEIGHT,
+        frameWidth: options.frameWidth || Constants.WIDTH,
+        frameHeight: options.frameHeight || Constants.HEIGHT
       }),
       new Sprite({
         context: options.context, image: options.images[4], x: options.x, y: options.y,
@@ -668,7 +678,7 @@ class Character implements BoundingBox {
     this.boundingBox.render();
   };
   hasCollided = function() {
-    return this.hasCollidedBottom || this.hasCollidedTop || this.hasCollidedLeft || this.hasCollidedRight;
+    return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
   };
   resetCollided = function() {
     this.hasCollidedBottom = false;
@@ -707,9 +717,12 @@ class Sprite {
     this.numberOfFrames = options.numberOfFrames || Math.trunc(options.image.width / options.frameWidth);
   }
   toString = function () {
-    return "this.x: " + this.x + ", this.y: " + this.y +
-      ", this.frameWidth: " + this.frameWidth + ", this.frameHeight: " + this.frameHeight +
-      ", this.sourceWidth: " + this.sourceWidth + ", this.sourceHeight: " + this.sourceHeight;
+    return "x: " + this.x + 
+      ", y: " + this.y +
+      ", frameWidth: " + this.frameWidth + 
+      ", frameHeight: " + this.frameHeight +
+      ", sourceWidth: " + this.sourceWidth + 
+      ", sourceHeight: " + this.sourceHeight;
   };
   update = function () {
     this.tickCount += 1;
@@ -723,6 +736,11 @@ class Sprite {
       }
     }
     this.sourceX = this.frameIndex * this.frameWidth;
+  };
+  stopUpdate = function() {
+    this.frameIndex = 0;
+    this.ticksPerFrame = 0;
+    this.numberOfFrames = 1;
   };
   render = function () {
     this.context.drawImage(
