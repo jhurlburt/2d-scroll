@@ -42,37 +42,29 @@ export class Enemy implements BoundingBox {
         this.boundingBox = this.sprites[0];
     }
   
-    toString = function () {
+    toString() {
       if (this.boundingBox != null) {
         return this.boundingBox.toString();
       }
       return "";
     };
   
-    isJumping = function () {
-      return (this.lastAction == ACTION.JUMP_LEFT ||
-        this.lastAction == ACTION.JUMP_RIGHT ||
-        this.lastAction == ACTION.JUMP) && !this.isFalling;
-    };
-  
-    update = function (hor: number, vert: number, platform_y: number) {
-      if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
-        console.log(this.toString());
-        this.boundingBox.stopUpdate();
-        this.boundingBox.image = this.images[1];
-      }
+    update(hor: number, vert: number, platform_y: number) {
       this.platform_y = platform_y;
       this.boundingBox.x += hor;
       this.boundingBox.y += vert;    
       this.boundingBox.update();
     };
-    render = function () {
+
+    render () {
       this.boundingBox.render();
     };
-    hasCollided = function() {
+
+    hasCollided () {
       return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
     };
-    resetCollided = function() {
+
+    resetCollided () {
       this.hasCollidedBottom = false;
       this.hasCollidedTop = false;
       this.hasCollidedLeft = false;

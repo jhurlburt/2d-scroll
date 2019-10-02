@@ -26,7 +26,8 @@ export class Sprite {
     this.sourceHeight = options.sourceHeight || options.image.height;
     this.numberOfFrames = options.numberOfFrames || Math.trunc(options.image.width / options.frameWidth);
   }
-  toString = function () {
+
+  toString () {
     return "x: " + this.x + 
       ", y: " + this.y +
       ", frameWidth: " + this.frameWidth + 
@@ -34,7 +35,8 @@ export class Sprite {
       ", sourceWidth: " + this.sourceWidth + 
       ", sourceHeight: " + this.sourceHeight;
   };
-  update = function () {
+  
+  update() {
     this.tickCount += 1;
     if (this.tickCount > this.ticksPerFrame) {
       this.tickCount = 0;
@@ -47,12 +49,14 @@ export class Sprite {
     }
     this.sourceX = this.frameIndex * this.frameWidth;
   };
-  stopUpdate = function() {
+
+  stopUpdate() {
     this.frameIndex = 0;
     this.ticksPerFrame = 0;
     this.numberOfFrames = 1;
   };
-  render = function () {
+
+  render() {
     this.context.drawImage(
       this.image,         // img  Source image object	Sprite sheet
       this.sourceX,       // sx	Source x	Frame index times frame width

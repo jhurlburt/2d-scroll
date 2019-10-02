@@ -75,7 +75,6 @@ export class AppComponent implements OnInit, AfterViewInit {
             });
             this.mario.isFalling = true;    //IS FALLING
           }
-
         } else if (vert >= 0) {             //IS FALLING
           if (collided.length > 0){         //IS COLLIDED
             collided.forEach(element => {

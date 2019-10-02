@@ -37,66 +37,52 @@ export class Character implements BoundingBox {
         this.sprites = [
             new Sprite({
             context: options.context, image: options.images[0], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth,
-            sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth,
-            frameHeight: options.frameHeight
-            }),
+            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
+            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
             new Sprite({
             context: options.context, image: options.images[1], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth,
-            sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth,
-            frameHeight: options.frameHeight
-            }),
+            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
+            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
             new Sprite({
             context: options.context, image: options.images[2], x: options.x, y: options.y,
             ticksPerFrame: Constants.CHAR_TPF,
             sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
             sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
             frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
-            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT
-            }),
+            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT }),
             new Sprite({
             context: options.context, image: options.images[3], x: options.x, y: options.y,
             ticksPerFrame: Constants.CHAR_TPF,
             sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
             sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
             frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
-            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT
-            }),
+            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT }),
             new Sprite({
             context: options.context, image: options.images[4], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth,
-            sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth,
-            frameHeight: options.frameHeight
-            }),
+            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
+            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
             new Sprite({
             context: options.context, image: options.images[5], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth,
-            sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth,
-            frameHeight: options.frameHeight
-            })
+            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
+            frameWidth: options.frameWidth, frameHeight: options.frameHeight })
         ];
         this.boundingBox = this.sprites[ACTION.STAND_RIGHT];
     }
   
-    toString = function () {
+    toString () {
       if (this.boundingBox != null) {
         return this.boundingBox.toString();
       }
       return "";
     };
   
-    isJumping = function () {
+    isJumping () {
       return (this.lastAction == ACTION.JUMP_LEFT ||
         this.lastAction == ACTION.JUMP_RIGHT ||
         this.lastAction == ACTION.JUMP) && !this.isFalling;
     };
   
-    update = function (action: ACTION = ACTION.STAND_RIGHT) {
+    update (action: ACTION = ACTION.STAND_RIGHT) {
       switch (action) {
         case ACTION.WALK_LEFT: {
           this.boundingBox = this.sprites[ACTION.WALK_LEFT];
@@ -127,13 +113,16 @@ export class Character implements BoundingBox {
       this.lastAction = action;
       this.boundingBox.update();
     };
-    render = function () {
+
+    render () {
       this.boundingBox.render();
     };
-    hasCollided = function() {
+
+    hasCollided () {
       return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
     };
-    resetCollided = function() {
+
+    resetCollided () {
       this.hasCollidedBottom = false;
       this.hasCollidedTop = false;
       this.hasCollidedLeft = false;

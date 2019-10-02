@@ -37,7 +37,7 @@ export class Block implements BoundingBox {
         });
     }
   
-    toString = function () {
+    toString () {
       var result = "";
       if (this.boundingBox != null) {
         result = this.boundingBox.toString();      
@@ -49,7 +49,7 @@ export class Block implements BoundingBox {
       return result;
     };
   
-    update = function (hor: number, vert: number, platform_y: number) {
+    update (hor: number, vert: number, platform_y: number) {
       if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
         console.log(this.toString());
         this.boundingBox.stopUpdate();
@@ -66,42 +66,15 @@ export class Block implements BoundingBox {
       this.boundingBox.update();
     };
   
-    animate = function () {
-      // if (this.step == 0){
-      //   this.offset += 10;
-      //   this.step++;
-      
-      // } else if (this.step == 1){
-      //   this.offset += 10;
-      //   this.step++;
-  
-      // } else if (this.step == 2){
-      //   this.offset += 10;
-      //   this.step++;
-  
-      // } else if (this.step == 3){
-      //   this.offset -= 10;
-      //   this.step++;
-  
-      // } else if (this.step == 4){
-      //   this.offset -= 10;
-      //   this.step++;
-  
-      // } else {
-      //   this.offset -= 10;
-      //   this.step = 0;
-      // }
-    };
-  
-    render = function () {
+    render () {
       this.boundingBox.render();
     };
   
-    hasCollided = function() {
+    hasCollided () {
       return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
     };
   
-    resetCollided = function() {
+    resetCollided () {
       this.hasCollidedBottom = false;
       this.hasCollidedTop = false;
       this.hasCollidedLeft = false;

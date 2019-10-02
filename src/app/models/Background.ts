@@ -22,40 +22,40 @@ export class Background {
       });
     }
   
-    canScrollRight = function (scroll: number = Constants.CHAR_MOVE) {
+    canScrollRight (scroll: number = Constants.CHAR_MOVE) {
       var rightEdge = this.level1.image.width - this.level1.frameWidth;
       return this.level1.sourceX + scroll > rightEdge ? rightEdge - this.level1.sourceX : scroll;
     };
   
-    canScrollLeft = function (scroll: number = 0 - Constants.CHAR_MOVE) {
+    canScrollLeft (scroll: number = 0 - Constants.CHAR_MOVE) {
       var leftEdge = 0;
       return this.level1.sourceX + scroll < leftEdge ? leftEdge - this.level1.sourceX : scroll;
     };
   
-    canScrollUp = function (vert: number = Constants.CHAR_JUMP,  max: number = Constants.CHAR_MAX_JUMP) {
+    canScrollUp (vert: number = Constants.CHAR_JUMP,  max: number = Constants.CHAR_MAX_JUMP) {
       var topEdge = this.platform_y - max; //-1, -10, -100, -200
       return this.level1.sourceY + vert < topEdge ? this.level1.sourceY - topEdge : vert; //-201 => 
     };
   
-    canScrollDown = function (vert: number = Constants.CHAR_FALL) {
+    canScrollDown (vert: number = Constants.CHAR_FALL) {
       var bottomEdge = this.platform_y;
       return this.level1.sourceY + vert > bottomEdge ? this.level1.sourceY - bottomEdge : vert; //-1
     };
   
-    setPlatform = function () {
+    setPlatform () {
       this.platform_y = this.level1.sourceY;
     };
   
-    clearPlatform = function () {
+    clearPlatform () {
       this.platform_y = 0;
     };
   
-    update = function (scroll: number, vert: number) {
+    update (scroll: number, vert: number) {
       this.level1.sourceX += scroll;
       this.level1.sourceY += vert;
     };
   
-    render = function () {
+    render () {
       this.level1.render();
     };
   }
