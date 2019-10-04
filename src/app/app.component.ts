@@ -52,10 +52,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.isdrawing = true;
 
         //First, determine if character can move within the constraints of the background        
-        var vert: number = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
+        let vert: number = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll: number = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
 
-        var collided: BoundingBox[] = this.getCollided(vert, scroll);                
+        let collided: BoundingBox[] = this.getCollided(vert, scroll);                
      
         //Character is falling if:
         //1. Is ascending (jumping) and has collided with an element
@@ -63,40 +63,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.mario.isFalling = false;
         
         //Next, determine if character is ascending, descending or neither        
-        if (vert < 0) {                     //IS JUMPING          
-          if (collided.length > 0) {        //IS COLLIDED
-            collided.forEach(element => {
-              var counter = 0;
-              while ((counter >= vert) && !hasCollided) {
-                var hasCollided = Helper.collideWithBox(this.mario, [ element ], counter, scroll);
-                if (!hasCollided) counter--;
-              }
-              vert = counter;               //IS ACCURATE VERT
-            });
-            this.mario.isFalling = true;    //IS FALLING
-          }
-        } else if (vert >= 0) {             //IS FALLING
-          if (collided.length > 0){         //IS COLLIDED
-            collided.forEach(element => {
-              var counter = 0;
-              while ((counter <= vert) && !hasCollided){
-                var hasCollided = Helper.collideWithBox(this.mario, [ element ], counter, scroll);
-                if (!hasCollided) counter++;
-              }
-              vert = counter;               //IS ACCURATE VERT
-            });            
-            this.bg.setPlatform();          //SET PLATFORM
-            //TODO: Compare box to mario (top AND bottom and inbetween) 
-            //Make incremental checks to get an accurate number
-            //If collided then step scroll = 0
-            if (collided[0].boundingBox.y == this.mario.boundingBox.y) {
-                scroll = 0;                 //IS COLLIDED, STOP SCROLLING
-            }
-          } else {
-            this.bg.clearPlatform();        //CLEAR PLATFORM
-          }
-          this.mario.isFalling = !(vert == 0);
-        }        
+        ({ vert, scroll } = this.detectCollision(vert, collided, scroll));        
         //Next, update all elements
         this.update(vert, scroll);
         //Next, render all elements
@@ -105,6 +72,48 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.isdrawing = false;
       }
     }, Constants.REFRESH);
+  }
+
+  private detectCollision(vert: number, collided: BoundingBox[], scroll: number) {
+    if (vert < 0) { //IS JUMPING          
+      if (collided.length > 0) { //IS COLLIDED
+        collided.forEach(element => {
+          var counter = 0;
+          while ((counter >= vert) && !hasCollided) {
+            var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
+            if (!hasCollided)
+              counter--;
+          }
+          vert = counter; //IS ACCURATE VERT
+        });
+        this.mario.isFalling = true; //IS FALLING
+      }
+    }
+    else if (vert >= 0) { //IS FALLING
+      if (collided.length > 0) { //IS COLLIDED
+        collided.forEach(element => {
+          var counter = 0;
+          while ((counter <= vert) && !hasCollided) {
+            var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
+            if (!hasCollided)
+              counter++;
+          }
+          vert = counter; //IS ACCURATE VERT
+        });
+        this.bg.setPlatform(); //SET PLATFORM
+        //TODO: Compare box to mario (top AND bottom and inbetween) 
+        //Make incremental checks to get an accurate number
+        //If collided then step scroll = 0
+        if (collided[0].boundingBox.y == this.mario.boundingBox.y) {
+          scroll = 0; //IS COLLIDED, STOP SCROLLING
+        }
+      }
+      else {
+        this.bg.clearPlatform(); //CLEAR PLATFORM
+      }
+      this.mario.isFalling = !(vert == 0);
+    }
+    return { vert, scroll };
   }
 
   private getCollided(vert: number, scroll: number){
