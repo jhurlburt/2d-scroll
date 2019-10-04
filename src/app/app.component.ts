@@ -55,8 +55,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         let vert: number = (this.key_jump && !this.mario.isFalling) ? this.bg.canScrollUp() : this.bg.canScrollDown(),
           scroll: number = (this.key_walk_right) ? this.bg.canScrollRight() : (this.key_walk_left) ? this.bg.canScrollLeft() : 0;
 
-        let collided: BoundingBox[] = this.getCollided(vert, scroll);                
-     
+        let collided: BoundingBox[] = this.getCollided(vert, scroll);
+
         //Character is falling if:
         //1. Is ascending (jumping) and has collided with an element
         //2. Is descending
