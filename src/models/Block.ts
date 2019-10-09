@@ -5,7 +5,6 @@ import { Constants } from '../helpers/Constants';
 
 export class Block implements BoundingBox {
     boundingBox: Sprite;
-    // lastAction: ACTION.STAND_RIGHT;
     platform_y: number;
     id: string;
     name: string;
@@ -49,7 +48,7 @@ export class Block implements BoundingBox {
       return result;
     };
   
-    update (hor: number, vert: number, platform_y: number) {
+    update (scroll: number, vert: number, platform_y: number) {
       if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
         console.log(this.toString());
         this.boundingBox.stopUpdate();
@@ -61,9 +60,7 @@ export class Block implements BoundingBox {
         //If type is mushroom then add mushroom to scene
       }
       this.platform_y = platform_y;
-      this.boundingBox.x += hor;
-      this.boundingBox.y += vert;    
-      this.boundingBox.update();
+      this.boundingBox.update(vert, scroll);
     };
   
     render () {

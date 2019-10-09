@@ -1,4 +1,5 @@
 import { Sprite } from "../models/Sprite";
+import { EventEmitter } from '@angular/core';
 
 export interface BoundingBox {
     //public fields
@@ -15,7 +16,7 @@ export interface BoundingBox {
   
     hasCollided(): boolean;
     resetCollided(): void;
-    update(hor: number, vert: number, platform_y: number): void;
+    update(scroll: number, vert: number, platform_y: number): void;
     render(): void;
     toString(): string;
   }

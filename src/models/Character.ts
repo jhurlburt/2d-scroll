@@ -1,7 +1,7 @@
 import { Sprite } from './Sprite';
 import { BoundingBox } from '../interface/BoundingBox';
 import { Constants } from '../helpers/Constants';
-// import { Helper } from '../helpers/Helper';
+import { Helper } from '../helpers/Helper';
 
 export enum ACTION {
     STAND_LEFT,
@@ -30,6 +30,8 @@ export class Character implements BoundingBox {
     hasCollidedRight: boolean = false;
     collisionObjectName: string = "";
     collisionObjectId: number = 0;
+    canvasWidth: number = 0;
+
   
     constructor(options) {
         this.id = options.id || "0";
@@ -67,6 +69,7 @@ export class Character implements BoundingBox {
             frameWidth: options.frameWidth, frameHeight: options.frameHeight })
         ];
         this.boundingBox = this.sprites[ACTION.STAND_RIGHT];
+        this.canvasWidth = options.canvasWidth || 0;
     }
   
     toString () {
@@ -81,8 +84,20 @@ export class Character implements BoundingBox {
         this.lastAction == ACTION.JUMP_RIGHT ||
         this.lastAction == ACTION.JUMP) && !this.isFalling;
     };
+
+    canScrollRight (scroll: number = Constants.CHAR_MOVE) {
+      let maxRight: number = (this.canvasWidth / 2) - this.boundingBox.x;
+      return (scroll > maxRight) ? maxRight : scroll;
+    };
   
-    update (action: ACTION = ACTION.STAND_RIGHT) {
+    canScrollLeft (scroll: number = 0 - Constants.CHAR_MOVE) {
+      let maxLeft: number = Constants.CHAR_X - this.boundingBox.x; //this.boundingBox
+      return (scroll < maxLeft) ? maxLeft  : scroll;
+    };
+  
+    update (vert: number = 0, scroll: number = 0) {
+      let action: ACTION = Helper.getAction(this.lastAction || ACTION.STAND_RIGHT, vert, scroll); 
+
       switch (action) {
         case ACTION.WALK_LEFT: {
           this.boundingBox = this.sprites[ACTION.WALK_LEFT];
@@ -102,16 +117,13 @@ export class Character implements BoundingBox {
         } case ACTION.JUMP_RIGHT: {
           this.boundingBox = this.sprites[ACTION.JUMP_RIGHT];
           break;
-        } case ACTION.JUMP: {
-          this.boundingBox = (this.lastAction == ACTION.STAND_LEFT) ? this.sprites[ACTION.JUMP_LEFT] : this.sprites[ACTION.JUMP_RIGHT];
-          break;
         } default: {
           console.log("switch (action) == default");
           break;
         }
       }
       this.lastAction = action;
-      this.boundingBox.update();
+      this.boundingBox.update(vert, scroll);
     };
 
     render () {
