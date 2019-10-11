@@ -51,9 +51,9 @@ export class Enemy implements BoundingBox {
   
     update(hor: number, vert: number, platform_y: number) {
       this.platform_y = platform_y;
-      this.boundingBox.x += hor;
-      this.boundingBox.y += vert;    
-      this.boundingBox.update();
+      // this.boundingBox.x += hor;
+      // this.boundingBox.y += vert;    
+      this.boundingBox.update(vert, hor);
     };
 
     render () {

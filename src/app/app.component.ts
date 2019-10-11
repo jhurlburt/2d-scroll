@@ -111,7 +111,8 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.imgMarioStillLt.nativeElement, this.imgMarioStillRt.nativeElement,
           this.imgMarioWalkLt.nativeElement, this.imgMarioWalkRt.nativeElement,
           this.imgMarioJumpLt.nativeElement, this.imgMarioJumpRt.nativeElement ], 
-        x: Constants.CHAR_X, y: Constants.CHAR_Y, id: Helper.newGuid() }),
+        x: Constants.CHAR_X, y: Constants.CHAR_Y, id: Helper.newGuid(), 
+        canvasWidth: this.canvasE1.nativeElement.width }),
       [ new Enemy({ context: ctx, 
         images: [ 
           this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ], 

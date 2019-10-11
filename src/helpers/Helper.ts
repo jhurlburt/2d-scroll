@@ -11,31 +11,6 @@ export class Helper {
       });
     };  
   
-    static getAction(lastAction: ACTION = ACTION.STAND_RIGHT, vert: number = 0, scroll: number = 0) {
-      if (vert < 0 && scroll < 0) {
-        return ACTION.JUMP_LEFT;
-  
-      } else if (vert < 0 && scroll > 0) {
-        return ACTION.JUMP_RIGHT;
-  
-      } else if (vert < 0 && scroll == 0) {
-        return (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT) ?
-          ACTION.JUMP_LEFT :
-          ACTION.JUMP_RIGHT;
-  
-      } else if (scroll < 0) {
-        return ACTION.WALK_LEFT;
-  
-      } else if (scroll > 0) {
-        return ACTION.WALK_RIGHT;
-  
-      } else if (scroll == 0) {
-        return (lastAction == ACTION.WALK_LEFT || lastAction == ACTION.JUMP_LEFT || lastAction == ACTION.STAND_LEFT) ?
-          ACTION.STAND_LEFT :
-          ACTION.STAND_RIGHT;
-      }
-    };
-  
     static collideWithBox(char: BoundingBox, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
       var hasCollidedAny = false;
       
@@ -71,6 +46,7 @@ export class Helper {
               // console.log("element.hasCollidedTop = true");
             }
             hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
+            
           } 
         });
       }
