@@ -78,7 +78,7 @@ export class Level {
       }  
     }
 
-    private detectCollision(vert: number, collided: BoundingBox[], scroll: number) {
+    private detectCollision(vert: number, scroll: number, collided: BoundingBox[]) {
       if (vert < 0) { //IS JUMPING          
         if (collided.length > 0) { //IS COLLIDED
           collided.forEach(element => {
@@ -145,7 +145,9 @@ export class Level {
       // scroll: number = (this.key_walk_right) ? this.canScrollRight() : (this.key_walk_left) ? this.canScrollLeft() : 0;
 
       let vert: number = 0,
-      scroll: number = 0;
+      scroll: number = 0,
+      char_scroll: number = 0,
+      char_vert: number = 0;
 
       // if ((this.key_jump && !this.mario.isFalling)){
       //   vert = this.canScrollUp(); //default: -3
@@ -161,23 +163,19 @@ export class Level {
         
       // }
 
+      
       if (this.key_walk_right){
         scroll = this.canScrollRight(); //default: 2
-        let char_scroll : number = this.mario.canScrollRight();
-        this.mario.update(char_scroll);
+        char_scroll = this.mario.canScrollRight(scroll);
+        scroll -= char_scroll;
 
+        console.log("scroll:" + scroll);
+        console.log("char_scroll:" + char_scroll);
 
       } else if (this.key_walk_left){
         scroll = this.canScrollLeft(); //default: -2
-        let char_scroll : number = this.mario.canScrollLeft();
-
-
-      } else {
-        scroll = 0;
-      }
-      if (scroll != 0){
-        //move mario
-
+        char_scroll = this.mario.canScrollLeft(scroll);
+        scroll += char_scroll;
       }
 
       let collided: BoundingBox[] = this.getCollided(vert, scroll);
@@ -188,11 +186,11 @@ export class Level {
       this.mario.isFalling = false;
       
       //Next, determine if character is ascending, descending or neither        
-      ({ vert, scroll } = this.detectCollision(vert, collided, scroll));        
+      ({ vert, scroll } = this.detectCollision(vert, scroll, collided));        
       //Next, update all elements
 
       //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
-      this.mario.update(vert, scroll);
+      this.mario.update(char_vert, char_scroll);
 
       this.enemies.forEach(element => {          
         element.update(0 - scroll, 0 - vert, this.platform_y); //FG elements move opposite the BG element
