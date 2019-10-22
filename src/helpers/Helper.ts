@@ -1,5 +1,4 @@
 import { BoundingBox } from '../interface/BoundingBox';
-import { ACTION } from '../models/Character';
 import { Sprite } from '../models/Sprite';
 
 export class Helper {

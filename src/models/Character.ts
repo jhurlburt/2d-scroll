@@ -30,6 +30,9 @@ export class Character implements BoundingBox {
     collisionObjectName: string = "";
     collisionObjectId: number = 0;
     canvasWidth: number = 0;
+    xPos: number = 0;
+    yPos: number = 0;
+
   
     constructor(options) {
         this.id = options.id || "0";
@@ -106,29 +109,59 @@ export class Character implements BoundingBox {
     };
   
     update (vert: number = 0, scroll: number = 0) {
+      let action: ACTION = ACTION.STAND_RIGHT, 
+      x: number = this.boundingBox.x, 
+      y: number = this.boundingBox.y; 
+
       if (vert < 0 && scroll < 0) {
-        this.lastAction = ACTION.JUMP_LEFT;
+        action = ACTION.JUMP_LEFT;
   
       } else if (vert < 0 && scroll > 0) {
-        this.lastAction = ACTION.JUMP_RIGHT;
+        action = ACTION.JUMP_RIGHT;
   
       } else if (vert < 0 && scroll == 0) {
-        this.lastAction = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
+        action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
           ACTION.JUMP_LEFT :
           ACTION.JUMP_RIGHT;
   
       } else if (scroll < 0) {
-        this.lastAction = ACTION.WALK_LEFT;
+        action = ACTION.WALK_LEFT;
   
       } else if (scroll > 0) {
-        this.lastAction = ACTION.WALK_RIGHT;
+        action = ACTION.WALK_RIGHT;
   
       } else if (scroll == 0) {
-        this.lastAction = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
+        action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
           ACTION.STAND_LEFT :
           ACTION.STAND_RIGHT;
+      }      
+      switch (action) {
+        case ACTION.WALK_LEFT: {
+          this.boundingBox = this.sprites[ACTION.WALK_LEFT];
+          break;
+        } case ACTION.WALK_RIGHT: {
+          this.boundingBox = this.sprites[ACTION.WALK_RIGHT];
+          break;
+        } case ACTION.STAND_LEFT: {
+          this.boundingBox = this.sprites[ACTION.STAND_LEFT];
+          break;
+        } case ACTION.STAND_RIGHT: {
+          this.boundingBox = this.sprites[ACTION.STAND_RIGHT];
+          break;
+        } case ACTION.JUMP_LEFT: {
+          this.boundingBox = this.sprites[ACTION.JUMP_LEFT];
+          break;
+        } case ACTION.JUMP_RIGHT: {
+          this.boundingBox = this.sprites[ACTION.JUMP_RIGHT];
+          break;
+        } default: {
+          console.log("switch (action) == default");
+          break;
+        }
       }
-      this.boundingBox = this.sprites[this.lastAction];
+      this.lastAction = action;
+      this.boundingBox.x = x;
+      this.boundingBox.y = y;
       this.boundingBox.update(vert, scroll);
     };
 

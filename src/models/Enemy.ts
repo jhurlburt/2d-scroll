@@ -49,11 +49,11 @@ export class Enemy implements BoundingBox {
       return "";
     };
   
-    update(hor: number, vert: number, platform_y: number) {
+    update(vert: number, scroll: number, platform_y: number) {
       this.platform_y = platform_y;
-      // this.boundingBox.x += hor;
-      // this.boundingBox.y += vert;    
-      this.boundingBox.update(vert, hor);
+      this.boundingBox.x += scroll;
+      this.boundingBox.y += vert;    
+      this.boundingBox.update(vert, scroll);
     };
 
     render () {
