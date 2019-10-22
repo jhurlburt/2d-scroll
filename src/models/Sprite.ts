@@ -35,7 +35,7 @@ export class Sprite {
       ", sourceWidth: " + this.sourceWidth + 
       ", sourceHeight: " + this.sourceHeight;
   };
-  
+
   update(vert: number, scroll: number) {
     this.tickCount += 1;
     if (this.tickCount > this.ticksPerFrame) {

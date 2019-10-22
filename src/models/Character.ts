@@ -1,7 +1,6 @@
 import { Sprite } from './Sprite';
 import { BoundingBox } from '../interface/BoundingBox';
 import { Constants } from '../helpers/Constants';
-import { Helper } from '../helpers/Helper';
 
 export enum ACTION {
     STAND_LEFT,
@@ -31,6 +30,8 @@ export class Character implements BoundingBox {
     collisionObjectName: string = "";
     collisionObjectId: number = 0;
     canvasWidth: number = 0;
+    xPos: number = 0;
+    yPos: number = 0;
 
   
     constructor(options) {
@@ -96,8 +97,32 @@ export class Character implements BoundingBox {
     };
   
     update (vert: number = 0, scroll: number = 0) {
-      let action: ACTION = Helper.getAction(this.lastAction || ACTION.STAND_RIGHT, vert, scroll); 
+      let action: ACTION = ACTION.STAND_RIGHT, 
+      x: number = this.boundingBox.x, 
+      y: number = this.boundingBox.y; 
 
+      if (vert < 0 && scroll < 0) {
+        action = ACTION.JUMP_LEFT;
+  
+      } else if (vert < 0 && scroll > 0) {
+        action = ACTION.JUMP_RIGHT;
+  
+      } else if (vert < 0 && scroll == 0) {
+        action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
+          ACTION.JUMP_LEFT :
+          ACTION.JUMP_RIGHT;
+  
+      } else if (scroll < 0) {
+        action = ACTION.WALK_LEFT;
+  
+      } else if (scroll > 0) {
+        action = ACTION.WALK_RIGHT;
+  
+      } else if (scroll == 0) {
+        action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
+          ACTION.STAND_LEFT :
+          ACTION.STAND_RIGHT;
+      }      
       switch (action) {
         case ACTION.WALK_LEFT: {
           this.boundingBox = this.sprites[ACTION.WALK_LEFT];
@@ -123,6 +148,8 @@ export class Character implements BoundingBox {
         }
       }
       this.lastAction = action;
+      this.boundingBox.x = x;
+      this.boundingBox.y = y;
       this.boundingBox.update(vert, scroll);
     };
 

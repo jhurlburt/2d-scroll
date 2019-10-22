@@ -167,7 +167,9 @@ export class Level {
       if (this.key_walk_right){
         scroll = this.canScrollRight(); //default: 2
         char_scroll = this.mario.canScrollRight(scroll);
-        scroll -= char_scroll;
+
+        if (char_scroll > scroll) scroll = char_scroll;
+        // scroll -= char_scroll;
 
         console.log("scroll:" + scroll);
         console.log("char_scroll:" + char_scroll);
@@ -193,14 +195,14 @@ export class Level {
       this.mario.update(char_vert, char_scroll);
 
       this.enemies.forEach(element => {          
-        element.update(0 - scroll, 0 - vert, this.platform_y); //FG elements move opposite the BG element
+        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements move opposite the BG element
       });
       //UPDATE FG/BG
       this.blocks.forEach(element => {          
-        element.update(0 - scroll, 0 - vert, this.platform_y); //FG elements move opposite the BG element
+        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements move opposite the BG element
       });
       this.pipes.forEach(element => {
-        element.update(0 - scroll, 0 - vert, this.platform_y); //FG elements should move opposite the BG element
+        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements should move opposite the BG element
       });      
       this.level1.sourceX += scroll;
       this.level1.sourceY += vert;
