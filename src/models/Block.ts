@@ -48,7 +48,7 @@ export class Block implements BoundingBox {
       return result;
     };
   
-    update (scroll: number, vert: number, platform_y: number) {
+    update (options) {
       if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
         console.log(this.toString());
         this.boundingBox.stopUpdate();
@@ -59,8 +59,8 @@ export class Block implements BoundingBox {
         //If type is coin then animate coin, add to score
         //If type is mushroom then add mushroom to scene
       }
-      this.platform_y = platform_y;
-      this.boundingBox.update(vert, scroll);
+      this.platform_y = options.platform_y;
+      this.boundingBox.update(options.vert, options.scroll);
     };
   
     render () {

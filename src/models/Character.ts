@@ -80,89 +80,55 @@ export class Character implements BoundingBox {
       return "";
     };
   
-    isJumping () {
-      return (this.lastAction == ACTION.JUMP_LEFT ||
-        this.lastAction == ACTION.JUMP_RIGHT ||
-        this.lastAction == ACTION.JUMP) && !this.isFalling;
-    };
+    // isJumping () {
+    //   return (this.lastAction == ACTION.JUMP_LEFT ||
+    //     this.lastAction == ACTION.JUMP_RIGHT ||
+    //     this.lastAction == ACTION.JUMP) && !this.isFalling;
+    // };
 
     canScrollRight (scroll: number = Constants.CHAR_MOVE) {
-
-      // this.canvasWidth / 2:600
-      // this.boundingBox.x:650
-      // maxRight:-50
-      // scroll:52
-      // char_scroll:-50
-
-      let maxRight: number = (this.canvasWidth / 2) <= this.boundingBox.x + scroll ? (this.canvasWidth / 2) - this.boundingBox.x : 0;
-      console.log("this.canvasWidth / 2:" + this.canvasWidth / 2);
-      console.log("this.boundingBox.x:" + this.boundingBox.x);
-      console.log("maxRight:" + maxRight);
-      return (scroll > maxRight) ? maxRight : scroll;
-      // return scroll;
+      return (this.canvasWidth / 2) <= this.boundingBox.x + scroll ? (this.canvasWidth / 2) - this.boundingBox.x : scroll;
     };
   
     canScrollLeft (scroll: number = 0 - Constants.CHAR_MOVE) {
-      let maxLeft: number = Constants.CHAR_X - this.boundingBox.x; //this.boundingBox
-      // return (scroll < maxLeft) ? maxLeft  : scroll;
-      return scroll;
+      return Constants.CHAR_X >= (this.boundingBox.x + scroll) ? Constants.CHAR_X - this.boundingBox.x : scroll; //this.boundingBox
     };
   
-    update (vert: number = 0, scroll: number = 0) {
+    update (options : any) {
       let action: ACTION = ACTION.STAND_RIGHT, 
-      x: number = this.boundingBox.x, 
-      y: number = this.boundingBox.y; 
+        lastBoundingBox: Sprite = this.boundingBox;
 
-      if (vert < 0 && scroll < 0) {
+      let scroll_vert : number = options.bg_scroll_vert + options.char_scroll_vert,
+        scroll_horz : number = options.bg_scroll_horz + options.char_scroll_horz;
+
+      if (scroll_vert < 0 && scroll_horz < 0) {
         action = ACTION.JUMP_LEFT;
   
-      } else if (vert < 0 && scroll > 0) {
+      } else if (scroll_vert < 0 && scroll_horz > 0) {
         action = ACTION.JUMP_RIGHT;
   
-      } else if (vert < 0 && scroll == 0) {
+      } else if (scroll_vert < 0 && scroll_horz == 0) {
         action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
           ACTION.JUMP_LEFT :
           ACTION.JUMP_RIGHT;
   
-      } else if (scroll < 0) {
+      } else if (scroll_horz < 0) {
         action = ACTION.WALK_LEFT;
   
-      } else if (scroll > 0) {
+      } else if (scroll_horz > 0) {
         action = ACTION.WALK_RIGHT;
   
-      } else if (scroll == 0) {
+      } else if (scroll_horz == 0) {
         action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
           ACTION.STAND_LEFT :
           ACTION.STAND_RIGHT;
-      }      
-      switch (action) {
-        case ACTION.WALK_LEFT: {
-          this.boundingBox = this.sprites[ACTION.WALK_LEFT];
-          break;
-        } case ACTION.WALK_RIGHT: {
-          this.boundingBox = this.sprites[ACTION.WALK_RIGHT];
-          break;
-        } case ACTION.STAND_LEFT: {
-          this.boundingBox = this.sprites[ACTION.STAND_LEFT];
-          break;
-        } case ACTION.STAND_RIGHT: {
-          this.boundingBox = this.sprites[ACTION.STAND_RIGHT];
-          break;
-        } case ACTION.JUMP_LEFT: {
-          this.boundingBox = this.sprites[ACTION.JUMP_LEFT];
-          break;
-        } case ACTION.JUMP_RIGHT: {
-          this.boundingBox = this.sprites[ACTION.JUMP_RIGHT];
-          break;
-        } default: {
-          console.log("switch (action) == default");
-          break;
-        }
       }
       this.lastAction = action;
-      this.boundingBox.x = x;
-      this.boundingBox.y = y;
-      this.boundingBox.update(vert, scroll);
+      this.boundingBox = this.sprites[action];
+      this.boundingBox.x = lastBoundingBox.x;
+      this.boundingBox.y = lastBoundingBox.y;
+
+      this.boundingBox.update(options.char_scroll_vert, options.char_scroll_horz);
     };
 
     render () {

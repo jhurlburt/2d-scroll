@@ -41,7 +41,7 @@ export class Level {
   
     canScrollUp (vert: number = Constants.CHAR_JUMP,  max: number = Constants.CHAR_MAX_JUMP) {
       var topEdge = this.platform_y - max; //-1, -10, -100, -200
-      return this.level1.sourceY + vert < topEdge ? this.level1.sourceY - topEdge : vert; //-201 => 
+      return this.level1.sourceY + vert < topEdge ? topEdge - this.level1.sourceY : vert;
     };
   
     canScrollDown (vert: number = Constants.CHAR_FALL) {
@@ -144,68 +144,81 @@ export class Level {
       // let vert: number = (this.key_jump && !this.mario.isFalling) ? this.canScrollUp() : this.canScrollDown(),
       // scroll: number = (this.key_walk_right) ? this.canScrollRight() : (this.key_walk_left) ? this.canScrollLeft() : 0;
 
-      let vert: number = 0,
-      scroll: number = 0,
-      char_scroll: number = 0,
-      char_vert: number = 0;
+      let bg_scroll_vert: number = 0,
+        bg_scroll_horz: number = 0,
+        char_scroll_horz: number = 0,
+        char_scroll_vert: number = 0;
 
-      // if ((this.key_jump && !this.mario.isFalling)){
-      //   vert = this.canScrollUp(); //default: -3
-      //   let v = 0, h = 0;
-      //   while (v++ < vert){
-      //     //update blocks
-      //     //update pipes
-      //   } 
-      // } else {
-      //   vert = this.canScrollDown(); //default: +4
-      // }
-      // if (vert != 0){
-        
-      // }
-
-      
       if (this.key_walk_right){
-        scroll = this.canScrollRight(); //default: 2
-        char_scroll = this.mario.canScrollRight(scroll);
-
-        if (char_scroll > scroll) scroll = char_scroll;
-        // scroll -= char_scroll;
-
-        console.log("scroll:" + scroll);
-        console.log("char_scroll:" + char_scroll);
+        char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
+        if (char_scroll_horz < Constants.CHAR_MOVE){
+          bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
+        }
 
       } else if (this.key_walk_left){
-        scroll = this.canScrollLeft(); //default: -2
-        char_scroll = this.mario.canScrollLeft(scroll);
-        scroll += char_scroll;
+        char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
+        if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
+          bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
+        }      
+      }
+      if (this.key_jump && !this.mario.isFalling) {
+        bg_scroll_vert = this.canScrollUp();
+        if (bg_scroll_vert == 0){
+          this.mario.isFalling = true;
+        }
+      } else {
+        bg_scroll_vert = this.canScrollDown();
+        if (bg_scroll_vert == 0){
+          this.mario.isFalling = false;
+        }
       }
 
-      let collided: BoundingBox[] = this.getCollided(vert, scroll);
+      // let collided: BoundingBox[] = this.getCollided(vert, scroll);
 
       //Character is falling if:
       //1. Is ascending (jumping) and has collided with an element
       //2. Is descending
-      this.mario.isFalling = false;
-      
+      // this.mario.isFalling = (vert == 0);
+      // this.mario.isFalling = false;
+
       //Next, determine if character is ascending, descending or neither        
-      ({ vert, scroll } = this.detectCollision(vert, scroll, collided));        
+      // ({ vert, scroll } = this.detectCollision(vert, scroll, collided));        
       //Next, update all elements
 
+      // let scrollBackground : boolean = char_scroll_horz == 0 && bg_scroll_horz != 0;
+      // let bg_scroll : number  = scrollBackground ? bg_scroll_horz : char_scroll_horz;
+
       //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
-      this.mario.update(char_vert, char_scroll);
+      this.mario.update({
+        bg_scroll_vert : bg_scroll_vert,
+        bg_scroll_horz : bg_scroll_horz,
+        char_scroll_vert : char_scroll_vert,
+        char_scroll_horz : char_scroll_horz });
+
+      //Did char scroll already? Was there a collission? Assume for now that there wasn't
+      // bg_scroll_vert += char_scroll_vert;
+      // bg_scroll_horz += char_scroll_horz;
 
       this.enemies.forEach(element => {          
-        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements move opposite the BG element
+        element.update({
+            vert : 0 - bg_scroll_vert, 
+            scroll : 0 - bg_scroll_horz, 
+            platform_y : this.platform_y }); //FG elements move opposite the BG element
       });
-      //UPDATE FG/BG
       this.blocks.forEach(element => {          
-        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements move opposite the BG element
+        element.update({
+          vert : 0 - bg_scroll_vert, 
+          scroll : 0 - bg_scroll_horz, 
+          platform_y : this.platform_y }); //FG elements move opposite the BG element
       });
       this.pipes.forEach(element => {
-        element.update(0 - vert, 0 - scroll, this.platform_y); //FG elements should move opposite the BG element
-      });      
-      this.level1.sourceX += scroll;
-      this.level1.sourceY += vert;
+        element.update({
+          vert : 0 - bg_scroll_vert, 
+          scroll : 0 - bg_scroll_horz, 
+          platform_y : this.platform_y }); //FG elements should move opposite the BG element
+      });
+      this.level1.sourceX += bg_scroll_horz;
+      this.level1.sourceY += bg_scroll_vert;
     };
   
     render () {

@@ -37,11 +37,11 @@ export class StandPipe implements BoundingBox {
       return result;
     };
   
-    update = function (vert: number, hor: number, platform_y: number = 0) {
-      this.platform_y = platform_y;
-      this.boundingBox.x += hor;
-      this.boundingBox.y += vert;
-      this.boundingBox.update(vert, scroll);
+    update = function (options) {
+      this.platform_y = options.platform_y;
+      this.boundingBox.x += options.scroll;
+      this.boundingBox.y += options.vert;
+      this.boundingBox.update(options.vert, options.scroll);
     };
   
     render = function () {

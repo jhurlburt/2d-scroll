@@ -16,7 +16,7 @@ export interface BoundingBox {
   
     hasCollided(): boolean;
     resetCollided(): void;
-    update(vert: number, scroll: number, platform_y: number): void;
+    update(options : any): void;
     render(): void;
     toString(): string;
   }

@@ -24,19 +24,19 @@ export class Enemy implements BoundingBox {
         this.name = "Enemy";
         this.sprites = [
             new Sprite({
-            context: options.context, image: options.images[0], x: options.x, y: options.y,
-            ticksPerFrame: 60,
-            sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
-            sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
-            frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
-            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT
+              context: options.context, image: options.images[0], x: options.x, y: options.y,
+              ticksPerFrame: 60,
+              sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
+              sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
+              frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
+              frameHeight: options.frameHeight || Constants.CHAR_HEIGHT
             }),
             new Sprite({
-            context: options.context, image: options.images[1], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth,
-            sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth,
-            frameHeight: options.frameHeight
+              context: options.context, image: options.images[1], x: options.x, y: options.y,
+              sourceWidth: options.sourceWidth,
+              sourceHeight: options.sourceHeight,
+              frameWidth: options.frameWidth,
+              frameHeight: options.frameHeight
             })
         ];
         this.boundingBox = this.sprites[0];
@@ -49,11 +49,9 @@ export class Enemy implements BoundingBox {
       return "";
     };
   
-    update(vert: number, scroll: number, platform_y: number) {
-      this.platform_y = platform_y;
-      this.boundingBox.x += scroll;
-      this.boundingBox.y += vert;    
-      this.boundingBox.update(vert, scroll);
+    update(options) {
+      this.platform_y = options.platform_y;
+      this.boundingBox.update(options.vert, options.scroll);
     };
 
     render () {

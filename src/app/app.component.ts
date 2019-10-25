@@ -32,11 +32,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   title: string = 'Super Mario Brothers';
   isdrawing: boolean = false;
   level1: Level;
+  imagesLoaded: number = 0;
+  totalImages: number = 13;
 
   constructor() {
   }
 
   private gameLoop() {
+    console.log("begin gameLoop");
+
     setInterval(() => {
       if (!this.isdrawing) {
         //Set isDrawing (thread contention prevention)
@@ -89,12 +93,17 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   afterLoading() {
-    //Don't begin the loop until MARIO arrives to the party
-    console.log("this.gameLoop()");
-    this.gameLoop();
+    this.imagesLoaded++;
+    if (this.imagesLoaded == this.totalImages) {
+      this.allImagesLoaded();
+    }
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit() {     
+  }
+
+  allImagesLoaded(){
+
     console.log("ngAfterViewInit()");
 
     this.canvasE1.nativeElement.height = Constants.CANVAS_HEIGHT;
@@ -125,7 +134,9 @@ export class AppComponent implements OnInit, AfterViewInit {
         new Block({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH, id: Helper.newGuid() }),
         new Block({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH * 3, id: Helper.newGuid() }),
         new Block({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y, id: Helper.newGuid() })
-      ]);      
+      ]); 
+
+    this.gameLoop();
   }
 
   @HostListener('window:keydown', ['$event'])
