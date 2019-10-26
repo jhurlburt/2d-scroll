@@ -120,17 +120,17 @@ export class Level {
       return { vert, scroll };
     }
   
-    private getCollided(vert: number, scroll: number){
+    private getCollided(){
       var collided: BoundingBox[] = [];
       //Next, determine if character will collide with any elements; add elements to array
       this.blocks.forEach(element => {
-        if (Helper.collideWithBox(this.mario, [ element ], vert, scroll)) {
+        if (Helper.collideWithBox(this.mario, [ element ])) {
           collided.push( element );
           return;
         }
       });
       this.pipes.forEach(element => {
-        if (Helper.collideWithBox(this.mario, [ element ], vert, scroll)) {
+        if (Helper.collideWithBox(this.mario, [ element ])) {
           collided.push( element );
           return;
         }
@@ -149,19 +149,26 @@ export class Level {
         char_scroll_horz: number = 0,
         char_scroll_vert: number = 0;
 
-      if (this.key_walk_right){
+        
+      let collided : BoundingBox[] = this.getCollided();
+      if (collided.length == 0){
+        // this.mario.isFalling = true;
+        // this.level1.sourceX += bg_scroll_horz;
+        // this.level1.sourceY += bg_scroll_vert;
+      }
+      if (this.key_walk_right && !this.mario.hasCollidedRight){
         char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
         if (char_scroll_horz < Constants.CHAR_MOVE){
           bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
         }
 
-      } else if (this.key_walk_left){
+      } else if (this.key_walk_left && !this.mario.hasCollidedLeft){
         char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
         if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
           bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
         }      
       }
-      if (this.key_jump && !this.mario.isFalling) {
+      if (this.key_jump && !this.mario.isFalling && !this.mario.hasCollidedTop) {
         bg_scroll_vert = this.canScrollUp();
         if (bg_scroll_vert == 0){
           this.mario.isFalling = true;
