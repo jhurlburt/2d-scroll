@@ -122,6 +122,10 @@ export class Level {
   
     private getCollided(){
       var collided: BoundingBox[] = [];
+
+      this.mario.resetCollided();
+      this.mario.hasCollided();
+
       //Next, determine if character will collide with any elements; add elements to array
       this.blocks.forEach(element => {
         if (Helper.collideWithBox(this.mario, [ element ])) {
@@ -148,38 +152,47 @@ export class Level {
         bg_scroll_horz: number = 0,
         char_scroll_horz: number = 0,
         char_scroll_vert: number = 0;
-
         
       let collided : BoundingBox[] = this.getCollided();
-      if (collided.length == 0){
+      if (collided.length != 0){
+        console.log("collided.length:" + collided.length);
         // this.mario.isFalling = true;
         // this.level1.sourceX += bg_scroll_horz;
         // this.level1.sourceY += bg_scroll_vert;
       }
-      if (this.key_walk_right && !this.mario.hasCollidedRight){
-        char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
-        if (char_scroll_horz < Constants.CHAR_MOVE){
-          bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
-        }
 
-      } else if (this.key_walk_left && !this.mario.hasCollidedLeft){
-        char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
-        if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
-          bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
-        }      
+      if (this.key_walk_right){
+        if (!(this.mario.hasCollidedRight && (this.mario.hasCollidedTop || this.mario.hasCollidedBottom))){
+          char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
+          if (char_scroll_horz < Constants.CHAR_MOVE){
+            bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
+          }
+        }
+      } else if (this.key_walk_left && !this.mario.hasCollidedLeft && !this.mario.hasCollidedTop && !this.mario.hasCollidedBottom){
+        if (!(this.mario.hasCollidedLeft && (this.mario.hasCollidedTop || this.mario.hasCollidedBottom))){
+          char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
+          if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
+            bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
+          }      
+        }
       }
-      if (this.key_jump && !this.mario.isFalling && !this.mario.hasCollidedTop) {
-        bg_scroll_vert = this.canScrollUp();
-        if (bg_scroll_vert == 0){
-          this.mario.isFalling = true;
+      if (this.key_jump && !this.mario.isFalling) {
+        if (!(this.mario.hasCollidedTop && (this.mario.hasCollidedLeft || this.mario.hasCollidedRight))){
+          bg_scroll_vert = this.canScrollUp();
+          if (bg_scroll_vert == 0){
+            this.mario.isFalling = true;
+          } 
+        } else {
+          console.log("this.mario.hasCollidedTop");
         }
       } else {
-        bg_scroll_vert = this.canScrollDown();
-        if (bg_scroll_vert == 0){
-          this.mario.isFalling = false;
+        if (!(this.mario.hasCollidedBottom && (this.mario.hasCollidedLeft || this.mario.hasCollidedRight))){
+          bg_scroll_vert = this.canScrollDown();
+          if (bg_scroll_vert == 0){
+            this.mario.isFalling = false;
+          }
         }
       }
-
       // let collided: BoundingBox[] = this.getCollided(vert, scroll);
 
       //Character is falling if:

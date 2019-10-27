@@ -19,7 +19,7 @@ export class Helper {
           char_bot = obj1.y,
           char_rt = obj1.x + obj1.frameWidth,
           char_lt = obj1.x;
-  
+        
         objects.forEach(element => {
           element.resetCollided();
   
@@ -32,17 +32,21 @@ export class Helper {
   
             if (((char_rt + scroll >= block_lt) && (char_lt + scroll < block_rt))) {
               element.hasCollidedLeft = true;
+              char.hasCollidedRight = true;
   
             } else if (((char_lt + scroll <= block_rt) && (char_rt + scroll > block_lt))) {
               element.hasCollidedRight = true;
+              char.hasCollidedLeft = true;
+              
             }
             if ((char_top + vert <= block_bot) && (char_bot + vert >= block_bot)) {
               element.hasCollidedBottom = true;
-              // console.log("element.hasCollidedBottom = true");
+              char.hasCollidedTop = true;
   
             } else if ((char_bot + vert >= block_top) && (char_bot + vert <= block_bot)) {
               element.hasCollidedTop = true;
-              // console.log("element.hasCollidedTop = true");
+              char.hasCollidedBottom = true;
+
             }
             hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
             
