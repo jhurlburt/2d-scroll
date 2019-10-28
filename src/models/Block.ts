@@ -50,7 +50,7 @@ export class Block implements BoundingBox {
   
     update (options) {
       if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom)) {
-        console.log(this.toString());
+        // console.log(this.toString());
         this.boundingBox.stopUpdate();
         this.boundingBox.image = this.images[1];
   

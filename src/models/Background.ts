@@ -20,7 +20,11 @@ export class Level {
     isFalling: boolean = false;
     hasCollided: boolean = false;
     platform_y: number = 0;
-    
+    lastMoveRight : boolean = false;
+    lastMoveLeft : boolean = false;
+    lastMoveUp : boolean = false;
+    lastMoveDown : boolean = false;
+
     constructor(options: Sprite, character: Character, enemies: Enemy[], pipes: StandPipe[], blocks: Block[] ) {
       this.level1 = options;
       this.mario = character;
@@ -123,9 +127,6 @@ export class Level {
     private getCollided(){
       var collided: BoundingBox[] = [];
 
-      this.mario.resetCollided();
-      this.mario.hasCollided();
-
       //Next, determine if character will collide with any elements; add elements to array
       this.blocks.forEach(element => {
         if (Helper.collideWithBox(this.mario, [ element ])) {
@@ -133,12 +134,12 @@ export class Level {
           return;
         }
       });
-      this.pipes.forEach(element => {
-        if (Helper.collideWithBox(this.mario, [ element ])) {
-          collided.push( element );
-          return;
-        }
-      });
+      // this.pipes.forEach(element => {
+      //   if (Helper.collideWithBox(this.mario, [ element ])) {
+      //     collided.push( element );
+      //     return;
+      //   }
+      // });
       return collided;
     }
   
@@ -153,60 +154,56 @@ export class Level {
         char_scroll_horz: number = 0,
         char_scroll_vert: number = 0;
         
+      let canMoveRight : boolean = this.key_walk_right,
+        canMoveLeft: boolean = this.key_walk_left,
+        canMoveUp : boolean = this.key_jump && !this.mario.isFalling,
+        canMoveDown : boolean = true;
+
       let collided : BoundingBox[] = this.getCollided();
+
       if (collided.length != 0){
         console.log("collided.length:" + collided.length);
-        // this.mario.isFalling = true;
-        // this.level1.sourceX += bg_scroll_horz;
-        // this.level1.sourceY += bg_scroll_vert;
-      }
-
-      if (this.key_walk_right){
-        if (!(this.mario.hasCollidedRight && (this.mario.hasCollidedTop || this.mario.hasCollidedBottom))){
-          char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
-          if (char_scroll_horz < Constants.CHAR_MOVE){
-            bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
-          }
-        }
-      } else if (this.key_walk_left && !this.mario.hasCollidedLeft && !this.mario.hasCollidedTop && !this.mario.hasCollidedBottom){
-        if (!(this.mario.hasCollidedLeft && (this.mario.hasCollidedTop || this.mario.hasCollidedBottom))){
-          char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
-          if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
-            bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
-          }      
-        }
-      }
-      if (this.key_jump && !this.mario.isFalling) {
-        if (!(this.mario.hasCollidedTop && (this.mario.hasCollidedLeft || this.mario.hasCollidedRight))){
-          bg_scroll_vert = this.canScrollUp();
-          if (bg_scroll_vert == 0){
+        if (collided[0].hasCollided){
+          if (this.lastMoveUp && collided[0].hasCollidedBottom){
+            canMoveUp = false;
             this.mario.isFalling = true;
-          } 
-        } else {
-          console.log("this.mario.hasCollidedTop");
-        }
-      } else {
-        if (!(this.mario.hasCollidedBottom && (this.mario.hasCollidedLeft || this.mario.hasCollidedRight))){
-          bg_scroll_vert = this.canScrollDown();
-          if (bg_scroll_vert == 0){
-            this.mario.isFalling = false;
+          }
+          if (this.lastMoveRight && collided[0].hasCollidedLeft){
+            canMoveRight = false;
+          }
+          if (this.lastMoveLeft && collided[0].hasCollidedRight){
+            canMoveLeft = false;
           }
         }
       }
-      // let collided: BoundingBox[] = this.getCollided(vert, scroll);
+      this.lastMoveRight = canMoveRight;
+      this.lastMoveLeft = canMoveLeft;
+      this.lastMoveUp = canMoveUp;
+      this.lastMoveDown = canMoveDown;
 
-      //Character is falling if:
-      //1. Is ascending (jumping) and has collided with an element
-      //2. Is descending
-      // this.mario.isFalling = (vert == 0);
-      // this.mario.isFalling = false;
-
-      //Next, determine if character is ascending, descending or neither        
-      // ({ vert, scroll } = this.detectCollision(vert, scroll, collided));        
-      //Next, update all elements
-
-      // let scrollBackground : boolean = char_scroll_horz == 0 && bg_scroll_horz != 0;
-      // let bg_scroll : number  = scrollBackground ? bg_scroll_horz : char_scroll_horz;
+      if (canMoveRight){
+        char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
+        if (char_scroll_horz < Constants.CHAR_MOVE){
+          bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
+        }
+      } else if (canMoveLeft){
+        char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
+        if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
+          bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
+        }      
+      }
+      if (canMoveUp) {
+        bg_scroll_vert = this.canScrollUp();
+        if (bg_scroll_vert == 0){
+          this.mario.isFalling = true;
+        } 
+      } else if (canMoveDown) {
+        this.mario.isFalling = true;
+        bg_scroll_vert = this.canScrollDown();
+        if (bg_scroll_vert == 0){
+          this.mario.isFalling = false;
+        }
+      }
 
       //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
       this.mario.update({
@@ -214,10 +211,6 @@ export class Level {
         bg_scroll_horz : bg_scroll_horz,
         char_scroll_vert : char_scroll_vert,
         char_scroll_horz : char_scroll_horz });
-
-      //Did char scroll already? Was there a collission? Assume for now that there wasn't
-      // bg_scroll_vert += char_scroll_vert;
-      // bg_scroll_horz += char_scroll_horz;
 
       this.enemies.forEach(element => {          
         element.update({
