@@ -17,13 +17,15 @@ export class Level {
     key_walk_left: boolean = false;
     key_walk_right: boolean = false;
     key_jump: boolean = false;
+    enable_left: boolean = true;
+    enable_right: boolean = true;
+    enable_jump: boolean = true;
     isFalling: boolean = false;
     hasCollided: boolean = false;
     platform_y: number = 0;
     lastMoveRight : boolean = false;
     lastMoveLeft : boolean = false;
     lastMoveUp : boolean = false;
-    lastMoveDown : boolean = false;
 
     constructor(options: Sprite, character: Character, enemies: Enemy[], pipes: StandPipe[], blocks: Block[] ) {
       this.level1 = options;
@@ -63,12 +65,13 @@ export class Level {
 
     public handleKeyDownEvent(event: KeyboardEvent){
       // console.log("window:keydown => %s", event.keyCode.toString());
-      if (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D) {
+      if (this.enable_right && (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D)) {
         this.key_walk_right = true;
-      } else if (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A) {
+      } else if (this.enable_left && (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A)) {
         this.key_walk_left = true;
-      } else if (event.keyCode == KEY_CODE.SPACE) {
+      } else if (this.enable_jump && (event.keyCode == KEY_CODE.SPACE)) {
         this.key_jump = true;
+        this.enable_jump = false;
       }
     }
 
@@ -82,47 +85,47 @@ export class Level {
       }  
     }
 
-    private detectCollision(vert: number, scroll: number, collided: BoundingBox[]) {
-      if (vert < 0) { //IS JUMPING          
-        if (collided.length > 0) { //IS COLLIDED
-          collided.forEach(element => {
-            var counter = 0;
-            while ((counter >= vert) && !hasCollided) {
-              var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
-              if (!hasCollided)
-                counter--;
-            }
-            vert = counter; //IS ACCURATE VERT
-          });
-          this.mario.isFalling = true; //IS FALLING
-        }
-      }
-      else if (vert >= 0) { //IS FALLING
-        if (collided.length > 0) { //IS COLLIDED
-          collided.forEach(element => {
-            var counter = 0;
-            while ((counter <= vert) && !hasCollided) {
-              var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
-              if (!hasCollided)
-                counter++;
-            }
-            vert = counter; //IS ACCURATE VERT
-          });
-          this.setPlatform(); //SET PLATFORM
-          //TODO: Compare box to mario (top AND bottom and inbetween) 
-          //Make incremental checks to get an accurate number
-          //If collided then step scroll = 0
-          if (collided[0].boundingBox.y == this.mario.boundingBox.y) {
-            scroll = 0; //IS COLLIDED, STOP SCROLLING
-          }
-        }
-        else {
-          this.clearPlatform(); //CLEAR PLATFORM
-        }
-        this.mario.isFalling = !(vert == 0);
-      }
-      return { vert, scroll };
-    }
+    // private detectCollision(vert: number, scroll: number, collided: BoundingBox[]) {
+    //   if (vert < 0) { //IS JUMPING          
+    //     if (collided.length > 0) { //IS COLLIDED
+    //       collided.forEach(element => {
+    //         var counter = 0;
+    //         while ((counter >= vert) && !hasCollided) {
+    //           var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
+    //           if (!hasCollided)
+    //             counter--;
+    //         }
+    //         vert = counter; //IS ACCURATE VERT
+    //       });
+    //       this.mario.isFalling = true; //IS FALLING
+    //     }
+    //   }
+    //   else if (vert >= 0) { //IS FALLING
+    //     if (collided.length > 0) { //IS COLLIDED
+    //       collided.forEach(element => {
+    //         var counter = 0;
+    //         while ((counter <= vert) && !hasCollided) {
+    //           var hasCollided = Helper.collideWithBox(this.mario, [element], counter, scroll);
+    //           if (!hasCollided)
+    //             counter++;
+    //         }
+    //         vert = counter; //IS ACCURATE VERT
+    //       });
+    //       this.setPlatform(); //SET PLATFORM
+    //       //TODO: Compare box to mario (top AND bottom and inbetween) 
+    //       //Make incremental checks to get an accurate number
+    //       //If collided then step scroll = 0
+    //       if (collided[0].boundingBox.y == this.mario.boundingBox.y) {
+    //         scroll = 0; //IS COLLIDED, STOP SCROLLING
+    //       }
+    //     }
+    //     else {
+    //       this.clearPlatform(); //CLEAR PLATFORM
+    //     }
+    //     this.mario.isFalling = !(vert == 0);
+    //   }
+    //   return { vert, scroll };
+    // }
   
     private getCollided(){
       var collided: BoundingBox[] = [];
@@ -134,77 +137,76 @@ export class Level {
           return;
         }
       });
-      // this.pipes.forEach(element => {
-      //   if (Helper.collideWithBox(this.mario, [ element ])) {
-      //     collided.push( element );
-      //     return;
-      //   }
-      // });
+      this.pipes.forEach(element => {
+        if (Helper.collideWithBox(this.mario, [ element ])) {
+          collided.push( element );
+          return;
+        }
+      });
       return collided;
     }
   
   
     update () {
-      //First, determine if character can move within the constraints of the background        
-      // let vert: number = (this.key_jump && !this.mario.isFalling) ? this.canScrollUp() : this.canScrollDown(),
-      // scroll: number = (this.key_walk_right) ? this.canScrollRight() : (this.key_walk_left) ? this.canScrollLeft() : 0;
+      if (!this.key_jump) this.platform_y = 0;
+
+      let collided : BoundingBox[] = this.getCollided();
+      if (collided.length != 0){
+        console.log("collided.length:" + collided.length);
+        if (collided[0].hasCollided){
+          if (this.lastMoveUp && collided[0].hasCollidedBottom){
+            this.key_jump = false;
+
+          } else if (collided[0].hasCollidedTop){
+            this.enable_jump = true;
+            this.platform_y = this.level1.sourceY;
+
+          } else {
+            if (this.lastMoveRight && collided[0].hasCollidedLeft){ 
+              this.key_walk_right = false;
+              this.enable_right = false;
+
+            } else if (this.lastMoveLeft && collided[0].hasCollidedRight){
+              this.key_walk_left = false;
+              this.enable_left = false;
+            }
+          }
+        }
+      }
+      this.lastMoveRight = this.key_walk_right;
+      this.lastMoveLeft = this.key_walk_left;
+      this.lastMoveUp = this.key_jump;
 
       let bg_scroll_vert: number = 0,
         bg_scroll_horz: number = 0,
         char_scroll_horz: number = 0,
         char_scroll_vert: number = 0;
-        
-      let canMoveRight : boolean = this.key_walk_right,
-        canMoveLeft: boolean = this.key_walk_left,
-        canMoveUp : boolean = this.key_jump && !this.mario.isFalling,
-        canMoveDown : boolean = true;
 
-      let collided : BoundingBox[] = this.getCollided();
-
-      if (collided.length != 0){
-        console.log("collided.length:" + collided.length);
-        if (collided[0].hasCollided){
-          if (this.lastMoveUp && collided[0].hasCollidedBottom){
-            canMoveUp = false;
-            this.mario.isFalling = true;
-          }
-          if (this.lastMoveRight && collided[0].hasCollidedLeft){
-            canMoveRight = false;
-          }
-          if (this.lastMoveLeft && collided[0].hasCollidedRight){
-            canMoveLeft = false;
-          }
-        }
-      }
-      this.lastMoveRight = canMoveRight;
-      this.lastMoveLeft = canMoveLeft;
-      this.lastMoveUp = canMoveUp;
-      this.lastMoveDown = canMoveDown;
-
-      if (canMoveRight){
+      if (this.lastMoveRight) {
         char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
         if (char_scroll_horz < Constants.CHAR_MOVE){
           bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
         }
-      } else if (canMoveLeft){
+        this.enable_left = true;
+
+      } else if (this.lastMoveLeft) {
         char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
         if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
           bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
-        }      
+        }
+        this.enable_right = true;
       }
-      if (canMoveUp) {
-        bg_scroll_vert = this.canScrollUp();
+      if (this.lastMoveUp) {
+        bg_scroll_vert = this.canScrollUp(Constants.CHAR_JUMP, Constants.CHAR_MAX_JUMP);
         if (bg_scroll_vert == 0){
-          this.mario.isFalling = true;
-        } 
-      } else if (canMoveDown) {
-        this.mario.isFalling = true;
+          this.key_jump = false;
+        }
+      } else {
         bg_scroll_vert = this.canScrollDown();
         if (bg_scroll_vert == 0){
-          this.mario.isFalling = false;
+          this.enable_jump = true;
         }
       }
-
       //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
       this.mario.update({
         bg_scroll_vert : bg_scroll_vert,

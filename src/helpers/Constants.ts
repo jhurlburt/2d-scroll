@@ -1,9 +1,9 @@
 export class Constants {
-    static readonly REFRESH: number = 3;
+    static readonly REFRESH: number = 10;
     static readonly CHAR_X: number = 200;
     static readonly CHAR_Y: number = 650;
     static readonly CHAR_MOVE: number = 2;
-    static readonly CHAR_JUMP: number = -3;
+    static readonly CHAR_JUMP: number = -2;
     static readonly CHAR_FALL: number = 4; //TODO: changing this to 3 breaks the mario stand action
     static readonly CHAR_TPF: number = 18;
     static readonly CHAR_HEIGHT: number = 64;

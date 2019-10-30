@@ -19,10 +19,8 @@ export class Character implements BoundingBox {
     sprites: Sprite[];
     boundingBox: Sprite;
     lastAction: ACTION = ACTION.STAND_RIGHT;
-    isFalling: boolean = false;
     id: string;
     name: string;
-    platform_y: number;
     hasCollidedTop: boolean = false;
     hasCollidedBottom: boolean = false;
     hasCollidedLeft: boolean = false;
@@ -136,7 +134,7 @@ export class Character implements BoundingBox {
     };
 
     hasCollided () {
-      return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
+      return (this.hasCollidedBottom || this.hasCollidedTop) || (this.hasCollidedLeft || this.hasCollidedRight);
     };
 
     resetCollided () {

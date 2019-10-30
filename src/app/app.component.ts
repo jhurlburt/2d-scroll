@@ -126,7 +126,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         images: [ 
           this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ], 
           x: Constants.CHAR_X + 500, y: Constants.CHAR_Y, id: Helper.newGuid() })],
-      [ new StandPipe({ context: ctx, images: [ null ], x: 2545, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 115, id: Helper.newGuid() })],
+      [ new StandPipe({ context: ctx, images: [ null ], x: 1595, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 115, id: Helper.newGuid() })],
       [ new Block({ context: ctx, images: [ this.imgBrick.nativeElement ], name: "Brick", x: 1141, id: Helper.newGuid() }),
         new Block({ context: ctx, images: [ this.imgBrick.nativeElement ], name: "Brick", x: 1141 + Constants.BLOCK_WIDTH * 2, id: Helper.newGuid() }),
         new Block({ context: ctx, images: [ this.imgBrick.nativeElement ], name: "Brick", x: 1141 + Constants.BLOCK_WIDTH * 4, id: Helper.newGuid() }),

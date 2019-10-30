@@ -4,7 +4,6 @@ import { Helper } from '../helpers/Helper';
 
 export class StandPipe implements BoundingBox {
     boundingBox: Sprite;
-    platform_y: number;
     id: string;
     name: string = "StandPipe";
     hasCollidedTop: boolean = false;
@@ -39,8 +38,6 @@ export class StandPipe implements BoundingBox {
   
     update = function (options) {
       this.platform_y = options.platform_y;
-      this.boundingBox.x += options.scroll;
-      this.boundingBox.y += options.vert;
       this.boundingBox.update(options.vert, options.scroll);
     };
   
@@ -49,7 +46,7 @@ export class StandPipe implements BoundingBox {
     };
   
     hasCollided = function() {
-      return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
+      return (this.hasCollidedBottom || this.hasCollidedTop) || (this.hasCollidedLeft || this.hasCollidedRight);
     };
   
     resetCollided = function() {

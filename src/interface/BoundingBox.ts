@@ -6,7 +6,7 @@ export interface BoundingBox {
     id: string;
     name: string;
     boundingBox: Sprite;
-    platform_y: number;
+    // platform_y: number;
     hasCollidedTop: boolean;
     hasCollidedBottom: boolean;
     hasCollidedLeft: boolean;

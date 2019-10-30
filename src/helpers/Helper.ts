@@ -14,35 +14,43 @@ export class Helper {
       var hasCollidedAny = false;
       
       if (char != null) {
-        var obj1: Sprite = char.boundingBox,
-          char_top = obj1.y - obj1.frameHeight,
-          char_bot = obj1.y,
-          char_rt = obj1.x + obj1.frameWidth,
-          char_lt = obj1.x;
+        var char_top = char.boundingBox.y - char.boundingBox.frameHeight,
+          char_bot = char.boundingBox.y,
+          char_rt = char.boundingBox.x + char.boundingBox.frameWidth,
+          char_lt = char.boundingBox.x;
         
         objects.forEach(element => {
           element.resetCollided();
   
           if (!hasCollidedAny){
-            var obj2: Sprite = element.boundingBox,
-              block_top = obj2.y - obj2.frameHeight,
-              block_bot = obj2.y,
-              block_rt = obj2.x + obj2.frameWidth,
-              block_lt = obj2.x;
+            var block_top = element.boundingBox.y - element.boundingBox.frameHeight,
+              block_bot = element.boundingBox.y,
+              block_rt = element.boundingBox.x + element.boundingBox.frameWidth,
+              block_lt = element.boundingBox.x;
   
-            if (((char_rt + scroll > block_lt) && (char_lt + scroll < block_rt))) {
-              element.hasCollidedLeft = true;
+            if (((char_rt + scroll >= block_lt) && (char_lt + scroll <= block_lt))) {
+              element.hasCollidedLeft = ((char_bot + vert > block_top) && (char_top + vert < block_bot));
   
-            } else if (((char_lt + scroll < block_rt) && (char_rt + scroll > block_lt))) {
-              element.hasCollidedRight = true;        
+            } else if (((char_lt + scroll <= block_rt) && (char_rt + scroll >= block_rt))) {
+              element.hasCollidedRight = ((char_bot + vert > block_top) && (char_top + vert < block_bot));
             }
-            if ((char_top + vert < block_bot) && (char_bot + vert > block_bot)) {
-              element.hasCollidedBottom = element.hasCollidedLeft || element.hasCollidedRight;
-  
-            } else if ((char_bot + vert > block_top) && (char_bot + vert < block_bot)) {
-              element.hasCollidedTop = element.hasCollidedLeft || element.hasCollidedRight;
+            if (element.hasCollidedLeft || element.hasCollidedRight){
+
+              if (((char_top + vert <= block_bot) && (char_bot + vert > block_bot)) &&
+                ((char_rt > block_lt + 5) && (char_lt < block_rt - 5))) {
+                element.hasCollidedBottom = true;
+                element.hasCollidedLeft = false;
+                element.hasCollidedRight = false;
+
+              } else if (((char_bot + vert >= block_top) && (char_top + vert < block_top)) &&
+                ((char_rt > block_lt + 5) && (char_lt < block_rt - 5))) {
+                element.hasCollidedTop = true;
+                element.hasCollidedLeft = false;
+                element.hasCollidedRight = false;
+              }
             }
-            hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
+            hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) || (element.hasCollidedLeft || element.hasCollidedRight);
+            // hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
             
           } 
         });

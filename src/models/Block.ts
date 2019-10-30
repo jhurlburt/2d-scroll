@@ -5,7 +5,6 @@ import { Constants } from '../helpers/Constants';
 
 export class Block implements BoundingBox {
     boundingBox: Sprite;
-    platform_y: number;
     id: string;
     name: string;
     hasCollidedTop: boolean = false;
@@ -59,7 +58,7 @@ export class Block implements BoundingBox {
         //If type is coin then animate coin, add to score
         //If type is mushroom then add mushroom to scene
       }
-      this.platform_y = options.platform_y;
+      // this.platform_y = options.platform_y;
       this.boundingBox.update(options.vert, options.scroll);
     };
   
@@ -68,7 +67,7 @@ export class Block implements BoundingBox {
     };
   
     hasCollided () {
-      return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
+      return (this.hasCollidedBottom || this.hasCollidedTop) || (this.hasCollidedLeft || this.hasCollidedRight);
     };
   
     resetCollided () {

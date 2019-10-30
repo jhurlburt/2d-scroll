@@ -11,7 +11,6 @@ export class Enemy implements BoundingBox {
     isFalling: boolean = false;
     id: string;
     name: string;
-    platform_y: number;
     hasCollidedTop: boolean = false;
     hasCollidedBottom: boolean = false;
     hasCollidedLeft: boolean = false;
@@ -50,7 +49,6 @@ export class Enemy implements BoundingBox {
     };
   
     update(options) {
-      this.platform_y = options.platform_y;
       this.boundingBox.update(options.vert, options.scroll);
     };
 
@@ -59,7 +57,7 @@ export class Enemy implements BoundingBox {
     };
 
     hasCollided () {
-      return (this.hasCollidedBottom || this.hasCollidedTop) && (this.hasCollidedLeft || this.hasCollidedRight);
+      return (this.hasCollidedBottom || this.hasCollidedTop) || (this.hasCollidedLeft || this.hasCollidedRight);
     };
 
     resetCollided () {
