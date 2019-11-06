@@ -151,28 +151,31 @@ export class Level {
       if (!this.key_jump) this.platform_y = 0;
 
       let collided : BoundingBox[] = this.getCollided();
-      if (collided.length != 0){
-        console.log("collided.length:" + collided.length);
-        if (collided[0].hasCollided){
-          if (this.lastMoveUp && collided[0].hasCollidedBottom){
+
+      if (collided.length == 2)
+        console.log("collided.length:" + collided.length);        
+
+      collided.forEach(element => {
+        if (element.hasCollided){
+          if (this.lastMoveUp && element.hasCollidedBottom){
             this.key_jump = false;
 
-          } else if (collided[0].hasCollidedTop){
+          } else if (element.hasCollidedTop){
             this.enable_jump = true;
             this.platform_y = this.level1.sourceY;
 
           } else {
-            if (this.lastMoveRight && collided[0].hasCollidedLeft){ 
+            if (this.lastMoveRight && element.hasCollidedLeft){ 
               this.key_walk_right = false;
               this.enable_right = false;
 
-            } else if (this.lastMoveLeft && collided[0].hasCollidedRight){
+            } else if (this.lastMoveLeft && element.hasCollidedRight){
               this.key_walk_left = false;
               this.enable_left = false;
             }
           }
         }
-      }
+      });
       this.lastMoveRight = this.key_walk_right;
       this.lastMoveLeft = this.key_walk_left;
       this.lastMoveUp = this.key_jump;

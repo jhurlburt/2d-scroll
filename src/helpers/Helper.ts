@@ -10,48 +10,83 @@ export class Helper {
       });
     };  
   
-    static collideWithBox(char: BoundingBox, objects: BoundingBox[], vert: number = 0, scroll: number = 0) {
-      var hasCollidedAny = false;
+    static collideWithBox(char: BoundingBox, objects: BoundingBox[], v: number = 0, s: number = 0) {
+      var hasCollidedAny = false, 
+        hasCollidedX = false, 
+        hasCollidedY = false;
       
       if (char != null) {
-        var char_top = char.boundingBox.y - char.boundingBox.frameHeight,
-          char_bot = char.boundingBox.y,
-          char_rt = char.boundingBox.x + char.boundingBox.frameWidth,
-          char_lt = char.boundingBox.x;
+        var ctop = char.boundingBox.y - char.boundingBox.frameHeight + v,
+          cbot = char.boundingBox.y + v,
+          crt = char.boundingBox.x + char.boundingBox.frameWidth + s,
+          clt = char.boundingBox.x + s;
         
         objects.forEach(element => {
           element.resetCollided();
   
           if (!hasCollidedAny){
-            var block_top = element.boundingBox.y - element.boundingBox.frameHeight,
-              block_bot = element.boundingBox.y,
-              block_rt = element.boundingBox.x + element.boundingBox.frameWidth,
-              block_lt = element.boundingBox.x;
-  
-            if (((char_rt + scroll >= block_lt) && (char_lt + scroll <= block_lt))) {
-              element.hasCollidedLeft = ((char_bot + vert > block_top) && (char_top + vert < block_bot));
-  
-            } else if (((char_lt + scroll <= block_rt) && (char_rt + scroll >= block_rt))) {
-              element.hasCollidedRight = ((char_bot + vert > block_top) && (char_top + vert < block_bot));
-            }
-            if (element.hasCollidedLeft || element.hasCollidedRight){
+            var btop = element.boundingBox.y - element.boundingBox.frameHeight,
+              bbot = element.boundingBox.y,
+              brt = element.boundingBox.x + element.boundingBox.frameWidth,
+              blt = element.boundingBox.x;
 
-              if (((char_top + vert <= block_bot) && (char_bot + vert > block_bot)) &&
-                ((char_rt > block_lt + 5) && (char_lt < block_rt - 5))) {
-                element.hasCollidedBottom = true;
-                element.hasCollidedLeft = false;
-                element.hasCollidedRight = false;
+              // //11:00, 12:00, 01:00 
+              // if ((ctop< btop) && (ctop< bbot) && (cbot>=btop) && (cbot<=bbot) && (clt>=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { console.log("collided: 0000-a"); }
+              // if ((ctop< btop) && (ctop< bbot) && (cbot>=btop) && (cbot<=bbot) && (clt< blt) && (clt< brt) && (crt> blt) && (crt> brt)) { console.log("collided: 0000-b"); }
+              // if ((ctop< btop) && (ctop< bbot) && (cbot>=btop) && (cbot<=bbot) && (clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { console.log("collided: 0100"); }
+              // if ((ctop< btop) && (ctop< bbot) && (cbot>=btop) && (cbot<=bbot) && (clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { console.log("collided: 1100"); }
 
-              } else if (((char_bot + vert >= block_top) && (char_top + vert < block_top)) &&
-                ((char_rt > block_lt + 5) && (char_lt < block_rt - 5))) {
+              // //05:00, 06:00, 07:00 
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot> bbot) && (clt>=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { console.log("collided: 0600-a"); }
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot> bbot) && (clt< blt) && (clt< brt) && (crt> blt) && (crt> brt)) { console.log("collided: 0600-b"); }
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot> bbot) && (clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { console.log("collided: 0500"); }
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot> bbot) && (clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { console.log("collided: 0700"); }
+
+              // //03:00, 09:00 - will work when character is smaller than the block
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot<=bbot) && (clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { console.log("collided: 0300"); }
+              // if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot<=bbot) && (clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { console.log("collided: 0900"); }
+
+            if ((ctop< btop) && (ctop< bbot) && (cbot>=btop) && (cbot<=bbot)) {
+              //11:00, 12:00, 01:00 
+              if (((clt>=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) || ((clt< blt) && (clt< brt) && (crt> blt) && (crt> brt))) { 
                 element.hasCollidedTop = true;
-                element.hasCollidedLeft = false;
-                element.hasCollidedRight = false;
+                console.log("collided: 0000"); 
+              } else if ((clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { 
+                element.hasCollidedTop = true;
+                element.hasCollidedRight = true;
+                console.log("collided: 0100"); 
+              } else if ((clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { 
+                element.hasCollidedTop = true;
+                element.hasCollidedLeft = true;
+                console.log("collided: 1100"); 
               }
-            }
-            hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) || (element.hasCollidedLeft || element.hasCollidedRight);
-            // hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) && (element.hasCollidedLeft || element.hasCollidedRight);
-            
+            } else if ((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot> bbot)) {
+              //05:00, 06:00, 07:00 
+              if (((clt>=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) || ((clt< blt) && (clt< brt) && (crt> blt) && (crt> brt))) { 
+                element.hasCollidedBottom = true;
+                console.log("collided: 0600"); 
+              } else if ((clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { 
+                element.hasCollidedBottom = true;
+                element.hasCollidedRight = true;
+                console.log("collided: 0500"); 
+              } else if ((clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { 
+                element.hasCollidedBottom = true;
+                element.hasCollidedLeft = true;
+                console.log("collided: 0700"); 
+              }
+            } else if (((ctop>=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot<=bbot)) || ((ctop<=btop) && (ctop<=bbot) && (cbot>=btop) && (cbot>=bbot))) {
+              //03:00, 09:00 - will work when character is smaller than the block
+              //TODO: test then character is larger than the block
+              if ((clt>=blt) && (clt<=brt) && (crt>=blt) && (crt>=brt)) { 
+                element.hasCollidedRight = true;
+                console.log("collided: 0300"); 
+              }
+              if ((clt<=blt) && (clt<=brt) && (crt>=blt) && (crt<=brt)) { 
+                element.hasCollidedLeft = true;
+                console.log("collided: 0900"); 
+              }
+            }  
+            hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) || (element.hasCollidedLeft || element.hasCollidedRight);            
           } 
         });
       }
