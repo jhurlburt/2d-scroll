@@ -78,18 +78,13 @@ export class Character implements BoundingBox {
       return "";
     };
   
-    // isJumping () {
-    //   return (this.lastAction == ACTION.JUMP_LEFT ||
-    //     this.lastAction == ACTION.JUMP_RIGHT ||
-    //     this.lastAction == ACTION.JUMP) && !this.isFalling;
-    // };
 
-    canScrollRight (scroll: number = Constants.CHAR_MOVE) {
+    canScrollRight (scroll: number = Constants.CHAR_HORZ) {
       return (this.canvasWidth / 2) <= this.boundingBox.x + scroll ? (this.canvasWidth / 2) - this.boundingBox.x : scroll;
     };
   
-    canScrollLeft (scroll: number = 0 - Constants.CHAR_MOVE) {
-      return Constants.CHAR_X >= (this.boundingBox.x + scroll) ? Constants.CHAR_X - this.boundingBox.x : scroll; //this.boundingBox
+    canScrollLeft (scroll: number = 0 - Constants.CHAR_HORZ) {
+      return Constants.CHAR_X_POS >= (this.boundingBox.x + scroll) ? Constants.CHAR_X_POS - this.boundingBox.x : scroll; //this.boundingBox
     };
   
     update (options : any) {

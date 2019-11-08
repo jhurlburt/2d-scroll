@@ -35,22 +35,22 @@ export class Level {
       this.blocks = blocks; 
     }
 
-    canScrollRight (scroll: number = Constants.CHAR_MOVE) {
+    canScrollRight (scroll: number = Constants.CHAR_HORZ) {
       var rightEdge = this.level1.image.width - this.level1.frameWidth;
       return this.level1.sourceX + scroll > rightEdge ? rightEdge - this.level1.sourceX : scroll;
     };
   
-    canScrollLeft (scroll: number = 0 - Constants.CHAR_MOVE) {
+    canScrollLeft (scroll: number = 0 - Constants.CHAR_HORZ) {
       var leftEdge = 0;
       return this.level1.sourceX + scroll < leftEdge ? leftEdge - this.level1.sourceX : scroll;
     };
   
-    canScrollUp (vert: number = Constants.CHAR_JUMP,  max: number = Constants.CHAR_MAX_JUMP) {
+    canScrollUp (vert: number = Constants.CHAR_VERT,  max: number = Constants.CHAR_MAX_VERT) {
       var topEdge = this.platform_y - max; //-1, -10, -100, -200
       return this.level1.sourceY + vert < topEdge ? topEdge - this.level1.sourceY : vert;
     };
   
-    canScrollDown (vert: number = Constants.CHAR_FALL) {
+    canScrollDown (vert: number = Constants.GRAVITY) {
       var bottomEdge = this.platform_y;
       return this.level1.sourceY + vert > bottomEdge ? this.level1.sourceY - bottomEdge : vert; //-1
     };
@@ -67,8 +67,10 @@ export class Level {
       // console.log("window:keydown => %s", event.keyCode.toString());
       if (this.enable_right && (event.keyCode == KEY_CODE.RIGHT_ARROW || event.keyCode == KEY_CODE.CHAR_D)) {
         this.key_walk_right = true;
+        this.enable_left = true;
       } else if (this.enable_left && (event.keyCode == KEY_CODE.LEFT_ARROW || event.keyCode == KEY_CODE.CHAR_A)) {
         this.key_walk_left = true;
+        this.enable_right = true;
       } else if (this.enable_jump && (event.keyCode == KEY_CODE.SPACE)) {
         this.key_jump = true;
         this.enable_jump = false;
@@ -127,18 +129,18 @@ export class Level {
     //   return { vert, scroll };
     // }
   
-    private getCollided(){
+    private getCollided(v: number = 0, s: number = 0){
       var collided: BoundingBox[] = [];
 
       //Next, determine if character will collide with any elements; add elements to array
       this.blocks.forEach(element => {
-        if (Helper.collideWithBox(this.mario, [ element ])) {
+        if (Helper.collideWithBox(this.mario, [ element ], v, s)) {
           collided.push( element );
           return;
         }
       });
       this.pipes.forEach(element => {
-        if (Helper.collideWithBox(this.mario, [ element ])) {
+        if (Helper.collideWithBox(this.mario, [ element ], v, s)) {
           collided.push( element );
           return;
         }
@@ -149,94 +151,81 @@ export class Level {
   
     update () {
       if (!this.key_jump) this.platform_y = 0;
+      
+      let bg_vert: number = 0, bg_horz: number = 0, ch_vert: number = 0, ch_horz: number = 0;
 
-      let collided : BoundingBox[] = this.getCollided();
+      if (this.key_walk_right) {
+        ch_horz = this.mario.canScrollRight(Constants.CHAR_HORZ);
+        bg_horz = (ch_horz < Constants.CHAR_HORZ) ? this.canScrollRight(Constants.CHAR_HORZ - ch_horz) : 0;
 
-      if (collided.length == 2)
-        console.log("collided.length:" + collided.length);        
+      } else if (this.key_walk_left) {
+        ch_horz = this.mario.canScrollLeft(0 - Constants.CHAR_HORZ);
+        bg_horz = (ch_horz > 0 - Constants.CHAR_HORZ) ? this.canScrollLeft(0 - Constants.CHAR_HORZ - ch_horz) : 0;
+      }
+      if (this.key_jump) {
+        bg_vert = this.canScrollUp(Constants.CHAR_VERT, Constants.CHAR_MAX_VERT);
+        this.key_jump = (bg_vert != 0);
+
+      } else {
+        bg_vert = this.canScrollDown();
+        this.enable_jump = (bg_vert == 0); 
+      }
+      let collided : BoundingBox[] = this.getCollided(
+        bg_vert + ch_vert, 
+        bg_horz + ch_horz);
+
+      if (collided.length == 2) console.log("collided.length:" + collided.length);        
 
       collided.forEach(element => {
         if (element.hasCollided){
-          if (this.lastMoveUp && element.hasCollidedBottom){
-            this.key_jump = false;
+          if (this.key_jump && element.hasCollidedBottom){
+            this.key_jump = this.enable_jump = false;
+            bg_vert = ch_vert = 0;
 
           } else if (element.hasCollidedTop){
             this.enable_jump = true;
             this.platform_y = this.level1.sourceY;
+            bg_vert = ch_vert = 0;
 
           } else {
-            if (this.lastMoveRight && element.hasCollidedLeft){ 
-              this.key_walk_right = false;
-              this.enable_right = false;
+            if (this.key_walk_right && element.hasCollidedLeft){ 
+              this.key_walk_right = this.enable_right = false;
+              bg_horz = ch_horz = 0;
 
-            } else if (this.lastMoveLeft && element.hasCollidedRight){
-              this.key_walk_left = false;
-              this.enable_left = false;
+            } else if (this.key_walk_left && element.hasCollidedRight){
+              this.key_walk_left = this.enable_left = false;
+              bg_horz = ch_horz = 0;
             }
           }
         }
       });
-      this.lastMoveRight = this.key_walk_right;
-      this.lastMoveLeft = this.key_walk_left;
-      this.lastMoveUp = this.key_jump;
-
-      let bg_scroll_vert: number = 0,
-        bg_scroll_horz: number = 0,
-        char_scroll_horz: number = 0,
-        char_scroll_vert: number = 0;
-
-      if (this.lastMoveRight) {
-        char_scroll_horz = this.mario.canScrollRight(Constants.CHAR_MOVE);
-        if (char_scroll_horz < Constants.CHAR_MOVE){
-          bg_scroll_horz = this.canScrollRight(Constants.CHAR_MOVE - char_scroll_horz);
-        }
-        this.enable_left = true;
-
-      } else if (this.lastMoveLeft) {
-        char_scroll_horz = this.mario.canScrollLeft(0 - Constants.CHAR_MOVE);
-        if (char_scroll_horz > 0 - Constants.CHAR_MOVE){
-          bg_scroll_horz = this.canScrollLeft(0 - Constants.CHAR_MOVE - char_scroll_horz);
-        }
-        this.enable_right = true;
-      }
-      if (this.lastMoveUp) {
-        bg_scroll_vert = this.canScrollUp(Constants.CHAR_JUMP, Constants.CHAR_MAX_JUMP);
-        if (bg_scroll_vert == 0){
-          this.key_jump = false;
-        }
-      } else {
-        bg_scroll_vert = this.canScrollDown();
-        if (bg_scroll_vert == 0){
-          this.enable_jump = true;
-        }
-      }
       //Get NEW MARIO ACTION & UPDATE MARIO SPRITE ANIMATION
       this.mario.update({
-        bg_scroll_vert : bg_scroll_vert,
-        bg_scroll_horz : bg_scroll_horz,
-        char_scroll_vert : char_scroll_vert,
-        char_scroll_horz : char_scroll_horz });
+        bg_scroll_vert : bg_vert,
+        bg_scroll_horz : bg_horz,
+        char_scroll_vert : ch_vert,
+        char_scroll_horz : ch_horz });
 
       this.enemies.forEach(element => {          
         element.update({
-            vert : 0 - bg_scroll_vert, 
-            scroll : 0 - bg_scroll_horz, 
+            vert : 0 - bg_vert, 
+            scroll : 0 - bg_horz, 
             platform_y : this.platform_y }); //FG elements move opposite the BG element
       });
       this.blocks.forEach(element => {          
         element.update({
-          vert : 0 - bg_scroll_vert, 
-          scroll : 0 - bg_scroll_horz, 
+          vert : 0 - bg_vert, 
+          scroll : 0 - bg_horz, 
           platform_y : this.platform_y }); //FG elements move opposite the BG element
       });
       this.pipes.forEach(element => {
         element.update({
-          vert : 0 - bg_scroll_vert, 
-          scroll : 0 - bg_scroll_horz, 
+          vert : 0 - bg_vert, 
+          scroll : 0 - bg_horz, 
           platform_y : this.platform_y }); //FG elements should move opposite the BG element
       });
-      this.level1.sourceX += bg_scroll_horz;
-      this.level1.sourceY += bg_scroll_vert;
+      this.level1.sourceX += bg_horz;
+      this.level1.sourceY += bg_vert;
     };
   
     render () {
