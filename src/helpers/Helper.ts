@@ -40,94 +40,53 @@ export class Helper {
               block_rt = element.boundingBox.x + element.boundingBox.frameWidth,
               block_lt = element.boundingBox.x;
 
-            if ((orig_top< block_top) && (orig_top< block_bot) && (orig_bot>=block_top) && (orig_bot<=block_bot)) {
-              //11:00, 12:00, 01:00 
-              if (((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt<=block_rt)) || ((orig_lt< block_lt) && (orig_lt< block_rt) && (orig_rt> block_lt) && (orig_rt> block_rt))) { 
-                isCollidedTop = true;
-                console.log("orig collided: 0000"); 
-              } else if ((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt>=block_rt)) { 
-                isCollidedTop = true;
-                isCollidedRt = true;
-                console.log("orig collided: 0100"); 
-              } else if ((orig_lt<=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt<=block_rt)) { 
-                isCollidedTop = true;
-                isCollidedLt = true;
-                console.log("orig collided: 1100"); 
-              }
-            } else if ((orig_top>=block_top) && (orig_top<=block_bot) && (orig_bot>=block_top) && (orig_bot> block_bot)) {
-              //05:00, 06:00, 07:00 
-              if (((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) 
-              && (orig_rt<=block_rt)) || ((orig_lt< block_lt) && (orig_lt< block_rt) && (orig_rt> block_lt) && (orig_rt> block_rt))) { 
-                isCollidedBot = true;
-                console.log("orig collided: 0600"); 
-              } else if ((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt>=block_rt)) { 
-                isCollidedBot = true;
-                isCollidedRt = true;
-                console.log("orig collided: 0500"); 
-              } else if ((orig_lt<=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt<=block_rt)) { 
-                isCollidedBot = true;
-                isCollidedLt = true;
-                console.log("orig collided: 0700"); 
-              }
-            } else if (((orig_top>=block_top) && (orig_top<=block_bot) && (orig_bot>=block_top) && (orig_bot<=block_bot)) 
-                  || ((orig_top<=block_top) && (orig_top<=block_bot) && (orig_bot>=block_top) && (orig_bot>=block_bot))) {
-              //03:00, 09:00
-              if ((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt>=block_rt)) { 
-                isCollidedRt = true;
-                console.log("orig collided: 0300"); 
-              }
-              if ((orig_lt<=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt<=block_rt)) { 
-                isCollidedLt = true;
-                console.log("orig collided: 0900"); 
-              }
-            }
-            if ((dest_top< block_top) && (dest_top< block_bot) && (dest_bot>=block_top) && (dest_bot<=block_bot)) {
-              //11:00, 12:00, 01:00 
-              if (((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) 
-              || ((dest_lt< block_lt) && (dest_lt< block_rt) && (dest_rt> block_lt) && (dest_rt> block_rt))) { 
-                willCollideTop = true;
-                console.log("dest collided: 0000"); 
-              } else if ((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt>=block_rt)) { 
-                willCollideTop = true;
-                willCollideRt = true;
-                console.log("dest collided: 0100"); 
-              } else if ((dest_lt<=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) { 
-                willCollideTop = true;
-                willCollideLt = true;
-                console.log("dest collided: 1100"); 
-              }
-            } else if ((dest_top>=block_top) && (dest_top<=block_bot) && (dest_bot>=block_top) && (dest_bot> block_bot)) {
-              //05:00, 06:00, 07:00 
-              if (((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) 
-              || ((dest_lt< block_lt) && (dest_lt< block_rt) && (dest_rt> block_lt) && (dest_rt> block_rt))) { 
-                willCollideBot = true;
-                console.log("dest collided: 0600"); 
-              } else if ((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt>=block_rt)) { 
-                willCollideBot = true;
-                willCollideRt = true;
-                console.log("dest collided: 0500"); 
-              } else if ((dest_lt<=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) { 
-                willCollideBot = true;
-                willCollideLt = true;
-                console.log("dest collided: 0700"); 
-              }
-            } else if (((dest_top>=block_top) && (dest_top<=block_bot) && (dest_bot>=block_top) && (dest_bot<=block_bot)) 
-                  || ((dest_top<=block_top) && (dest_top<=block_bot) && (dest_bot>=block_top) && (dest_bot>=block_bot))) {
-              //03:00, 09:00 - will work when character is smaller than the block
-              //TODO: test then character is larger than the block
-              if ((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt>=block_rt)) { 
-                willCollideRt = true;
-                console.log("dest collided: 0300"); 
-              }
-              if ((dest_lt<=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) { 
-                willCollideLt = true;
-                console.log("dest collided: 0900"); 
-              }
-            }
-            element.hasCollidedTop    = willCollideTop && !isCollidedTop;
-            element.hasCollidedBottom = willCollideBot && !isCollidedBot;
-            element.hasCollidedLeft   = willCollideLt && !isCollidedLt;
-            element.hasCollidedRight  = willCollideRt && !isCollidedRt;
+            isCollidedTop = (orig_bot>=block_top);
+            isCollidedBot = (orig_top<=block_bot);
+            isCollidedRt = (orig_lt<=block_rt);
+            isCollidedLt = (orig_rt>=block_lt);
+  
+            //   if ((orig_top< block_top) && (orig_top< block_bot) && (orig_bot>=block_top) && (orig_bot<=block_bot)) {
+            //   isCollidedTop = true;
+            //   console.log("orig collided: 1200"); 
+            // } 
+            // if ((orig_top>=block_top) && (orig_top<=block_bot) && (orig_bot>=block_top) && (orig_bot> block_bot)) {
+            //   isCollidedBot = true;
+            //   console.log("orig collided: 0600"); 
+            // }
+            // if ((orig_lt>=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt>=block_rt)) { 
+            //   isCollidedRt = true;
+            //   console.log("orig collided: 0300"); 
+            // }
+            // if ((orig_lt<=block_lt) && (orig_lt<=block_rt) && (orig_rt>=block_lt) && (orig_rt<=block_rt)) { 
+            //   isCollidedLt = true;
+            //   console.log("orig collided: 0900"); 
+            // }
+
+            willCollideTop = (dest_bot>=block_top);
+            willCollideBot = (dest_top>=block_top);
+            willCollideRt = (dest_lt<=block_rt);
+            willCollideLt = (dest_rt>=block_lt);
+
+            // if ((dest_top< block_top) && (dest_top< block_bot) && (dest_bot>=block_top) && (dest_bot<=block_bot)) {
+            //   willCollideTop = true;
+            //   console.log("dest collided: 0000"); 
+            // }
+            // if ((dest_top>=block_top) && (dest_top<=block_bot) && (dest_bot>=block_top) && (dest_bot> block_bot)) {
+            //   willCollideBot = true;
+            //   console.log("dest collided: 0600"); 
+            // }
+            // if ((dest_lt>=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt>=block_rt)) { 
+            //   willCollideRt = true;
+            //   console.log("dest collided: 0300");
+            // }
+            // if ((dest_lt<=block_lt) && (dest_lt<=block_rt) && (dest_rt>=block_lt) && (dest_rt<=block_rt)) { 
+            //   willCollideLt = true;
+            //   console.log("dest collided: 0900"); 
+            // }
+            element.hasCollidedTop    = (isCollidedLt && isCollidedRt) && (willCollideTop && willCollideTop);
+            element.hasCollidedBottom = (isCollidedLt && isCollidedRt) && willCollideBot;
+            element.hasCollidedLeft   = (isCollidedTop && isCollidedBot) && willCollideLt;
+            element.hasCollidedRight  = (isCollidedTop && isCollidedBot) && willCollideRt;
 
             hasCollidedAny = (element.hasCollidedTop || element.hasCollidedBottom) || (element.hasCollidedLeft || element.hasCollidedRight);            
           } 
