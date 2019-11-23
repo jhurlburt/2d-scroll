@@ -2,7 +2,7 @@ import { BoundingBox } from '../interface/BoundingBox';
 import { Sprite } from './Sprite';
 import { Helper } from '../helpers/Helper';
 
-export class StandPipe implements BoundingBox {
+export class Terra implements BoundingBox {
     bounds: Sprite;
     id: string;
     name: string;
@@ -14,7 +14,7 @@ export class StandPipe implements BoundingBox {
 
     constructor(options) {
       this.id = options.id || "0";
-      this.name = options.name || "StandPipe";
+      this.name = options.name || "Terra";
       this.bounds = new Sprite({
         context:        options.context,
         image:          options.images[0],

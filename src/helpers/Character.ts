@@ -1,0 +1,12 @@
+export enum ACTION {
+    STAND_LEFT,
+    STAND_RIGHT,
+    WALK_LEFT,
+    WALK_RIGHT,
+    JUMP_LEFT,
+    JUMP_RIGHT,
+    FALL_LEFT,
+    FALL_RIGHT,
+    FALL_DOWN,
+    JUMP
+}
