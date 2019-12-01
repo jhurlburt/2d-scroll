@@ -1,77 +1,70 @@
 import { BoundingBox } from '../interface/BoundingBox';
 import { Sprite } from '../models/Sprite';
 import { Constants } from '../helpers/Constants';
+import { Helper } from 'src/helpers/Helper';
 
-export class Block implements BoundingBox {
-    bounds: Sprite;
-    id: string;
-    name: string;
-    hasCollidedTop: string[];
-    hasCollidedBottom: string[];
-    hasCollidedLeft: string[];
-    hasCollidedRight: string[];
-    collisionObjectId: string[];
-    step: number = 0;
-    offset: number = 0;
-    images: HTMLImageElement[];
-    canUpdate: boolean = true;
+export abstract class Block implements BoundingBox {
+  protected lastAction: number = 0;  
+  protected bounds: Sprite[];
+  protected step: number = 0;
+  protected offset: number = 0;
+  protected images: HTMLImageElement[];
+  protected canUpdate: boolean = true;
+  // name: string;
+  hasCollidedTop: string[];
+  hasCollidedBottom: string[];
+  hasCollidedLeft: string[];
+  hasCollidedRight: string[];
+  collisionObjectId: string[];
+  id: string;
   
-    constructor(options) {
-      this.id = options.id || "0";
-      this.name = options.name || "Block";
-      this.images = options.images;
-      this.bounds = new Sprite({
-        context:        options.context,
-        image:          options.images[0],
-        x:              options.x,
-        y:              options.y || Constants.PLATFORM_1_Y,
-        ticksPerFrame:  options.ticksPerFrame || Constants.BLOCK_TPF,
-        sourceWidth:    options.sourceWidth || Constants.BLOCK_WIDTH,
-        sourceHeight:   options.sourceHeight || Constants.BLOCK_HEIGHT,
-        frameWidth:     options.frameWidth || Constants.BLOCK_WIDTH,
-        frameHeight:    options.frameHeight || Constants.BLOCK_HEIGHT
-      });
-    }
-  
-    update (options) {
-      //TODO: Animate
-      if ((this.name == "Question") && (this.hasCollided() && this.hasCollidedBottom.length > 0)) {
-        //Block types: coin, mushroom
-        //     If type is coin then animate coin, add to score
-        //     If type is mushroom then add mushroom to scene
-        this.bounds.stopUpdate();
-        this.bounds.image = this.images[1];
-        console.log(this.name);
-
-      } else if ((this.name == "Brick") && (this.hasCollided() && this.hasCollidedBottom.length > 0)) {
-        console.log(this.name);
-      }
-      this.bounds.update(options.vert, options.scroll);
-    };
-  
-    render () {
-      this.bounds.render();
-    };
-  
-    hasCollided () {
-      return this.collisionObjectId != null && this.collisionObjectId.length > 0;
-    };
-  
-    resetCollided () {
-      this.hasCollidedBottom = [];
-      this.hasCollidedTop = [];
-      this.hasCollidedLeft = [];
-      this.hasCollidedRight = [];
-      this.collisionObjectId = [];
-    };
-  
-    toString () {
-      let result = (this.bounds != null) ? this.bounds.toString() : "";      
-      result = result + ", hasCollidedLeft: " + this.hasCollidedLeft +
-        ", hasCollidedRight: " + this.hasCollidedRight +
-        ", hasCollidedTop: " + this.hasCollidedTop +
-        ", hasCollidedBottom: " + this.hasCollidedBottom;
-      return result;
-    };
+  constructor(options) {
+    this.id = options.id || Helper.newGuid();
+    this.images = options.images;
+    this.bounds = [ new Sprite({
+      context:        options.context,
+      image:          options.images[0],
+      x:              options.x,
+      y:              options.y             || Constants.PLATFORM_1_Y,
+      ticksPerFrame:  options.ticksPerFrame || Constants.BLOCK_TPF,
+      sourceWidth:    options.sourceWidth   || Constants.BLOCK_WIDTH,
+      sourceHeight:   options.sourceHeight  || Constants.BLOCK_HEIGHT,
+      frameWidth:     options.frameWidth    || Constants.BLOCK_WIDTH,
+      frameHeight:    options.frameHeight   || Constants.BLOCK_HEIGHT
+    })];
   }
+
+  public getBounds() {
+    if (this.bounds[this.lastAction] != null){
+      return this.bounds[this.lastAction];
+    }
+  }
+
+  abstract update (options) : void;
+  
+  public render () {
+    this.getBounds().render();
+  };
+
+  public hasCollided () {
+    return this.collisionObjectId != null && this.collisionObjectId.length > 0;
+  };
+  
+  public resetCollided () {
+    this.hasCollidedBottom = [];
+    this.hasCollidedTop = [];
+    this.hasCollidedLeft = [];
+    this.hasCollidedRight = [];
+    this.collisionObjectId = [];
+  };
+  
+  public toString () {
+    let result : string = (this.getBounds() != null) ? this.getBounds().toString() : "";      
+    result += ", hasCollidedLeft: " + this.hasCollidedLeft.toString() +
+      ", hasCollidedRight: " + this.hasCollidedRight.toString() +
+      ", hasCollidedTop: " + this.hasCollidedTop.toString() +
+      ", hasCollidedBottom: " + this.hasCollidedBottom.toString();
+    return result;
+  };
+}
   

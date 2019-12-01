@@ -24,7 +24,12 @@ export class Sprite {
       this.frameHeight = options.frameHeight || options.image.height;
       this.sourceWidth = options.sourceWidth || options.image.width;
       this.sourceHeight = options.sourceHeight || options.image.height;
-      this.numberOfFrames = options.numberOfFrames || Math.trunc(this.image.width / this.frameWidth);
+
+      if (options.image == null){
+        this.numberOfFrames = 1;
+      } else {
+        this.numberOfFrames = options.numberOfFrames || Math.trunc(this.image.width / this.frameWidth);
+      }
     }
 
     update(vert: number, scroll: number) {
