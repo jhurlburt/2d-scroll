@@ -8,11 +8,14 @@ import { Enemy } from './Enemy';
 import { StandPipe } from './StandPipe';
 import { Block } from './Block';
 import { Terra } from './Terra';
+import { Output } from '@angular/core';
+import { EventEmitter } from '@angular/core';
 
 export class Level {
-    private bounds: Sprite;
-    private terras: Terra[];
+    bounds: Sprite;
+    mario: Character;
     private enemies: Enemy[];
+    private terras: BoundingBox[];
     private blocks: BoundingBox[];
     private pipes: BoundingBox[];
     private key_walk_left: boolean = false;
@@ -22,15 +25,26 @@ export class Level {
     private enable_right: boolean = true;
     private enable_jump: boolean = true;
     private platform_y: number = 0;
-    checkpoint: number = 0;
-    mario: Character;
+    private historyLog : string [] = [];
+    private checkpoint: number = 0;
     // private isFalling: boolean = false;
     // private hasCollided: boolean = false;
     // private lastMoveRight : boolean = false;
     // private lastMoveLeft : boolean = false;
     // private lastMoveUp : boolean = false;
 
-    constructor(options: Sprite, character: Character /*, terras: Terra[], enemies: Enemy[], pipes: StandPipe[], blocks: Block[]*/ ) {
+    // public onCheckpoint: EventEmitter<CheckPointEvent> = new EventEmitter<CheckPointEvent>();
+
+    // constructor() {
+    //   this.bounds = null;
+    //   this.mario  = null;
+    //   this.terras = [];
+    //   this.enemies = [];
+    //   this.pipes  = [];
+    //   this.blocks = []; 
+    // }
+
+    constructor(options: Sprite, character: Character) {
       this.bounds = options;
       this.mario  = character;
       this.terras = [];
@@ -38,6 +52,8 @@ export class Level {
       this.pipes  = [];
       this.blocks = []; 
     }
+
+    @Output() notifyParent: EventEmitter<any> = new EventEmitter();
 
     private canScrollRight (scroll: number = Constants.CHAR_HORZ) {
       let rightEdge = this.bounds.image.width - this.bounds.frameWidth;
@@ -116,40 +132,58 @@ export class Level {
       this.enemies.push(enemy);
     }
 
-    public removeEnemy (enemy : Enemy){      
+    private removeEnemy (enemy : Enemy){      
       const index = this.enemies.indexOf(enemy, 0);
       if (index > -1) {
         this.enemies.splice(index, 1);
       }
     }
 
-    public addTerra (terra : Terra) {
+    public addTerras (terras : Terra []) {
+      terras.forEach(terra => {
+        this.addTerra(terra);
+      });
+    } 
+
+    private addTerra (terra : Terra) {
       this.terras.push(terra);
     } 
 
-    public removeTerra (terra : Terra){      
+    private removeTerra (terra : Terra){      
       const index = this.terras.indexOf(terra, 0);
       if (index > -1) {
         this.terras.splice(index, 1);
       }
     }
 
-    public addBlock (block : Block) {
+    public addBlocks (blocks : Block []){
+      blocks.forEach(block => {
+        this.addBlock(block);        
+      });
+    }
+
+    private addBlock (block : Block) {
       this.blocks.push(block);
     }
 
-    public removeBlock (block : Block){      
+    private removeBlock (block : Block){      
       const index = this.blocks.indexOf(block, 0);
       if (index > -1) {
         this.blocks.splice(index, 1);
       }
     }
 
-    public addPipe(pipe : StandPipe){
+    public addPipes (pipes : StandPipe []){
+      pipes.forEach(pipe => {
+        this.addPipe(pipe);        
+      });
+    }
+
+    private addPipe(pipe : StandPipe){
       this.pipes.push(pipe);
     }
 
-    public removePipe (pipe : StandPipe){      
+    private removePipe (pipe : StandPipe){      
       const index = this.pipes.indexOf(pipe, 0);
       if (index > -1) {
         this.pipes.splice(index, 1);
@@ -159,24 +193,21 @@ export class Level {
     public updateFrame () {
       let bg_vert: number = 0, bg_horz: number = 0
         , ch_vert: number = 0, ch_horz: number = 0
-        , en_vert: number = 0, en_horz: number = 0
-        , orig_x: number = 0, dest_x: number = 0;
-
-      orig_x = this.mario.getBounds().x + this.bounds.sourceX; 
-       
+        , en_vert: number = 0, en_horz: number = 0;
+  
+      //RESET COLLISIONS
       this.resetFrame();
+
+      //GET HORIZONTAL MOVEMENT
       if ( this.key_walk_right ) {
         ch_horz = this.mario.canScrollRight( Constants.CHAR_HORZ );
         bg_horz = (ch_horz < Constants.CHAR_HORZ) ? this.canScrollRight(Constants.CHAR_HORZ - ch_horz) : 0;
-        dest_x = orig_x + ch_horz + bg_horz;
-        // console.log("lt: " + dest_x + ", rt: " + (dest_x + this.mario.bounds.frameWidth));         
       } else if ( this.key_walk_left ) {
         ch_horz = this.mario.canScrollLeft( 0 - Constants.CHAR_HORZ );
         bg_horz = (ch_horz > 0 - Constants.CHAR_HORZ) ? this.canScrollLeft(0 - Constants.CHAR_HORZ - ch_horz) : 0;
-        dest_x = orig_x + ch_horz + bg_horz;
-        // console.log("lt: " + dest_x + ", rt: " + (dest_x + this.mario.bounds.frameWidth));         
       }
 
+      //GET VERTICAL MOVEMENT
       if (this.key_jump) {
         bg_vert = this.canScrollUp( Constants.CHAR_JUMP, Constants.CHAR_MAX_VERT );
         this.key_jump = bg_vert != 0;
@@ -186,6 +217,7 @@ export class Level {
         this.enable_jump = ( ch_vert + bg_vert ) == 0; 
       }
      
+      //CHARACTER COLLISION DETECTION
       let collided : BoundingBox[] = this.getCollisionObjects(this.mario, bg_vert, ch_vert, bg_horz, ch_horz);
       collided.forEach(element => {
         if (this.mario.collisionObjectId.includes( element.id )){
@@ -195,40 +227,33 @@ export class Level {
             this.enable_left = true;
             this.enable_right = true;
             bg_vert = ch_vert = 0;
-            // console.log("mario collided: top");
+
           } else if (this.mario.hasCollidedBottom.includes( element.id )) {
             this.platform_y = this.bounds.sourceY;
             this.enable_jump = true;
             this.enable_left = true;
             this.enable_right = true;
             bg_vert = ch_vert = 0;
-            // console.log("mario collided: bottom");
+
           } else if (this.mario.hasCollidedRight.includes( element.id )) { 
             this.enable_right = false;
             bg_horz = ch_horz = 0;
-            // console.log("mario collided: right");
+
           } else if (this.mario.hasCollidedLeft.includes( element.id )) {
             this.enable_left = false;
             bg_horz = ch_horz = 0;
-            // console.log("mario collided: left");
           }
         }
       });
        
-      //Trigger 2:Remove Enemy
-      //          When enemy passes outside the bounds of the level, remove from game   
-      //          When enemy passes outside the bounds of the level, remove from game   
-      //Trigger 3:Collide with Enemy
-      //          When mario makes contact with enemy, play animation, end turn
-      //Trigger 4:Fall into Void
-      //          When mario falls into void, play animation, end turn
-
+      //UPDATE CHARACTER
       this.mario.update({
         bg_scroll_vert : bg_vert,
         bg_scroll_horz : bg_horz,
         char_scroll_vert : ch_vert,
         char_scroll_horz : ch_horz });
 
+      //UPDATE ENEMIES
       this.enemies.forEach(enemy => {
         en_vert = Constants.GRAVITY;
         en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
@@ -268,12 +293,30 @@ export class Level {
         }
       });//this.enemies.forEach...
 
+      //UPDATE STATIC OBJECTS
       this.pipes.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });  
       this.blocks.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });
       this.terras.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });  
 
+      //UPDATE BOUNDS X/Y
       this.bounds.sourceX += bg_horz;
       this.bounds.sourceY += bg_vert;
+
+      //CHECKPOINT LOGIC
+      let orig_x = this.mario.getBounds().x + this.bounds.sourceX; 
+      if (orig_x > 1200 && !this.historyLog.includes("Checkpoint1")){
+        this.historyLog.push("Checkpoint1");
+        this.notifyParent.emit({ name : "Checkpoint1", x : this.mario.getBounds().x + 600, y : 0, moveLeft : true });          
+
+      } else if (orig_x > 2400 && !this.historyLog.includes("Checkpoint2")) {
+        this.historyLog.push("Checkpoint2");
+        this.notifyParent.emit({ name : "Checkpoint2", x : this.mario.getBounds().x + 600, y : 0, moveLeft : false });  
+
+      } else if (orig_x > 3600 && !this.historyLog.includes("Checkpoint3")) {
+        this.historyLog.push("Checkpoint3");
+        this.notifyParent.emit({ name : "Checkpoint3", x : this.mario.getBounds().x + 600, y : 0, moveLeft : true });  
+
+      }
     };
   
     public renderFrame () {

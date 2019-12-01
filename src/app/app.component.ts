@@ -5,7 +5,6 @@ import { Level } from '../models/Background';
 import { Character } from '../models/Character';
 import { StandPipe } from '../models/StandPipe';
 import { Enemy } from '../models/Enemy';
-// import { Block } from '../models/Block';
 import { Sprite } from 'src/models/Sprite';
 import { Terra } from 'src/models/Terra';
 import { BrickBlock } from 'src/models/BrickBlock';
@@ -34,32 +33,30 @@ export class AppComponent {
 
   title: string = 'Super Mario Brothers';
   isdrawing: boolean = false;
-  level1: Level;
   imagesLoaded: number = 0;
   totalImages: number = 13;
-  historyLog : string [] = [];
+  level1: Level;
 
   private gameLoop() {
     console.log("begin gameLoop()");
     setInterval(() => {
       if (!this.isdrawing) {
         this.isdrawing = true;    
-
-        if (!this.historyLog.includes("add enemy 2")){
-          if ((this.level1.mario.getBounds().x + this.level1.getBounds().sourceX) > 1200){
-            this.historyLog.push("add enemy 2");
-            this.level1.addEnemy(
-              new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-                  this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-              , x: this.level1.mario.getBounds().x + 600, y: 0, moveLeft: false
-              , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })      
-            );
-          }
-        }          
         this.level1.updateFrame();
         this.level1.renderFrame();
         this.isdrawing = false;
       }}, Constants.REFRESH);
+  }
+
+  public handleCheckpoint(options){
+    if (options.name == "Checkpoint1"){
+      this.level1.addEnemy(
+        new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+          this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+          , x: options.x, y: options.y, moveLeft: false
+          , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+      );
+    }
   }
 
   afterLoading() {
@@ -84,60 +81,62 @@ export class AppComponent {
       , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
     ); 
 
-    //Add enemies
-    if (!this.historyLog.includes("add enemy 1")){
-      this.level1.addEnemy(
-        new Enemy({ context: ctx, images: [ this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-        , x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true
-        , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
-      );
-      this.historyLog.push("add enemy 1");
-    }        
-    this.level1.addTerra(
+    this.level1.addEnemy(
+      new Enemy({ context: ctx, images: [ this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+      , x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true
+      , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
+    );
+
+    this.level1.addTerras([
       new Terra({ context: ctx, images: [ null ], x: 0, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 3930, frameHeight: 150 })
-    );
-    this.level1.addTerra(
-      new Terra({ context: ctx, images: [ null ], x: 4069, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
-    );
-    this.level1.addTerra(
-      new Terra({ context: ctx, images: [ null ], x: 5098, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
-    );
-    this.level1.addTerra(
-      new Terra({ context: ctx, images: [ null ], x: 5948, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 3200, frameHeight: 150 })
-    );
-    this.level1.addPipe(
+      , new Terra({ context: ctx, images: [ null ], x: 4069, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
+      , new Terra({ context: ctx, images: [ null ], x: 5098, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
+      , new Terra({ context: ctx, images: [ null ], x: 5948, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 3200, frameHeight: 150 })
+    ]);
+
+    this.level1.addPipes([
       new StandPipe({ context: ctx, images: [ null ], x: 1595, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 115 })
-    );
-    this.level1.addPipe(
-      new StandPipe({ context: ctx, images: [ null ], x: 2170, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 170 })
-    );
-    this.level1.addPipe(
-      new StandPipe({ context: ctx, images: [ null ], x: 2630, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
-    );
-    this.level1.addPipe(
-      new StandPipe({ context: ctx, images: [ null ], x: 3245, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
-    );
-    this.level1.addBlock(
+      , new StandPipe({ context: ctx, images: [ null ], x: 2170, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 170 })
+      , new StandPipe({ context: ctx, images: [ null ], x: 2630, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
+      , new StandPipe({ context: ctx, images: [ null ], x: 3245, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
+    ]);
+
+    this.level1.addBlocks([
       new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 })
-    );
-    this.level1.addBlock(
-      new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 2 })
-    );
-    this.level1.addBlock(
-      new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 4 })
-    );
-    this.level1.addBlock(
-      new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 914 })
-    );
-    this.level1.addBlock(
-      new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH })
-    );
-    this.level1.addBlock(
-      new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 3 })
-    );
-    this.level1.addBlock(
-      new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
-    );
+      , new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 2 })
+      , new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 4 })
+      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 914 })
+      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH })
+      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 3 })
+      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
+    ]);
+    
+    this.level1.notifyParent.subscribe((options) => {
+      console.log("Name: " + options.name);
+      if (options.name == "Checkpoint1"){
+        this.level1.addEnemy(
+          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+            , x: options.x, y: options.y, moveLeft: options.moveLeft
+            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+        );
+      } else if (options.name == "Checkpoint2"){
+        this.level1.addEnemy(
+          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+            , x: options.x, y: options.y, moveLeft: options.moveLeft
+            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+        );
+      } else if (options.name == "Checkpoint3"){
+        this.level1.addEnemy(
+          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+            , x: options.x, y: options.y, moveLeft: options.moveLeft
+            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+        );
+      }
+    });
+
     this.gameLoop();
   }
 
