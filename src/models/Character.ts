@@ -1,80 +1,54 @@
 import { Sprite } from './Sprite';
-import { BoundingBox } from '../interface/BoundingBox';
 import { Constants } from '../helpers/Constants';
 import { ACTION } from '../helpers/Character';
-import { Helper } from 'src/helpers/Helper';
+import { Block } from './Block';
 
-export class Character implements BoundingBox {
-    private sprites: Sprite[];
-    private lastAction: ACTION = ACTION.STAND_RIGHT;
+export class Character extends Block {
     private canvasWidth: number = 0;
     private canvasHeight: number = 0;
-    
-    id: string;
-    hasCollidedTop: string[];
-    hasCollidedBottom: string[];
-    hasCollidedLeft: string[];
-    hasCollidedRight: string[];
-    collisionObjectId: string[];
   
     constructor(options) {
-        this.id = options.id || Helper.newGuid();
-        // this.name = "Character";  
-        this.sprites = [
-          new Sprite({
-            context: options.context, image: options.images[0], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
-          new Sprite({
-            context: options.context, image: options.images[1], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
-          new Sprite({
-            context: options.context, image: options.images[2], x: options.x, y: options.y,
-            ticksPerFrame: Constants.CHAR_TPF,
-            sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
-            sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
-            frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
-            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT }),
-          new Sprite({
-            context: options.context, image: options.images[3], x: options.x, y: options.y,
-            ticksPerFrame: Constants.CHAR_TPF,
-            sourceWidth: options.sourceWidth || Constants.CHAR_WIDTH,
-            sourceHeight: options.sourceHeight || Constants.CHAR_HEIGHT,
-            frameWidth: options.frameWidth || Constants.CHAR_WIDTH,
-            frameHeight: options.frameHeight || Constants.CHAR_HEIGHT }),
-          new Sprite({
-            context: options.context, image: options.images[4], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth, frameHeight: options.frameHeight }),
-          new Sprite({
-            context: options.context, image: options.images[5], x: options.x, y: options.y,
-            sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight,
-            frameWidth: options.frameWidth, frameHeight: options.frameHeight })
-        ];
-        // this.bounds = this.sprites[ ACTION.STAND_RIGHT ];
-        this.canvasWidth = options.canvasWidth || 0;
-        this.canvasHeight = options.canvasHeight || 0;
+      super(options);  
+          
+      this.bounds = [];
+      this.bounds.push(
+        new Sprite({ context: options.context, image: options.images[0], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight 
+        }),
+        new Sprite({ context: options.context, image: options.images[1], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight 
+        }),
+        new Sprite({ context: options.context, image: options.images[2], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight, ticksPerFrame: Constants.CHAR_TPF 
+        }),
+        new Sprite({ context: options.context, image: options.images[3], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight, ticksPerFrame: Constants.CHAR_TPF 
+        }),
+        new Sprite({ context: options.context, image: options.images[4], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight 
+        }),
+        new Sprite({ context: options.context, image: options.images[5], x: options.x, y: options.y
+          , sourceWidth: options.sourceWidth, sourceHeight: options.sourceHeight
+          , frameWidth: options.frameWidth, frameHeight: options.frameHeight 
+      }));
+      this.canvasWidth = options.canvasWidth    || 0;
+      this.canvasHeight = options.canvasHeight  || 0;
+      this.lastAction = ACTION.STAND_RIGHT;
     }
 
-    public canScrollDown(vert: number = Constants.GRAVITY) {
-      return this.canvasHeight <= this.sprites[this.lastAction].y + vert ? this.canvasHeight - this.sprites[this.lastAction].y : vert; 
-    };
-
-    public canScrollRight (scroll: number = Constants.CHAR_HORZ) {
-      return (this.canvasWidth / 2) <= this.sprites[this.lastAction].x + scroll ? (this.canvasWidth / 2) - this.sprites[this.lastAction].x : scroll;
-    };
-  
-    public canScrollLeft (scroll: number = 0 - Constants.CHAR_HORZ) {
-      return Constants.CHAR_X_POS >= (this.sprites[this.lastAction].x + scroll) ? Constants.CHAR_X_POS - this.sprites[this.lastAction].x : scroll; //this.boundingBox
-    };
-  
     public update (options : any) {
       let action: ACTION = ACTION.STAND_RIGHT;
-
       let scroll_vert : number = options.bg_scroll_vert + options.char_scroll_vert,
           scroll_horz : number = options.bg_scroll_horz + options.char_scroll_horz;
 
+      if (this.collisionObjectId.length > 0){
+        console.log("Yo, dog. This aint for me, man")
+      }
       if (scroll_vert < 0 && scroll_horz < 0) {
         action = ACTION.JUMP_LEFT;
   
@@ -97,32 +71,25 @@ export class Character implements BoundingBox {
           ACTION.STAND_LEFT :
           ACTION.STAND_RIGHT;
       }
+      this.bounds.forEach(sprite => { sprite.update(options.char_scroll_vert, options.char_scroll_horz);  });
       this.lastAction = action;
-      this.sprites.forEach(sprite => {
-        sprite.update(options.char_scroll_vert, options.char_scroll_horz);  
-      });
     };
 
-    public getBounds() {
-      return this.sprites[this.lastAction];
-    }
-
-    public render () {
-      this.getBounds().render();
+    public canScrollDown(vert: number ) {
+      return this.canvasHeight <= this.bounds[this.lastAction].y + vert 
+      ? this.canvasHeight - this.bounds[this.lastAction].y 
+      : vert; 
     };
 
-    public resetCollided () {
-      this.hasCollidedBottom = [];
-      this.hasCollidedTop = [];
-      this.hasCollidedLeft = [];
-      this.hasCollidedRight = [];
-      this.collisionObjectId = [];
+    public canScrollRight (scroll: number ) {
+      return (this.canvasWidth / 2) <= this.bounds[this.lastAction].x + scroll 
+      ? (this.canvasWidth / 2) - this.bounds[this.lastAction].x 
+      : scroll;
     };
   
-    public toString () {
-      if (this.getBounds() != null) {
-        return this.getBounds().toString();
-      }
-      return "";
+    public canScrollLeft (scroll: number ) {
+      return Constants.CHAR_X_POS >= (this.bounds[this.lastAction].x + scroll) 
+      ? Constants.CHAR_X_POS - this.bounds[this.lastAction].x 
+      : scroll;
     };
 } 

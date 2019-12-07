@@ -13,8 +13,20 @@ export class Helper {
         return v.toString(16);
       });
     };  
+
+    static isCollided(char: BoundingBox, element: BoundingBox){
+      let orig_top=char.getBounds().y-char.getBounds().frameHeight, orig_bot=char.getBounds().y
+      , orig_rt=char.getBounds().x+char.getBounds().frameWidth, orig_lt=char.getBounds().x;
+        
+      let block_top = element.getBounds().y - element.getBounds().frameHeight, block_bot = element.getBounds().y
+      , block_rt = element.getBounds().x + element.getBounds().frameWidth, block_lt = element.getBounds().x;
+
+      let result : boolean = ((orig_bot>=block_top) && (orig_top<=block_bot)) && ((orig_rt>=block_lt) && (orig_lt<=block_rt));
+      return result;
+    }
   
-    collideWithBox(char: BoundingBox, objects: BoundingBox[], bg_v1: number = 0, ch_v2: number, bg_s1: number = 0, ch_s2: number = 0) {      
+    static detectCollisionList(char: BoundingBox, objects: BoundingBox[], bg_v1: number = 0, ch_v2: number, bg_s1: number = 0, ch_s2: number = 0) {      
+      let hasCollided : boolean = false;
       if (char != null) {
 
         //Character original position (WHERE I AM)
@@ -27,53 +39,29 @@ export class Helper {
         , dest_rt=orig_rt + ch_s2 + bg_s1
         , dest_lt=orig_lt + ch_s2 + bg_s1;
 
-        // if ((char instanceof Character) || (char instanceof Enemy)) {
-        //   dest_top += bg_v1;
-        //   dest_bot += bg_v1;
-        //   dest_rt += bg_s1;
-        //   dest_lt += bg_s1;
-        // }
-
         objects.forEach(element => {  
           let block_top = element.getBounds().y - element.getBounds().frameHeight, block_bot = element.getBounds().y,
               block_rt = element.getBounds().x + element.getBounds().frameWidth, block_lt = element.getBounds().x;
-          // let isCollided = ((orig_bot>=block_top) && (orig_top<=block_bot)) && ((orig_rt>=block_lt) && (orig_lt<=block_rt));
-          let isCollided = false;
 
-          if (!isCollided){
-            if ((dest_rt>=block_lt) && (dest_lt<=block_lt) && (orig_top< block_bot) && (orig_bot> block_top)){
-              element.hasCollidedLeft.push( char.id );
-              element.collisionObjectId.push( char.id );
+          if ((dest_rt>=block_lt) && (dest_lt<=block_lt) && (orig_top< block_bot) && (orig_bot> block_top)){
+            element.hasCollidedLeft.push( char.id );
+            element.collisionObjectId.push( char.id );
 
-              char.hasCollidedRight.push( element.id );
-              char.collisionObjectId.push( element.id );
+          } else if ((dest_lt<=block_rt) && (dest_rt>=block_rt) && (orig_top< block_bot) && (orig_bot> block_top)){
+            element.hasCollidedRight.push( char.id );
+            element.collisionObjectId.push( char.id );
 
-            } else if ((dest_lt<=block_rt) && (dest_rt>=block_rt) && (orig_top< block_bot) && (orig_bot> block_top)){
-              element.hasCollidedRight.push( char.id );
-              element.collisionObjectId.push( char.id );
+          } else if ((dest_bot>=block_top) && (dest_top<=block_top) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+            element.hasCollidedTop.push( char.id );
+            element.collisionObjectId.push( char.id );
 
-              char.hasCollidedLeft.push( element.id );
-              char.collisionObjectId.push( element.id );
-
-            } else if ((dest_bot>=block_top) && (dest_top<=block_top) && (orig_rt> block_lt) && (orig_lt< block_rt)){
-              element.hasCollidedTop.push( char.id );
-              element.collisionObjectId.push( char.id );
-
-              char.hasCollidedBottom.push( element.id );
-              char.collisionObjectId.push( element.id );
-
-            } else if ((dest_top<=block_bot) && (dest_bot>=block_bot) && (orig_rt> block_lt) && (orig_lt< block_rt)){
-              element.hasCollidedBottom.push( char.id );
-              element.collisionObjectId.push( char.id );
-
-              char.hasCollidedTop.push( element.id );
-              char.collisionObjectId.push( element.id );
-
-            }
+          } else if ((dest_top<=block_bot) && (dest_bot>=block_bot) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+            element.hasCollidedBottom.push( char.id );
+            element.collisionObjectId.push( char.id );
           }
+          hasCollided = element.collisionObjectId.includes( char.id ) ? true : hasCollided;
         });
-        return char.collisionObjectId.length > 0;
       }
-      return false;
+      return hasCollided;
     };
   }
