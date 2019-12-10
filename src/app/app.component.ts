@@ -30,15 +30,19 @@ export class AppComponent {
   @ViewChild('imgBrick') imgBrick: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyWalking') imgMushroomEnemyWalking: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyFlat') imgMushroomEnemyFlat: ElementRef<HTMLImageElement>;
+  // @ViewChild('audioOption') sndMainTheme: ElementRef<HTMLAudioElement>;
 
   title: string = 'Super Mario Brothers';
   isdrawing: boolean = false;
   imagesLoaded: number = 0;
-  totalImages: number = 13;
+  totalImages: number = 14;
   level1: Level;
 
   private gameLoop() {
     console.log("begin gameLoop()");
+
+    // this.sndMainTheme.nativeElement.play();
+
     setInterval(() => {
       if (!this.isdrawing) {
         this.isdrawing = true;    
