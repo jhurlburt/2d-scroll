@@ -1,5 +1,4 @@
 import { Sprite } from "../models/Sprite";
-import { EventEmitter } from '@angular/core';
 
 export interface BoundingBox {
     id: string;
@@ -8,7 +7,9 @@ export interface BoundingBox {
     hasCollidedLeft: string[];
     hasCollidedRight: string[];
     collisionObjectId: string[];
-  
+
+    // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
+
     resetCollided(): void;
     update(options : any): void;
     render(): void;

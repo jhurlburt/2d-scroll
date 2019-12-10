@@ -12,8 +12,8 @@ import { Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 
 export class Level {
-    bounds: Sprite;
-    mario: Character;
+    private bounds: Sprite;
+    private mario: Character;
     private enemies: Enemy[];
     private terras: BoundingBox[];
     private blocks: BoundingBox[];
@@ -26,23 +26,6 @@ export class Level {
     private enable_jump: boolean = true;
     private platform_y: number = 0;
     private historyLog : string [] = [];
-    private checkpoint: number = 0;
-    // private isFalling: boolean = false;
-    // private hasCollided: boolean = false;
-    // private lastMoveRight : boolean = false;
-    // private lastMoveLeft : boolean = false;
-    // private lastMoveUp : boolean = false;
-
-    // public onCheckpoint: EventEmitter<CheckPointEvent> = new EventEmitter<CheckPointEvent>();
-
-    // constructor() {
-    //   this.bounds = null;
-    //   this.mario  = null;
-    //   this.terras = [];
-    //   this.enemies = [];
-    //   this.pipes  = [];
-    //   this.blocks = []; 
-    // }
 
     constructor(options: Sprite, character: Character) {
       this.bounds = options;
@@ -108,16 +91,15 @@ export class Level {
 
     private getCollisionObjects(src: BoundingBox, bg_v1: number = 0, ch_v2: number = 0, bg_s2: number = 0, ch_s2: number = 0){
       let collided: BoundingBox[] = [];
-      let helper: Helper = new Helper();
 
       this.terras.forEach(element => {
-        if (helper.collideWithBox(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
+        if (Helper.detectCollisionList(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
       });
       this.blocks.forEach(element => {
-        if (helper.collideWithBox(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
+        if (Helper.detectCollisionList(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
       });
       this.pipes.forEach(element => {
-        if (helper.collideWithBox(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
+        if (Helper.detectCollisionList(src, [ element ], bg_v1, ch_v2, bg_s2, ch_s2)) { collided.push( element ); }
       });
       return collided;
     }
@@ -220,66 +202,52 @@ export class Level {
       //CHARACTER COLLISION DETECTION
       let collided : BoundingBox[] = this.getCollisionObjects(this.mario, bg_vert, ch_vert, bg_horz, ch_horz);
       collided.forEach(element => {
-        if (this.mario.collisionObjectId.includes( element.id )){
-          if (this.mario.hasCollidedTop.includes( element.id )) {
+        if (element.collisionObjectId.includes( this.mario.id )){
+          if (element.hasCollidedBottom.includes( this.mario.id )) {
             this.key_jump = false;  
             this.enable_jump = false;
             this.enable_left = true;
             this.enable_right = true;
             bg_vert = ch_vert = 0;
 
-          } else if (this.mario.hasCollidedBottom.includes( element.id )) {
+          } else if (element.hasCollidedTop.includes( this.mario.id )) {
             this.platform_y = this.bounds.sourceY;
             this.enable_jump = true;
             this.enable_left = true;
             this.enable_right = true;
             bg_vert = ch_vert = 0;
 
-          } else if (this.mario.hasCollidedRight.includes( element.id )) { 
+          } else if (element.hasCollidedLeft.includes( this.mario.id )) { 
             this.enable_right = false;
             bg_horz = ch_horz = 0;
 
-          } else if (this.mario.hasCollidedLeft.includes( element.id )) {
+          } else if (element.hasCollidedRight.includes( this.mario.id )) {
             this.enable_left = false;
             bg_horz = ch_horz = 0;
           }
         }
-      });
-       
-      //UPDATE CHARACTER
-      this.mario.update({
-        bg_scroll_vert : bg_vert,
-        bg_scroll_horz : bg_horz,
-        char_scroll_vert : ch_vert,
-        char_scroll_horz : ch_horz });
+      });       
 
       //UPDATE ENEMIES
       this.enemies.forEach(enemy => {
         en_vert = Constants.GRAVITY;
         en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
 
-        let collided: BoundingBox[] = [];
-        collided = this.getCollisionObjects(enemy, bg_vert, en_vert, bg_horz, en_horz);
-
-        let collidedCount : number = 0; 
+        let collided: BoundingBox[] = this.getCollisionObjects(enemy, bg_vert, en_vert, bg_horz, en_horz);
         collided.forEach(obj => {
-          if (enemy.collisionObjectId.includes( obj.id )){
-            if (enemy.hasCollidedBottom.includes( obj.id )) {
+          if (obj.collisionObjectId.includes( enemy.id )){
+            if (obj.hasCollidedTop.includes( enemy.id )) {
               en_vert = 0;
-              // console.log("enemy collided: bottom");
-            } else if (enemy.hasCollidedRight.includes( obj.id )) { 
+            } else if (obj.hasCollidedLeft.includes( enemy.id )) { 
               enemy.moveLeft = true;
               en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
-              console.log("enemy collided: right");
-            } else if (enemy.hasCollidedLeft.includes( obj.id )) {
+            } else if (obj.hasCollidedRight.includes( enemy.id )) {
               enemy.moveLeft = false;
               en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
-              console.log("enemy collided: left");
             }
           }
-          collidedCount++;
         });
-        if (collidedCount < 1) en_horz = 0;
+        if (collided.length < 1) en_horz = 0;
 
         enemy.update({
           bg_scroll_vert : 0-bg_vert
@@ -287,42 +255,49 @@ export class Level {
           , char_scroll_vert : en_vert
           , char_scroll_horz : en_horz   
         });
-        
-        if ((enemy.getBounds().x + enemy.getBounds().frameWidth < this.bounds.x)){
+
+        if (Helper.isCollided(this.mario, enemy)){
+          this.mario.collisionObjectId.push( enemy.id );
+        }
+        if ((enemy.getBounds().x + enemy.getBounds().frameWidth) < 0){
           this.removeEnemy(enemy);
         }
       });//this.enemies.forEach...
 
+      //UPDATE CHARACTER
+      this.mario.update({
+        bg_scroll_vert : bg_vert,
+        bg_scroll_horz : bg_horz,
+        char_scroll_vert : ch_vert,
+        char_scroll_horz : ch_horz });
+              
       //UPDATE STATIC OBJECTS
-      this.pipes.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });  
-      this.blocks.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });
-      this.terras.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });  
+      this.pipes.forEach(element => { element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });
+      this.blocks.forEach(element =>{ element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });
+      this.terras.forEach(element =>{ element.update({vert : 0-bg_vert, scroll : 0-bg_horz}); });  
 
       //UPDATE BOUNDS X/Y
       this.bounds.sourceX += bg_horz;
       this.bounds.sourceY += bg_vert;
 
       //CHECKPOINT LOGIC
-      let orig_x = this.mario.getBounds().x + this.bounds.sourceX; 
-      if (orig_x > 1200 && !this.historyLog.includes("Checkpoint1")){
-        this.historyLog.push("Checkpoint1");
-        this.notifyParent.emit({ name : "Checkpoint1", x : this.mario.getBounds().x + 600, y : 0, moveLeft : true });          
-
-      } else if (orig_x > 2400 && !this.historyLog.includes("Checkpoint2")) {
-        this.historyLog.push("Checkpoint2");
-        this.notifyParent.emit({ name : "Checkpoint2", x : this.mario.getBounds().x + 600, y : 0, moveLeft : false });  
-
-      } else if (orig_x > 3600 && !this.historyLog.includes("Checkpoint3")) {
-        this.historyLog.push("Checkpoint3");
-        this.notifyParent.emit({ name : "Checkpoint3", x : this.mario.getBounds().x + 600, y : 0, moveLeft : true });  
-
+      let mario_x = this.mario.getBounds().x; 
+      let orig_x = mario_x + this.bounds.sourceX; 
+      let enemy_x = mario_x + 600;
+      let enemy_y = 0;
+      if ((orig_x > 1200 && !this.historyLog.includes("Checkpoint1"))
+        || (orig_x > 2400 && !this.historyLog.includes("Checkpoint2"))
+        || (orig_x > 3600 && !this.historyLog.includes("Checkpoint3"))){
+        let count = (orig_x - (orig_x % 1200)) / 1200;        
+        this.historyLog.push("Checkpoint" + count);
+        this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : false });          
       }
     };
   
     public renderFrame () {
       this.bounds.render();
       this.blocks.forEach(element => { element.render(); });
-      //Do not render pipes! No images
+      //Do not render pipes! No images to render!!
       this.enemies.forEach(element => { element.render(); });
       this.mario.render();  
     };

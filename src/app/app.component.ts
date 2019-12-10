@@ -52,12 +52,14 @@ export class AppComponent {
       }}, Constants.REFRESH);
   }
 
-  public handleCheckpoint(options){
-    if (options.name == "Checkpoint1"){
+  private handleCheckpoint(options){
+    if (options.name == "Checkpoint"){
       this.level1.addEnemy(
         new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
           this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-          , x: options.x, y: options.y, moveLeft: false
+          , x: options.x, y: options.y, moveLeft: options.moveLeft
+          , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
+          , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT    
           , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
       );
     }
@@ -78,16 +80,23 @@ export class AppComponent {
         sourceWidth: this.canvasE1.nativeElement.width, sourceHeight: this.canvasE1.nativeElement.height,
         frameWidth: this.canvasE1.nativeElement.width, frameHeight: this.canvasE1.nativeElement.height }),
       new Character({ context: ctx, images: [ 
-        this.imgMarioStillLt.nativeElement, this.imgMarioStillRt.nativeElement,
-        this.imgMarioWalkLt.nativeElement, this.imgMarioWalkRt.nativeElement,
-        this.imgMarioJumpLt.nativeElement, this.imgMarioJumpRt.nativeElement ]
+          this.imgMarioStillLt.nativeElement
+        , this.imgMarioStillRt.nativeElement
+        , this.imgMarioWalkLt.nativeElement
+        , this.imgMarioWalkRt.nativeElement
+        , this.imgMarioJumpLt.nativeElement
+        , this.imgMarioJumpRt.nativeElement ]
       , x: Constants.CHAR_X_POS, y: Constants.CHAR_Y_POS
+      , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
+      , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT
       , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
     ); 
 
     this.level1.addEnemy(
       new Enemy({ context: ctx, images: [ this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-      , x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true
+      , x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true 
+      , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
+      , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT
       , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
     );
 
@@ -112,35 +121,15 @@ export class AppComponent {
       , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 914 })
       , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH })
       , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 3 })
-      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], name: "Question", x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
+      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
     ]);
     
     this.level1.notifyParent.subscribe((options) => {
       console.log("Name: " + options.name);
-      if (options.name == "Checkpoint1"){
-        this.level1.addEnemy(
-          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-            , x: options.x, y: options.y, moveLeft: options.moveLeft
-            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
-        );
-      } else if (options.name == "Checkpoint2"){
-        this.level1.addEnemy(
-          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-            , x: options.x, y: options.y, moveLeft: options.moveLeft
-            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
-        );
-      } else if (options.name == "Checkpoint3"){
-        this.level1.addEnemy(
-          new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-            this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-            , x: options.x, y: options.y, moveLeft: options.moveLeft
-            , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
-        );
+      if (options.name == "Checkpoint"){
+        this.handleCheckpoint(options);
       }
     });
-
     this.gameLoop();
   }
 

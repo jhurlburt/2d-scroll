@@ -2,6 +2,7 @@ import { BoundingBox } from '../interface/BoundingBox';
 import { Sprite } from '../models/Sprite';
 import { Constants } from '../helpers/Constants';
 import { Helper } from 'src/helpers/Helper';
+import { Output, EventEmitter } from '@angular/core';
 
 export abstract class Block implements BoundingBox {
   protected lastAction: number = 0;  
@@ -10,37 +11,38 @@ export abstract class Block implements BoundingBox {
   protected offset: number = 0;
   protected images: HTMLImageElement[];
   protected canUpdate: boolean = true;
-  // name: string;
   hasCollidedTop: string[];
   hasCollidedBottom: string[];
   hasCollidedLeft: string[];
   hasCollidedRight: string[];
   collisionObjectId: string[];
   id: string;
-  
+
+  // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
+
   constructor(options) {
     this.id = options.id || Helper.newGuid();
     this.images = options.images;
-    this.bounds = [ new Sprite({
-      context:        options.context,
-      image:          options.images[0],
-      x:              options.x,
-      y:              options.y             || Constants.PLATFORM_1_Y,
-      ticksPerFrame:  options.ticksPerFrame || Constants.BLOCK_TPF,
-      sourceWidth:    options.sourceWidth   || Constants.BLOCK_WIDTH,
-      sourceHeight:   options.sourceHeight  || Constants.BLOCK_HEIGHT,
-      frameWidth:     options.frameWidth    || Constants.BLOCK_WIDTH,
-      frameHeight:    options.frameHeight   || Constants.BLOCK_HEIGHT
-    })];
+    this.bounds = [ 
+      new Sprite({ 
+        context: options.context, image: options.images[0]
+        , x: options.x, y: options.y           || Constants.PLATFORM_1_Y
+        , ticksPerFrame: options.ticksPerFrame || Constants.BLOCK_TPF
+        , sourceWidth:   options.sourceWidth   || Constants.BLOCK_WIDTH
+        , sourceHeight:  options.sourceHeight  || Constants.BLOCK_HEIGHT
+        , frameWidth:    options.frameWidth    || Constants.BLOCK_WIDTH
+        , frameHeight:   options.frameHeight   || Constants.BLOCK_HEIGHT
+      })
+    ];
   }
+
+  abstract update (options) : void;
 
   public getBounds() {
     if (this.bounds[this.lastAction] != null){
       return this.bounds[this.lastAction];
     }
   }
-
-  abstract update (options) : void;
   
   public render () {
     this.getBounds().render();
