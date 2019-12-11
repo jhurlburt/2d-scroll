@@ -1,6 +1,5 @@
 import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Constants } from '../helpers/Constants';
-import { Helper } from '../helpers/Helper';
 import { Level } from '../models/Background';
 import { Character } from '../models/Character';
 import { StandPipe } from '../models/StandPipe';
@@ -30,18 +29,16 @@ export class AppComponent {
   @ViewChild('imgBrick') imgBrick: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyWalking') imgMushroomEnemyWalking: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyFlat') imgMushroomEnemyFlat: ElementRef<HTMLImageElement>;
-  // @ViewChild('audioOption') sndMainTheme: ElementRef<HTMLAudioElement>;
+  @ViewChild('audioOption') sndMainTheme: ElementRef<HTMLAudioElement>;
 
   title: string = 'Super Mario Brothers';
   isdrawing: boolean = false;
   imagesLoaded: number = 0;
-  totalImages: number = 14;
+  totalImages: number = 13;
   level1: Level;
 
   private gameLoop() {
     console.log("begin gameLoop()");
-
-    // this.sndMainTheme.nativeElement.play();
 
     setInterval(() => {
       if (!this.isdrawing) {
@@ -74,6 +71,8 @@ export class AppComponent {
     this.canvasE1.nativeElement.height = Constants.CANVAS_HEIGHT;
     this.canvasE1.nativeElement.width = Constants.CANVAS_WIDTH;
     let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d');
+
+    this.sndMainTheme.nativeElement.play();
 
     this.level1 = new Level (
       new Sprite({ context: ctx, image: this.imgBackground1_1.nativeElement,

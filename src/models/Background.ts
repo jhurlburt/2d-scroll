@@ -290,7 +290,7 @@ export class Level {
         || (orig_x > 3600 && !this.historyLog.includes("Checkpoint3"))){
         let count = (orig_x - (orig_x % 1200)) / 1200;        
         this.historyLog.push("Checkpoint" + count);
-        this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : false });          
+        this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : (count % 2) == 0 });          
       }
     };
   
