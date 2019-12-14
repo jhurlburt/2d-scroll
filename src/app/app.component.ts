@@ -8,6 +8,7 @@ import { Sprite } from 'src/models/Sprite';
 import { Terra } from 'src/models/Terra';
 import { BrickBlock } from 'src/models/BrickBlock';
 import { MysteryBlock } from 'src/models/MysteryBlock';
+import { KEY_CODE } from 'src/helpers/Keyboard';
 
 @Component({
   selector: 'app-root',
@@ -29,19 +30,22 @@ export class AppComponent {
   @ViewChild('imgBrick') imgBrick: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyWalking') imgMushroomEnemyWalking: ElementRef<HTMLImageElement>;
   @ViewChild('imgMushroomEnemyFlat') imgMushroomEnemyFlat: ElementRef<HTMLImageElement>;
-  @ViewChild('audioOption') sndMainTheme: ElementRef<HTMLAudioElement>;
-
+  @ViewChild('audioTheme') audioMainTheme: ElementRef<HTMLAudioElement>;
+  @ViewChild('audioJump') audioJump: ElementRef<HTMLAudioElement>;
+  
   title: string = 'Super Mario Brothers';
   isdrawing: boolean = false;
   imagesLoaded: number = 0;
   totalImages: number = 13;
   level1: Level;
+  // audioJump: any;
+  audioJumpPlaying: boolean = false;
 
   private gameLoop() {
     console.log("begin gameLoop()");
 
     setInterval(() => {
-      if (!this.isdrawing) {
+      if (!this.isdrawing) { 
         this.isdrawing = true;    
         this.level1.updateFrame();
         this.level1.renderFrame();
@@ -72,7 +76,7 @@ export class AppComponent {
     this.canvasE1.nativeElement.width = Constants.CANVAS_WIDTH;
     let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d');
 
-    this.sndMainTheme.nativeElement.play();
+    this.audioMainTheme.nativeElement.play();
 
     this.level1 = new Level (
       new Sprite({ context: ctx, image: this.imgBackground1_1.nativeElement,
@@ -134,7 +138,25 @@ export class AppComponent {
 
   @HostListener('window:keydown', ['$event'])
   @HostListener('window:keyup', ['$event'])
-  keyboardEvent(event: KeyboardEvent) {
+  keyboardEvent(event: KeyboardEvent) {    
+    if ((event.type == "keydown") && (event.keyCode == KEY_CODE.SPACE)){
+      // this.playAudioJump();
+      // this.sndMainTheme.nativeElement.pause();
+      // this.sndJump.nativeElement.load();
+      this.audioJump.nativeElement.play();
+    }
     this.level1.handleKeyboardEvent(event);
   }
+
+  // playAudioJump(){
+  //   if (this.audioJump == null)
+  //     this.audioJump = new Audio("../assets/sounds/Jump.wav");
+
+  //   if (!this.audioJumpPlaying){
+  //     this.audioJumpPlaying = true;
+  //     this.audioJump.load();  
+  //     this.audioJump.play();
+  //   }
+  //   this.audioJumpPlaying = false;
+  // }
 }
