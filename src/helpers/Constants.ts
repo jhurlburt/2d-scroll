@@ -18,4 +18,7 @@ export class Constants {
   static readonly BLOCK_TPF: number = 30;
   static readonly BLOCK_WIDTH: number = 58;
   static readonly BLOCK_HEIGHT: number = 58;
+  static readonly CHECKPOINT_BG_X: number = 1000;
+  static readonly CHECKPOINT_ENEMY_DROP_X: number = 600;
+  static readonly CHECKPOINT_ENEMY_DROP_Y: number = 0;
 } 

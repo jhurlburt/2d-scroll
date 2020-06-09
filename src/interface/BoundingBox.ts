@@ -7,12 +7,13 @@ export interface BoundingBox {
     hasCollidedLeft: string[];
     hasCollidedRight: string[];
     collisionObjectId: string[];
+    isTerminated: boolean;
 
     // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
-
-    resetCollided(): void;
+    getBounds(): Sprite;
     update(options : any): void;
     render(): void;
+    resetCollided(): void;
     toString(): string;
-    getBounds(): Sprite;
+    // isTerminated(): boolean;
   }

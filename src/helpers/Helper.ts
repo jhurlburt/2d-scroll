@@ -21,6 +21,15 @@ export class Helper {
       let block_top = element.getBounds().y - element.getBounds().frameHeight, block_bot = element.getBounds().y
       , block_rt = element.getBounds().x + element.getBounds().frameWidth, block_lt = element.getBounds().x;
 
+      // if ((orig_rt>=block_lt) && (orig_lt<=block_lt) && (orig_top< block_bot) && (orig_bot> block_top)){
+      //   char.hasCollidedRight.push( element.id );
+      // } else if ((orig_lt<=block_rt) && (orig_rt>=block_rt) && (orig_top< block_bot) && (orig_bot> block_top)){
+      //   char.hasCollidedLeft.push( element.id );
+      // } else if ((orig_bot>=block_top) && (orig_top<=block_top) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+      //   char.hasCollidedBottom.push( element.id );
+      // } else if ((orig_top<=block_bot) && (orig_bot>=block_bot) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+      //   char.hasCollidedTop.push( element.id );
+      // }
       let result : boolean = ((orig_bot>=block_top) && (orig_top<=block_bot)) && ((orig_rt>=block_lt) && (orig_lt<=block_rt));
       return result;
     }
@@ -44,18 +53,22 @@ export class Helper {
               block_rt = element.getBounds().x + element.getBounds().frameWidth, block_lt = element.getBounds().x;
 
           if ((dest_rt>=block_lt) && (dest_lt<=block_lt) && (orig_top< block_bot) && (orig_bot> block_top)){
+            char.hasCollidedRight.push( element.id );
             element.hasCollidedLeft.push( char.id );
             element.collisionObjectId.push( char.id );
 
           } else if ((dest_lt<=block_rt) && (dest_rt>=block_rt) && (orig_top< block_bot) && (orig_bot> block_top)){
+            char.hasCollidedLeft.push( element.id );
             element.hasCollidedRight.push( char.id );
             element.collisionObjectId.push( char.id );
 
           } else if ((dest_bot>=block_top) && (dest_top<=block_top) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+            char.hasCollidedBottom.push( element.id );
             element.hasCollidedTop.push( char.id );
             element.collisionObjectId.push( char.id );
 
           } else if ((dest_top<=block_bot) && (dest_bot>=block_bot) && (orig_rt> block_lt) && (orig_lt< block_rt)){
+            char.hasCollidedTop.push( element.id );
             element.hasCollidedBottom.push( char.id );
             element.collisionObjectId.push( char.id );
           }

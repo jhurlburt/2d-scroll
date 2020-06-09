@@ -1,7 +1,7 @@
-import { Sprite } from '../models/Sprite';
+import { Sprite } from './Sprite';
 import { Helper } from '../helpers/Helper';
 import { Constants } from '../helpers/Constants';
-import { Character } from '../models/Character';
+import { Character } from './Character';
 import { BoundingBox } from '../interface/BoundingBox'; 
 import { KEY_CODE } from '../helpers/Keyboard';
 import { Enemy } from './Enemy';
@@ -188,7 +188,6 @@ export class Level {
         ch_horz = this.mario.canScrollLeft( 0 - Constants.CHAR_HORZ );
         bg_horz = (ch_horz > 0 - Constants.CHAR_HORZ) ? this.canScrollLeft(0 - Constants.CHAR_HORZ - ch_horz) : 0;
       }
-
       //GET VERTICAL MOVEMENT
       if (this.key_jump) {
         bg_vert = this.canScrollUp( Constants.CHAR_JUMP, Constants.CHAR_MAX_VERT );
@@ -234,14 +233,14 @@ export class Level {
         en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
 
         let collided: BoundingBox[] = this.getCollisionObjects(enemy, bg_vert, en_vert, bg_horz, en_horz);
-        collided.forEach(obj => {
-          if (obj.collisionObjectId.includes( enemy.id )){
-            if (obj.hasCollidedTop.includes( enemy.id )) {
+        collided.forEach(element => {
+          if (element.collisionObjectId.includes( enemy.id )){
+            if (element.hasCollidedTop.includes( enemy.id )) {
               en_vert = 0;
-            } else if (obj.hasCollidedLeft.includes( enemy.id )) { 
+            } else if (element.hasCollidedLeft.includes( enemy.id )) { 
               enemy.moveLeft = true;
               en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
-            } else if (obj.hasCollidedRight.includes( enemy.id )) {
+            } else if (element.hasCollidedRight.includes( enemy.id )) {
               enemy.moveLeft = false;
               en_horz = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
             }
@@ -249,19 +248,57 @@ export class Level {
         });
         if (collided.length < 1) en_horz = 0;
 
+        // enemy.update({
+        //   bg_scroll_vert : 0-bg_vert
+        //   , bg_scroll_horz : 0-bg_horz
+        //   , char_scroll_vert : en_vert
+        //   , char_scroll_horz : en_horz   
+        // });
+
+        //Character and enemy occupy the same space
+        if (Helper.isCollided(this.mario, enemy)){          
+          this.mario.collisionObjectId.push( enemy.id );
+
+          //If char bt is 0 -> 20% below enemy tp
+          let orig_top=this.mario.getBounds().y-this.mario.getBounds().frameHeight, 
+              orig_bot=this.mario.getBounds().y, 
+              orig_rt=this.mario.getBounds().x+this.mario.getBounds().frameWidth, 
+              orig_lt=this.mario.getBounds().x;
+
+          let block_top = enemy.getBounds().y-enemy.getBounds().frameHeight, 
+              block_bot = enemy.getBounds().y, 
+              block_rt = enemy.getBounds().x+enemy.getBounds().frameWidth, 
+              block_lt = enemy.getBounds().x;
+            
+          if ((orig_top < block_top) && (orig_bot < block_top + enemy.getBounds().frameHeight * .2)) {
+            console.log("Collide top")
+            if ((orig_lt < block_rt) && (orig_rt > block_lt + enemy.getBounds().frameWidth * .5)) {
+              //If char rt is 50 -> 100% right of enemy lt
+              console.log("Collide left")
+              //Animate enemy death then remove from level
+              enemy.isTerminated = true;
+            } else if ((orig_rt > block_lt) && (orig_lt < block_rt - enemy.getBounds().frameWidth * .5)) {
+              //If char lt is 50 -> 100% left of enemy right
+              console.log("Collide left")
+              //Animate enemy death then remove from level
+              enemy.isTerminated = true;
+            } else {
+              this.mario.isTerminated = true;
+            }
+          } else {
+            this.mario.isTerminated = true;
+          }
+        }
         enemy.update({
           bg_scroll_vert : 0-bg_vert
           , bg_scroll_horz : 0-bg_horz
           , char_scroll_vert : en_vert
           , char_scroll_horz : en_horz   
         });
-
-        if (Helper.isCollided(this.mario, enemy)){
-          this.mario.collisionObjectId.push( enemy.id );
-        }
         if ((enemy.getBounds().x + enemy.getBounds().frameWidth) < 0){
           this.removeEnemy(enemy);
         }
+
       });//this.enemies.forEach...
 
       //UPDATE CHARACTER
@@ -281,16 +318,14 @@ export class Level {
       this.bounds.sourceY += bg_vert;
 
       //CHECKPOINT LOGIC
-      let mario_x = this.mario.getBounds().x; 
-      let orig_x = mario_x + this.bounds.sourceX; 
-      let enemy_x = mario_x + 600;
-      let enemy_y = 0;
-      if ((orig_x > 1200 && !this.historyLog.includes("Checkpoint1"))
-        || (orig_x > 2400 && !this.historyLog.includes("Checkpoint2"))
-        || (orig_x > 3600 && !this.historyLog.includes("Checkpoint3"))){
-        let count = (orig_x - (orig_x % 1200)) / 1200;        
+      let char_x = this.mario.getBounds().x; 
+      let orig_x = char_x + this.bounds.sourceX; 
+      let enemy_x = char_x + Constants.CHECKPOINT_ENEMY_DROP_X;
+      let enemy_y = Constants.CHECKPOINT_ENEMY_DROP_Y;
+      let count = (orig_x - (orig_x % Constants.CHECKPOINT_BG_X)) / Constants.CHECKPOINT_BG_X;
+      if (!this.historyLog.includes("Checkpoint" + count)){
         this.historyLog.push("Checkpoint" + count);
-        this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : (count % 2) == 0 });          
+        this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : (count % 2) == 0 });
       }
     };
   

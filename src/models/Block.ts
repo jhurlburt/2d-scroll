@@ -17,6 +17,7 @@ export abstract class Block implements BoundingBox {
   hasCollidedRight: string[];
   collisionObjectId: string[];
   id: string;
+  isTerminated: boolean;
 
   // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
 

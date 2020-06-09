@@ -7,7 +7,7 @@ export class StandPipe extends Block {
   }
   
   public update (options) {
-    this.getBounds().update(options.vert, options.scroll);
+    return this.getBounds().update(options.vert, options.scroll);
   };
 }
   

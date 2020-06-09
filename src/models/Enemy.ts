@@ -20,6 +20,11 @@ export class Enemy extends Block {
     let scroll_vert : number = options.bg_scroll_vert + options.char_scroll_vert,
         scroll_horz : number = options.bg_scroll_horz + options.char_scroll_horz;
 
+    // if (this.collisionObjectId.length > 0){
+    // }  
+    if (this.isTerminated){
+      console.log("Hey, dog. This aint for me, neither!")
+    }
     this.bounds.forEach(sprite => {
       sprite.update(scroll_vert, scroll_horz);  
     });

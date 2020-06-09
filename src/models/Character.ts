@@ -46,26 +46,24 @@ export class Character extends Block {
       let scroll_vert : number = options.bg_scroll_vert + options.char_scroll_vert,
           scroll_horz : number = options.bg_scroll_horz + options.char_scroll_horz;
 
-      if (this.collisionObjectId.length > 0){
-        console.log("Yo, dog. This aint for me, man")
+      // if (this.collisionObjectId.length > 0){
+      //   console.log("Yo, dog. This aint for me, man")
+      // }
+      if (this.isTerminated){
+        console.log("Hey, dog. This aint for me, neither!")
       }
       if (scroll_vert < 0 && scroll_horz < 0) {
-        action = ACTION.JUMP_LEFT;
-  
+        action = ACTION.JUMP_LEFT;  
       } else if (scroll_vert < 0 && scroll_horz > 0) {
-        action = ACTION.JUMP_RIGHT;
-  
+        action = ACTION.JUMP_RIGHT;  
       } else if (scroll_vert < 0 && scroll_horz == 0) {
-        action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
-          ACTION.JUMP_LEFT :
-          ACTION.JUMP_RIGHT;
-  
+        action = (this.lastAction == ACTION.WALK_LEFT || 
+                  this.lastAction == ACTION.JUMP_LEFT || 
+                  this.lastAction == ACTION.STAND_LEFT) ? ACTION.JUMP_LEFT : ACTION.JUMP_RIGHT;  
       } else if (scroll_horz < 0) {
-        action = ACTION.WALK_LEFT;
-  
+        action = ACTION.WALK_LEFT;  
       } else if (scroll_horz > 0) {
-        action = ACTION.WALK_RIGHT;
-  
+        action = ACTION.WALK_RIGHT;  
       } else if (scroll_horz == 0) {
         action = (this.lastAction == ACTION.WALK_LEFT || this.lastAction == ACTION.JUMP_LEFT || this.lastAction == ACTION.STAND_LEFT) ?
           ACTION.STAND_LEFT :

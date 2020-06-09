@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Constants } from '../helpers/Constants';
-import { Level } from '../models/Background';
+import { Level } from '../models/Level';
 import { Character } from '../models/Character';
 import { StandPipe } from '../models/StandPipe';
 import { Enemy } from '../models/Enemy';
@@ -54,16 +54,14 @@ export class AppComponent {
   }
 
   private handleCheckpoint(options){
-    if (options.name == "Checkpoint"){
-      this.level1.addEnemy(
-        new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-          this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-          , x: options.x, y: options.y, moveLeft: options.moveLeft
-          , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
-          , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT    
-          , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
-      );
-    }
+    this.level1.addEnemy(
+      new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
+        this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+        , x: options.x, y: options.y, moveLeft: options.moveLeft
+        , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
+        , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT    
+        , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+    );
   }
 
   afterLoading() {
