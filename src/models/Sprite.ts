@@ -55,6 +55,7 @@ export class Sprite {
     };
 
     render() {
+
       this.context.drawImage(
         this.image,         // img  Source image object	Sprite sheet
         this.sourceX,       // sx	Source x	Frame index times frame width
