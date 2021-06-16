@@ -4,7 +4,6 @@ import { Level } from '../models/Level';
 import { Character } from '../models/Character';
 import { StandPipe } from '../models/StandPipe';
 import { Enemy } from '../models/Enemy';
-import { Sprite } from 'src/models/Sprite';
 import { Terra } from 'src/models/Terra';
 import { BrickBlock } from 'src/models/BrickBlock';
 import { MysteryBlock } from 'src/models/MysteryBlock';
@@ -17,12 +16,7 @@ import { KEY_CODE } from 'src/helpers/Keyboard';
 })
 export class AppComponent {
   @ViewChild('canvasE1') canvasE1: ElementRef<HTMLCanvasElement>;
-  @ViewChild('imgMarioWalkingRight') imgMarioWalkRt: ElementRef<HTMLImageElement>;
-  @ViewChild('imgMarioWalkingLeft') imgMarioWalkLt: ElementRef<HTMLImageElement>;
-  @ViewChild('imgMarioStillLeft') imgMarioStillLt: ElementRef<HTMLImageElement>;
-  @ViewChild('imgMarioStillRight') imgMarioStillRt: ElementRef<HTMLImageElement>;
-  @ViewChild('imgMarioJumpRight') imgMarioJumpRt: ElementRef<HTMLImageElement>;
-  @ViewChild('imgMarioJumpLeft') imgMarioJumpLt: ElementRef<HTMLImageElement>;
+  @ViewChild('inMemoryCanvas') inMemoryCanvas: ElementRef<HTMLCanvasElement>;
   @ViewChild('imgBackground1_1') imgBackground1_1: ElementRef<HTMLImageElement>;
   @ViewChild('imgBlock') imgBlock: ElementRef<HTMLImageElement>;
   @ViewChild('imgBlock_hit') imgBlock_hit: ElementRef<HTMLImageElement>;
@@ -33,13 +27,14 @@ export class AppComponent {
   @ViewChild('audioTheme') audioMainTheme: ElementRef<HTMLAudioElement>;
   @ViewChild('audioJump') audioJump: ElementRef<HTMLAudioElement>;
   
-  title: string = 'Super Mario Brothers';
-  isdrawing: boolean = false;
-  imagesLoaded: number = 0;
-  totalImages: number = 13;
-  level1: Level;
+  private title: string = 'Super Mario Brothers';
+  private isdrawing: boolean = false;
+  private imagesLoaded: number = 0;
+  private totalImages: number = 5;
+  private level1: Level;
   // audioJump: any;
-  audioJumpPlaying: boolean = false;
+  private audioJumpPlaying: boolean = false;
+
 
   private gameLoop() {
     console.log("begin gameLoop()");
@@ -55,12 +50,11 @@ export class AppComponent {
 
   private handleCheckpoint(options){
     this.level1.addEnemy(
-      new Enemy({ context: this.canvasE1.nativeElement.getContext('2d'), images: [ 
-        this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-        , x: options.x, y: options.y, moveLeft: options.moveLeft
-        , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
-        , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT    
-        , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })        
+      new Enemy({ context: this.canvasE1.nativeElement.getContext('2d')
+      , dataMaps: [ this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
+      , x: options.x, y: options.y, moveLeft: options.moveLeft
+      , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height 
+      })        
     );
   }
 
@@ -72,57 +66,65 @@ export class AppComponent {
     console.log("begin allImagesLoaded()");
     this.canvasE1.nativeElement.height = Constants.CANVAS_HEIGHT;
     this.canvasE1.nativeElement.width = Constants.CANVAS_WIDTH;
-    let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d');
+    let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d', { alpha: false });
 
     this.audioMainTheme.nativeElement.play();
 
-    this.level1 = new Level (
-      new Sprite({ context: ctx, image: this.imgBackground1_1.nativeElement,
-        sourceWidth: this.canvasE1.nativeElement.width, sourceHeight: this.canvasE1.nativeElement.height,
-        frameWidth: this.canvasE1.nativeElement.width, frameHeight: this.canvasE1.nativeElement.height }),
-      new Character({ context: ctx, images: [ 
-          this.imgMarioStillLt.nativeElement
-        , this.imgMarioStillRt.nativeElement
-        , this.imgMarioWalkLt.nativeElement
-        , this.imgMarioWalkRt.nativeElement
-        , this.imgMarioJumpLt.nativeElement
-        , this.imgMarioJumpRt.nativeElement ]
-      , x: Constants.CHAR_X_POS, y: Constants.CHAR_Y_POS
-      , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
-      , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT
-      , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
-    ); 
+    this.level1 = new Level ({ 
+      context: ctx, 
+      image:        this.imgBackground1_1.nativeElement,
+      sourceWidth:  this.canvasE1.nativeElement.width, 
+      sourceHeight: this.canvasE1.nativeElement.height,
+      frameWidth:   this.canvasE1.nativeElement.width, 
+      frameHeight:  this.canvasE1.nativeElement.height,
+      character:    new Character({ context: ctx, x: Constants.CHAR_X_POS, y: Constants.CHAR_Y_POS, canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
+    });
 
     this.level1.addEnemy(
-      new Enemy({ context: ctx, images: [ this.imgMushroomEnemyWalking.nativeElement, this.imgMushroomEnemyWalking.nativeElement ]
-      , x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true 
-      , sourceWidth:  Constants.CHAR_WIDTH, sourceHeight: Constants.CHAR_HEIGHT
-      , frameWidth:   Constants.CHAR_WIDTH, frameHeight:  Constants.CHAR_HEIGHT
-      , canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
+      new Enemy({ context: ctx, x: Constants.CHAR_X_POS + 600, y: 0, moveLeft: true })
     );
 
-    this.level1.addTerras([
-      new Terra({ context: ctx, images: [ null ], x: 0, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 3930, frameHeight: 150 })
-      , new Terra({ context: ctx, images: [ null ], x: 4069, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
-      , new Terra({ context: ctx, images: [ null ], x: 5098, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 850, frameHeight: 150 })
-      , new Terra({ context: ctx, images: [ null ], x: 5948, y: 800, sourceWidth: 120, sourceHeight: 115, frameWidth: 3200, frameHeight: 150 })
-    ]);
+    for (var i=0; i<100; i++){
+      // if (i != 63 && i != 25 && i != 26 && i != 27){
+        this.level1.addTerras([ new Terra({ context: ctx, x: i * Constants.BLOCK_WIDTH, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT }) ]);
+        // this.level1.addTerras([ new Terra({ context: ctx, x: i * Constants.BLOCK_WIDTH, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT }) ]);
+      // }
+    }
+    // this.level1.addTerras(
+    //   [
+    //   new Terra({ context: ctx, x: 0, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 2, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 3, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 4, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 4, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 5, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 6, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 7, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 8, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 9, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: Constants.BLOCK_WIDTH * 10, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT })
+    //   , new Terra({ context: ctx, x: 4069, y: 650, frameWidth: 850, frameHeight: 1 })
+    //   , new Terra({ context: ctx, x: 5098, y: 650, frameWidth: 850, frameHeight: 1 })
+    //   , new Terra({ context: ctx, x: 5948, y: 650, frameWidth: 3200, frameHeight: 1 })
+    // ]
+    // );
 
     this.level1.addPipes([
-      new StandPipe({ context: ctx, images: [ null ], x: 1595, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 115 })
-      , new StandPipe({ context: ctx, images: [ null ], x: 2170, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 170 })
-      , new StandPipe({ context: ctx, images: [ null ], x: 2630, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
-      , new StandPipe({ context: ctx, images: [ null ], x: 3245, y: 650, sourceWidth: 120, sourceHeight: 115, frameWidth: 120, frameHeight: 230 })
+        new StandPipe({ context: ctx, x: 1595, y: 598 })  //y-coordinate is the top most edge
+      , new StandPipe({ context: ctx, x: 2170, y: 552 })  //x-coordinate is the left most edge
+      , new StandPipe({ context: ctx, x: 2630, y: 552 })
+      , new StandPipe({ context: ctx, x: 3245, y: 552 })
     ]);
 
     this.level1.addBlocks([
-      new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 })
-      , new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 2 })
-      , new BrickBlock({ context: ctx, images: [ this.imgBrick.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 4 })
-      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 914 })
-      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH })
-      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 3 })
-      , new MysteryBlock({ context: ctx, images: [ this.imgBlock.nativeElement, this.imgBlock_hit.nativeElement, this.imgBlock_after.nativeElement ], x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
+      new MysteryBlock({ context: ctx, x: 914,  y: Constants.PLATFORM_1_Y }) //484
+      , new BrickBlock({ context: ctx, x: 1141,  y: Constants.PLATFORM_1_Y })
+      , new BrickBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_1_Y })
+      , new BrickBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 4,  y: Constants.PLATFORM_1_Y })
+      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH,  y: Constants.PLATFORM_1_Y })
+      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 3,  y: Constants.PLATFORM_1_Y })
+      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
     ]);
     
     this.level1.notifyParent.subscribe((options) => {
@@ -138,23 +140,8 @@ export class AppComponent {
   @HostListener('window:keyup', ['$event'])
   keyboardEvent(event: KeyboardEvent) {    
     if ((event.type == "keydown") && (event.keyCode == KEY_CODE.SPACE)){
-      // this.playAudioJump();
-      // this.sndMainTheme.nativeElement.pause();
-      // this.sndJump.nativeElement.load();
       this.audioJump.nativeElement.play();
     }
     this.level1.handleKeyboardEvent(event);
   }
-
-  // playAudioJump(){
-  //   if (this.audioJump == null)
-  //     this.audioJump = new Audio("../assets/sounds/Jump.wav");
-
-  //   if (!this.audioJumpPlaying){
-  //     this.audioJumpPlaying = true;
-  //     this.audioJump.load();  
-  //     this.audioJump.play();
-  //   }
-  //   this.audioJumpPlaying = false;
-  // }
 }

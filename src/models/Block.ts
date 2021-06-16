@@ -1,40 +1,24 @@
 import { BoundingBox } from '../interface/BoundingBox';
 import { Sprite } from '../models/Sprite';
-import { Constants } from '../helpers/Constants';
 import { Helper } from 'src/helpers/Helper';
-import { Output, EventEmitter } from '@angular/core';
 
 export abstract class Block implements BoundingBox {
-  protected lastAction: number = 0;  
+  protected lastAction: number = 0;
   protected bounds: Sprite[];
   protected step: number = 0;
   protected offset: number = 0;
-  protected images: HTMLImageElement[];
   protected canUpdate: boolean = true;
-  hasCollidedTop: string[];
-  hasCollidedBottom: string[];
-  hasCollidedLeft: string[];
-  hasCollidedRight: string[];
-  collisionObjectId: string[];
-  id: string;
-  isTerminated: boolean;
-
-  // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
+  public hasCollidedTop: string[];
+  public hasCollidedBottom: string[];
+  public hasCollidedLeft: string[];
+  public hasCollidedRight: string[];
+  public collisionObjectId: string[];
+  public id: string;
+  public isTerminated: boolean;
 
   constructor(options) {
-    this.id = options.id || Helper.newGuid();
-    this.images = options.images;
-    this.bounds = [ 
-      new Sprite({ 
-        context: options.context, image: options.images[0]
-        , x: options.x, y: options.y           || Constants.PLATFORM_1_Y
-        , ticksPerFrame: options.ticksPerFrame || Constants.BLOCK_TPF
-        , sourceWidth:   options.sourceWidth   || Constants.BLOCK_WIDTH
-        , sourceHeight:  options.sourceHeight  || Constants.BLOCK_HEIGHT
-        , frameWidth:    options.frameWidth    || Constants.BLOCK_WIDTH
-        , frameHeight:   options.frameHeight   || Constants.BLOCK_HEIGHT
-      })
-    ];
+    this.id = options.id || Helper.newGuid(); 
+    this.bounds = options.sprites;    
   }
 
   abstract update (options) : void;
@@ -45,8 +29,8 @@ export abstract class Block implements BoundingBox {
     }
   }
   
-  public render () {
-    this.getBounds().render();
+  public render ( sourceX: number, sourceY: number, sourceWidth: number, sourceHeight: number ) {
+    this.getBounds().render( sourceX, sourceY, sourceWidth, sourceHeight );
   };
 
   public hasCollided () {

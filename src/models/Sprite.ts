@@ -1,79 +1,117 @@
-export class Sprite {
-    context: CanvasRenderingContext2D;
-    image: HTMLImageElement;
-    numberOfFrames: number = 1;
-    frameIndex: number = 0;
-    ticksPerFrame: number = 0;
-    tickCount: number = 0;
-    x: number = 0;
-    y: number = 0;
-    frameWidth: number = 0;
-    frameHeight: number = 0;
-    sourceWidth: number = 0;
-    sourceHeight: number = 0;
-    sourceX: number = 0;
-    sourceY: number = 0;
+const SIZE_MULTIPLIER = 4;
 
-    constructor(options) {
-      this.ticksPerFrame = options.ticksPerFrame || 0;
-      this.context = options.context || null;
-      this.image = options.image || null;
-      this.x = options.x || 0;
-      this.y = options.y || 0;
-      this.frameWidth = options.frameWidth || options.image.width;
-      this.frameHeight = options.frameHeight || options.image.height;
-      this.sourceWidth = options.sourceWidth || options.image.width;
-      this.sourceHeight = options.sourceHeight || options.image.height;
+export class Sprite  {
+  public x: number = 0;
+  public y: number = 0;
+  public frameWidth: number = 0;
+  public frameHeight: number = 0;
+  private context: CanvasRenderingContext2D;
+  private dataMaps: number[][][];
+  private frameIndex: number = 0;
+  private ticksPerFrame: number = 0;
+  private tickCount: number = 0;
+  private direction: string = "";
+  private colorPallette: string[];
+  private canvases: HTMLCanvasElement[];
+  // private canvas: HTMLCanvasElement;
 
-      if (options.image == null){
-        this.numberOfFrames = 1;
-      } else {
-        this.numberOfFrames = options.numberOfFrames || Math.trunc(this.image.width / this.frameWidth);
-      }
+  constructor(options) {
+    this.ticksPerFrame = options.ticksPerFrame || 10;
+    this.context = options.context || null;
+    this.x = options.x || 0;
+    this.y = options.y || 0;
+    this.dataMaps = options.dataMaps || null;
+    this.direction = options.direction || "right";
+    this.colorPallette = options.colorPallette || ['#FFF','#cc1616','#6e3d23','#ffc17a','#dbde31','#333','#182a99'];
+    this.frameWidth = options.frameWidth || 0;
+    this.frameHeight = options.frameHeight || 0;
+    this.canvases = [];
+    // this.canvas = null;
+
+    if (this.frameWidth == 0){
+      this.frameWidth = (this.dataMap != null)
+        ? (this.dataMap.length * SIZE_MULTIPLIER) 
+        : 0;
     }
+    if (this.frameHeight == 0){
+      this.frameHeight = (this.dataMap != null)
+        ? (this.dataMap[0].length * SIZE_MULTIPLIER)
+        : 0;
+    }
+  }
 
-    update(vert: number, scroll: number) {
-      this.tickCount += 1;
-      if (this.tickCount > this.ticksPerFrame) {
-        this.tickCount = 0;
-        // If the current frame index is in range
-        if (this.frameIndex < this.numberOfFrames - 1) {
-          this.frameIndex += 1;
-        } else {
-          this.frameIndex = 0;
+  get dataMap(): number[][] {
+    return (this.dataMaps.length > this.frameIndex) 
+    ? this.dataMaps[this.frameIndex]
+    : null;
+  }
+
+  get numberOfFrames(): number {
+    return this.dataMaps.length;
+  }
+
+  update(vert: number, scroll: number) {
+    this.tickCount += 1;
+    if (this.tickCount > this.ticksPerFrame) {
+      this.tickCount = 0;
+      // If the current frame index is in range
+      if (this.frameIndex < this.numberOfFrames - 1) {
+        this.frameIndex += 1;
+      } else {
+        this.frameIndex = 0;
+      }
+    } 
+    this.x += scroll;
+    this.y += vert;
+  };
+
+  render(srcX: number = 0, srcY: number = 0, srcWidth: number = 1200, srcHeight: number = 800) {
+    // var ctx = this.context;
+    if (this.canvases[this.frameIndex] == null){
+      this.canvases[this.frameIndex] = document.createElement('canvas');
+      this.canvases[this.frameIndex].width = this.dataMap[0].length * SIZE_MULTIPLIER;
+      this.canvases[this.frameIndex].height = this.dataMap.length * SIZE_MULTIPLIER;
+
+      var ctx = this.canvases[this.frameIndex].getContext('2d'); 
+    
+      if (this.dataMap != null){
+        //traversing the image y-axis
+        for (var i=0; i<this.dataMap.length; i++){
+          // var y =  this.y + (SIZE_MULTIPLIER * i);
+          var y =  (SIZE_MULTIPLIER * i);
+    
+          //traversing the image x-axis
+          for (var j=0; j<this.dataMap[0].length; j++){
+            // var x = this.x + (SIZE_MULTIPLIER * j);
+            var x = (SIZE_MULTIPLIER * j);
+            
+            var color = (this.direction == "right") ? 
+              this.dataMap[i][j] :
+              this.dataMap[i][this.dataMap[0].length-1-j]; //SMACK UP, FLIP IT, REVERSE IT
+  
+            if (color != 0){
+              if(((x + SIZE_MULTIPLIER >= srcX) && (x < srcX + srcWidth)) &&
+                  ((y + SIZE_MULTIPLIER >= srcY) && (y < srcY + srcHeight))) {
+                    ctx.fillStyle = this.colorPallette[color];
+                    ctx.fillRect(x, y, SIZE_MULTIPLIER, SIZE_MULTIPLIER);
+                    
+              }
+            }
+          }
         }
       }
-      this.sourceX = this.frameIndex * this.frameWidth;
-      this.x += scroll;
-      this.y += vert;
-    };
+    }
+    this.context.drawImage(this.canvases[this.frameIndex], this.x, this.y);
+  };
 
-    stopUpdate() {
-      this.frameIndex = 0;
-      this.ticksPerFrame = 0;
-      this.numberOfFrames = 1;
-    };
+  stopUpdate() {
+    this.frameIndex = 0;
+    this.ticksPerFrame = 0;
+      // this.numberOfFrames = 1;
+  };
 
-    render() {
-
-      this.context.drawImage(
-        this.image,         // img  Source image object	Sprite sheet
-        this.sourceX,       // sx	Source x	Frame index times frame width
-        this.sourceY,       // sy	Source y	0
-        this.sourceWidth,   // sw	Source width	Frame width
-        this.sourceHeight,  // sh	Source height	Frame height 
-        this.x,             // dx	Destination x	0
-        this.y,             // dy	Destination y	0
-        this.frameWidth,    // dw	Destination width	Frame width
-        this.frameHeight);  // dh	Destination height	Frame height
-    };
-
-    toString () {
-      return "x: " + this.x + 
-        ", y: " + this.y +
-        ", frameWidth: " + this.frameWidth + 
-        ", frameHeight: " + this.frameHeight +
-        ", sourceWidth: " + this.sourceWidth + 
-        ", sourceHeight: " + this.sourceHeight;
-    };
+  toString () {
+    return "x: " + this.x + 
+      ", y: " + this.y;
+  };
 }

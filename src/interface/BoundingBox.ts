@@ -11,8 +11,8 @@ export interface BoundingBox {
 
     // @Output() notifyParent: EventEmitter<any> = new EventEmitter();
     getBounds(): Sprite;
-    update(options : any): void;
-    render(): void;
+    update( options : any ): void;
+    render( srcX: number, srcY: number, srcWidth: number, srcHeight: number ): void;
     resetCollided(): void;
     toString(): string;
     // isTerminated(): boolean;
