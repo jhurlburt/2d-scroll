@@ -1,6 +1,7 @@
 import { Block } from './Block';
 import { Output, EventEmitter } from '@angular/core';
 import { Sprite } from './Sprite';
+import { Constants } from 'src/helpers/Constants';
 
 //0,=bg //1,=shirt //2,=hair/shoes //3,=skin //4,=button //5,=eyes/mustache //6,=pants
 const colorPallette = [
@@ -35,7 +36,12 @@ export class BrickBlock extends Block {
   constructor(options) {
     super({
       sprites: [
-        new Sprite({ context: options.context, dataMaps: [ block ], x: options.x, y: options.y, colorPallette: colorPallette })
+        new Sprite({ 
+          context: options.context, 
+          dataMaps: [ block ], 
+          x: options.x, 
+          y: options.y || Constants.PLATFORM_1_Y, 
+          colorPallette: colorPallette })
       ]
     });
   }

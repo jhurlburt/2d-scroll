@@ -1,3 +1,5 @@
+import { Constants } from "src/helpers/Constants";
+
 const SIZE_MULTIPLIER = 4;
 
 export class Sprite  {
@@ -16,7 +18,7 @@ export class Sprite  {
   // private canvas: HTMLCanvasElement;
 
   constructor(options) {
-    this.ticksPerFrame = options.ticksPerFrame || 10;
+    this.ticksPerFrame = options.ticksPerFrame || Constants.CHAR_TPF;
     this.context = options.context || null;
     this.x = options.x || 0;
     this.y = options.y || 0;

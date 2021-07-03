@@ -53,7 +53,7 @@ export class Enemy extends Block {
   constructor(options) {
     super({
       x: options.x,
-      y: options.y,
+      y: options.y || 0,
       sprites: [
         new Sprite({ context: options.context, dataMaps: [ step1CM, step2CM ], x: options.x, y: options.y, colorPallette: colorPallette })] //WALK LEFT
     });

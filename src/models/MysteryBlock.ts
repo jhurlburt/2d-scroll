@@ -1,3 +1,4 @@
+import { Constants } from 'src/helpers/Constants';
 import { Block } from './Block';
 import { Sprite } from './Sprite';
 
@@ -53,7 +54,12 @@ const block2 = [
       x: options.x,
       y: options.y,
       sprites: [
-        new Sprite({ context: options.context, dataMaps: [ block1 ], x: options.x, y: options.y, colorPallette: colorPallette })] //WALK LEFT
+        new Sprite({ 
+          context: options.context, 
+          dataMaps: [ block1 ], 
+          x: options.x, 
+          y: options.y || Constants.PLATFORM_1_Y, 
+          colorPallette: colorPallette })] //WALK LEFT
     });
   }
 
