@@ -72,7 +72,7 @@ export class LongPipe extends Pipe {
   constructor(options) {
     super({
         context: options.context, 
-        dataMap: [ dataMap ], 
+        dataMap: dataMap, 
         x: options.x, 
         y: options.y || 484, 
         colorPallette: colorPallette

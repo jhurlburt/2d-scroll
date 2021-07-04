@@ -8,7 +8,7 @@ export abstract class Pipe extends Block {
       sprites: [
         new Sprite({ 
           context: options.context, 
-          dataMaps: options.dataMap, 
+          dataMaps: [ options.dataMap ], 
           x: options.x, 
           y: options.y, 
           colorPallette: options.colorPallette })] //, frameWidth: 128, frameHeight: 152

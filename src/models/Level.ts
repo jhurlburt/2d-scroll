@@ -9,6 +9,7 @@ import { Terra } from './Terra';
 import { Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { Pipe } from './Pipe';
+import { currentId } from 'async_hooks';
 
 export class Level {
   // private bounds: Sprite2;
@@ -37,6 +38,8 @@ export class Level {
   private sourceHeight: number = 0;
   private x: number = 0;
   private y: number = 0;
+  private flPReviousTime = 0;
+  private flCurrentTime = Date.now;
 
   constructor( options ) {
     this.context = options.context || null;
@@ -71,7 +74,7 @@ export class Level {
   private canScrollUp (vert: number = Constants.CHAR_JUMP,  max: number = Character.CHAR_MAX_VERT) {
     let topEdge = this.platform_y - max; //-1, -10, -100, -200
     return this.sourceY + vert < topEdge ? topEdge - this.sourceY : vert;
-  };
+  }; 
 
   private canScrollDown (vert: number = Constants.GRAVITY) {
     var bottomEdge = this.platform_y;

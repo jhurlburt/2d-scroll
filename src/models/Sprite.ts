@@ -32,12 +32,12 @@ export class Sprite  {
 
     if (this.frameWidth == 0){
       this.frameWidth = (this.dataMap != null)
-        ? (this.dataMap.length * SIZE_MULTIPLIER) 
+        ? (this.dataMap[0].length * SIZE_MULTIPLIER) 
         : 0;
     }
     if (this.frameHeight == 0){
       this.frameHeight = (this.dataMap != null)
-        ? (this.dataMap[0].length * SIZE_MULTIPLIER)
+        ? (this.dataMap.length * SIZE_MULTIPLIER)
         : 0;
     }
   }

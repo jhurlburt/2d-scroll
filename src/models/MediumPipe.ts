@@ -58,7 +58,7 @@ export class MediumPipe extends Pipe {
   constructor(options) {
     super({
         context: options.context, 
-        dataMap: [ dataMap ], 
+        dataMap: dataMap, 
         x: options.x, 
         y: options.y || 540,  
         colorPallette: colorPallette

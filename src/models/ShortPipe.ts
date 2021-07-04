@@ -44,7 +44,7 @@ export class ShortPipe extends Pipe {
   constructor(options) {
     super({
         context: options.context, 
-        dataMap: [ dataMap ], 
+        dataMap: dataMap, 
         x: options.x, 
         y: options.y || 596, 
         colorPallette: colorPallette

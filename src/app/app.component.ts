@@ -36,8 +36,7 @@ export class AppComponent {
   private level1: Level;
   // audioJump: any;
   private audioJumpPlaying: boolean = false;
-
-
+  
   private gameLoop() {
     console.log("begin gameLoop()");
 
