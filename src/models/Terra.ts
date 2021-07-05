@@ -48,6 +48,8 @@ const colorPallette = [
 
 export class Terra extends Block {
 
+  static readonly HEIGHT: number = 96;
+
   constructor( options ) {
     super(
       { sprites: [ 

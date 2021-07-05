@@ -47,18 +47,39 @@ const step2CM = [
   [0,0,0,5,5,5,2,2,2,5,5,5,5,5,5,0],
   [0,0,0,0,5,5,5,2,2,5,5,5,5,5,0,0]];
 
+const SPEED: number = 1;
+const STARTING_X: number = 800;
+const STARTING_Y: number = 0;
+
 export class Enemy extends Block {
-  public moveLeft: boolean;
+  private _moveLeft: boolean;
+  // private _velocity: number = SPEED;
 
   constructor(options) {
     super({
-      x: options.x,
-      y: options.y || 0,
+      x: options.x || STARTING_X,
+      y: options.y || STARTING_Y,
       sprites: [
-        new Sprite({ context: options.context, dataMaps: [ step1CM, step2CM ], x: options.x, y: options.y, colorPallette: colorPallette })] //WALK LEFT
+        new Sprite({ context: options.context, dataMaps: [ step1CM, step2CM ], x: options.x || STARTING_X, y: options.y || STARTING_Y, colorPallette: colorPallette })] //WALK LEFT
     });
-    this.moveLeft = options.moveLeft;
+    this._moveLeft = options.moveLeft;
   }
+
+  get moveLeft(): boolean {
+    return this._moveLeft;
+  }
+
+  set moveLeft(value: boolean) {
+    this._moveLeft = value;
+  }
+
+  get speed(): number {
+    return SPEED;
+  }
+
+  // set velocity(value: number){
+  //   this._velocity = value;
+  // }
   
   public update(options : any) {
     let scroll_vert : number = options.bg_scroll_vert + options.char_scroll_vert,

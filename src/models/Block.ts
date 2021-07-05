@@ -16,6 +16,13 @@ export abstract class Block implements BoundingBox {
   public id: string;
   public isTerminated: boolean;
 
+  static readonly PLATFORM_1_Y: number = 484;
+  static readonly PLATFORM_2_Y: number = Block.PLATFORM_1_Y  - 228;
+  // static readonly CHAR_JUMP: number = -1;
+  static readonly TPF: number = 30;
+  static readonly WIDTH: number = 64;
+  static readonly HEIGHT: number = 64;
+  
   constructor(options) {
     this.id = options.id || Helper.newGuid(); 
     this.bounds = options.sprites;    

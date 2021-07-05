@@ -29,7 +29,7 @@ const block = [
   [1,1,1,5,1,1,1,1,1,1,1,5,1,1,1,1],
   [1,1,1,5,1,1,1,1,1,1,1,5,1,1,1,1],
   [1,1,1,5,1,1,1,1,1,1,1,5,1,1,1,1],
-  [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]  ;
+  [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]];
 
 export class BrickBlock extends Block {
 
@@ -40,7 +40,7 @@ export class BrickBlock extends Block {
           context: options.context, 
           dataMaps: [ block ], 
           x: options.x, 
-          y: options.y || Constants.PLATFORM_1_Y, 
+          y: options.y || Block.PLATFORM_1_Y, 
           colorPallette: colorPallette })
       ]
     });

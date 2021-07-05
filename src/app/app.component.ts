@@ -11,6 +11,10 @@ import { ShortPipe } from '../models/ShortPipe';
 import { MediumPipe } from 'src/models/MediumPipe';
 import { LongPipe } from 'src/models/LongPipe';
 
+const REFRESH: number = 1; //lowering refresh rate increases game speed
+const CANVAS_HEIGHT: number = 800;
+const CANVAS_WIDTH: number = 1200;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -47,7 +51,7 @@ export class AppComponent {
         this.level1.update();
         this.level1.render();
         this.isdrawing = false;
-      }}, Constants.REFRESH);
+      }}, REFRESH);
   }
 
   private handleCheckpoint(options){
@@ -66,8 +70,8 @@ export class AppComponent {
 
   init(): void{
     console.log("begin allImagesLoaded()");
-    this.canvasE1.nativeElement.height = Constants.CANVAS_HEIGHT;
-    this.canvasE1.nativeElement.width = Constants.CANVAS_WIDTH;
+    this.canvasE1.nativeElement.height = CANVAS_HEIGHT;
+    this.canvasE1.nativeElement.width = CANVAS_WIDTH;
     let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d', { alpha: false });
 
     this.audioMainTheme.nativeElement.play();
@@ -79,16 +83,16 @@ export class AppComponent {
       sourceHeight: this.canvasE1.nativeElement.height,
       frameWidth:   this.canvasE1.nativeElement.width, 
       frameHeight:  this.canvasE1.nativeElement.height,
-      character:    new Character({ context: ctx, x: Constants.CHAR_X_POS, y: Constants.CHAR_Y_POS, canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
+      character:    new Character({ context: ctx, canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
     });
 
-    this.level1.addEnemy(
-      new Enemy({ context: ctx, x: Constants.CHAR_X_POS + 600, moveLeft: true })
-    );
+    // this.level1.addEnemy(
+    //   new Enemy({ context: ctx, moveLeft: true })
+    // );
 
     for (var i=0; i<100; i++){
       this.level1.addTerras([ 
-        new Terra({ context: ctx, x: i * Constants.BLOCK_WIDTH, y: Constants.CANVAS_HEIGHT - Constants.TERRA_HEIGHT }) ]);
+        new Terra({ context: ctx, x: i * Terra.WIDTH, y: CANVAS_HEIGHT - Terra.HEIGHT }) ]);
     }
 
     this.level1.addPipes([
@@ -101,11 +105,11 @@ export class AppComponent {
     this.level1.addBlocks([
       new MysteryBlock({ context: ctx, x: 914 }) //484
       , new BrickBlock({ context: ctx, x: 1141 })
-      , new BrickBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 2 })
-      , new BrickBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 4 })
-      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH })
-      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 3 })
-      , new MysteryBlock({ context: ctx, x: 1141 + Constants.BLOCK_WIDTH * 2,  y: Constants.PLATFORM_2_Y })
+      , new BrickBlock({ context: ctx, x: 1141 + BrickBlock.WIDTH * 2 })
+      , new BrickBlock({ context: ctx, x: 1141 + BrickBlock.WIDTH * 4 })
+      , new MysteryBlock({ context: ctx, x: 1141 + MysteryBlock.WIDTH })
+      , new MysteryBlock({ context: ctx, x: 1141 + MysteryBlock.WIDTH * 3 })
+      , new MysteryBlock({ context: ctx, x: 1141 + MysteryBlock.WIDTH * 2,  y: MysteryBlock.PLATFORM_2_Y })
     ]);
     
     this.level1.notifyParent.subscribe((options) => {

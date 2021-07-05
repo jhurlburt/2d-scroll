@@ -9,7 +9,11 @@ import { Terra } from './Terra';
 import { Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { Pipe } from './Pipe';
-import { currentId } from 'async_hooks';
+
+const GRAVITY: number = 1; //TODO: changing this to 3 breaks the mario stand action
+const CHECKPOINT_BG_X: number = 1000;
+const CHECKPOINT_ENEMY_DROP_X: number = 600;
+const CHECKPOINT_ENEMY_DROP_Y: number = 0;
 
 export class Level {
   // private bounds: Sprite2;
@@ -38,8 +42,9 @@ export class Level {
   private sourceHeight: number = 0;
   private x: number = 0;
   private y: number = 0;
-  private flPReviousTime = 0;
-  private flCurrentTime = Date.now;
+  private previousTime: number = 0;
+  private currentTime: number = Date.now();
+  private deltaTime: number = 0;
 
   constructor( options ) {
     this.context = options.context || null;
@@ -57,29 +62,30 @@ export class Level {
     this.enemies = [];
     this.pipes  = [];
     this.blocks = []; 
+    this.previousTime = Date.now();
   }
 
   @Output() notifyParent: EventEmitter<any> = new EventEmitter();
 
-  private canScrollRight (scroll: number = Constants.CHAR_HORZ) {
+  private canScrollRight (scroll: number) {
     let rightEdge = this.width - this.frameWidth;
     return this.sourceX + scroll > rightEdge ? rightEdge - this.sourceX : scroll;
   };
 
-  private canScrollLeft (scroll: number = 0 - Constants.CHAR_HORZ) {
+  private canScrollLeft (scroll: number = 0) {
     let leftEdge = 0;
     return this.sourceX + scroll < leftEdge ? leftEdge - this.sourceX : scroll;
   };
 
-  private canScrollUp (vert: number = Constants.CHAR_JUMP,  max: number = Character.CHAR_MAX_VERT) {
-    let topEdge = this.platform_y - max; //-1, -10, -100, -200
-    return this.sourceY + vert < topEdge ? topEdge - this.sourceY : vert;
-  }; 
+  // private canScrollUp (vert: number = Character.JUMP,  max: number = Character.MAX_VERT) {
+  //   let topEdge = this.platform_y - max; //-1, -10, -100, -200
+  //   return this.sourceY + vert < topEdge ? topEdge - this.sourceY : vert;
+  // }; 
 
-  private canScrollDown (vert: number = Constants.GRAVITY) {
-    var bottomEdge = this.platform_y;
-    return this.sourceY + vert > bottomEdge ? this.sourceY - bottomEdge : vert; //-1
-  };
+  // private canScrollDown (vert: number = Constants.GRAVITY) {
+  //   var bottomEdge = this.platform_y;
+  //   return this.sourceY + vert > bottomEdge ? this.sourceY - bottomEdge : vert; //-1
+  // };
 
   public handleKeyboardEvent(event: KeyboardEvent){
     if (event.type == "keydown"){
@@ -117,24 +123,21 @@ export class Level {
     let collided: BoundingBox[] = [];
 
     this.pipes.forEach(element => {
-      if (Helper.detectCollisionList(boundObj, [ element ], canvas_move_y, mario_move_y, canvas_move_x, character_move_x)) { 
+      if (Helper.detectCollisionList(boundObj, [ element ], canvas_move_y, mario_move_y, canvas_move_x, character_move_x)){
         collided.push( element ); 
         console.debug('pipe collided: ' + element.id);
-        return;
       }
     });
     this.blocks.forEach(element => {
       if (Helper.detectCollisionList(boundObj, [ element ], canvas_move_y, mario_move_y, canvas_move_x, character_move_x)) { 
         collided.push( element ); 
         console.debug('block collided: ' + element.id);
-        return;
       }
-    });
+    });    
     this.terras.forEach(element => {
       if (Helper.detectCollisionList(boundObj, [ element ], canvas_move_y, mario_move_y, canvas_move_x, character_move_x)) { 
         collided.push( element ); 
         console.debug('terra collided: ' + element.id);
-        return;
       }
     });
     return collided;
@@ -142,7 +145,7 @@ export class Level {
 
   public addEnemy (enemy : Enemy) {
     this.enemies.push(enemy);
-  }0
+  }
 
   private removeEnemy (enemy : Enemy){      
     const index = this.enemies.indexOf(enemy, 0);
@@ -203,13 +206,20 @@ export class Level {
   }
 
   public update () {
-    let canvas_y: number = 0, canvas_x: number = 0;
+    let canvas_y: number = 0, canvas_x: number = 0; 
     let char_y: number = 0, char_x: number = 0;
     //RESET COLLISIONS
     this.reset();
 
-    char_x = ( this.key_walk_right ) ? Constants.CHAR_HORZ: ( this.key_walk_left ) ? 0 - Constants.CHAR_HORZ : 0;
-    char_y = ( this.key_jump ) ? Constants.CHAR_JUMP: Constants.GRAVITY;
+    //mario position = mario position + mario velocity * dt
+    //mario velocity = mario velocity + mario gravity * dt
+
+    this.currentTime = Date.now();
+    this.deltaTime = this.currentTime - this.previousTime;
+    this.previousTime = this.currentTime;
+
+    char_x = ( this.key_walk_right ) ? this.mario.speed * this.deltaTime: ( this.key_walk_left ) ? 0 - this.mario.speed * this.deltaTime: 0;
+    char_y = ( this.key_jump ) ? this.mario.jump * this.deltaTime: GRAVITY * this.deltaTime;
 
     //CHARACTER COLLISION DETECTION
     let collided : BoundingBox[] = this.getCollisions(this.mario, canvas_y, char_y, canvas_x, char_x);
@@ -240,20 +250,20 @@ export class Level {
         }
       }
     });     
-    // if (collided.length < 1) char_x = 0;
 
     if (char_x > 0){
       char_x = this.mario.canScrollRight( char_x );
-      canvas_x = (char_x < Constants.CHAR_HORZ) ? this.canScrollRight(Constants.CHAR_HORZ - char_x) : 0;
+      if (char_x == 0){ console.debug("can scroll right? no way!") }
+      canvas_x = (char_x < (this.mario.speed * this.deltaTime)) ? (this.canScrollRight((this.mario.speed * this.deltaTime) - char_x)) : 0;
 
     } else if (char_x < 0){
       char_x = this.mario.canScrollLeft( char_x );
-      canvas_x = (char_x > 0 - Constants.CHAR_HORZ) ? this.canScrollLeft(0 - Constants.CHAR_HORZ - char_x) : 0;
+      canvas_x = (char_x > (0 - (this.mario.speed * this.deltaTime))) ? (this.canScrollLeft(0 - (this.mario.speed * this.deltaTime) - char_x)) : 0;
     }
     //UPDATE ENEMIES
     this.enemies.forEach(enemy => {
-      let enemy_y = Constants.GRAVITY;
-      let enemy_x = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
+      let enemy_y = GRAVITY * this.deltaTime;
+      let enemy_x = ( enemy.moveLeft ) ? 0 - (enemy.speed * this.deltaTime) : enemy.speed * this.deltaTime;
 
       let collided: BoundingBox[] = this.getCollisions(enemy, canvas_y, enemy_y, canvas_x, enemy_x);
       collided.forEach(element => {
@@ -262,10 +272,10 @@ export class Level {
             enemy_y = 0;
           } else if (element.hasCollidedLeft.includes( enemy.id )) { 
             enemy.moveLeft = true;
-            enemy_x = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
+            enemy_x = ( enemy.moveLeft ) ? (0 - (enemy.speed * this.deltaTime)) : (enemy.speed * this.deltaTime);
           } else if (element.hasCollidedRight.includes( enemy.id )) {
             enemy.moveLeft = false;
-            enemy_x = ( enemy.moveLeft ) ? 0 - Constants.ENEM_HORZ : Constants.ENEM_HORZ;
+            enemy_x = ( enemy.moveLeft ) ? (0 - (enemy.speed * this.deltaTime)) : (enemy.speed * this.deltaTime);
           }
         }
       });
@@ -333,11 +343,11 @@ export class Level {
     //CHECKPOINT LOGIC
     let mario_x = this.mario.getBounds().x; 
     let orig_x = mario_x + this.sourceX; 
-    let enemy_x = mario_x + Constants.CHECKPOINT_ENEMY_DROP_X;
-    let enemy_y = Constants.CHECKPOINT_ENEMY_DROP_Y;
-    let count = (orig_x - (orig_x % Constants.CHECKPOINT_BG_X)) / Constants.CHECKPOINT_BG_X;
+    let enemy_x = mario_x + CHECKPOINT_ENEMY_DROP_X;
+    let enemy_y = CHECKPOINT_ENEMY_DROP_Y;
+    let count = (orig_x - (orig_x % CHECKPOINT_BG_X)) / CHECKPOINT_BG_X;
 
-    if (!this.historyLog.includes("Checkpoint" + count)){
+  if (!this.historyLog.includes("Checkpoint" + count)){
       this.historyLog.push("Checkpoint" + count);
       this.notifyParent.emit({ name : "Checkpoint", x : enemy_x, y : enemy_y, moveLeft : (count % 2) == 0 });
     }

@@ -47,7 +47,8 @@ const block2 = [
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,5],
   [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]];
 
-  export class MysteryBlock extends Block {
+  
+export class MysteryBlock extends Block {
 
   constructor(options) {
     super({
@@ -58,7 +59,7 @@ const block2 = [
           context: options.context, 
           dataMaps: [ block1 ], 
           x: options.x, 
-          y: options.y || Constants.PLATFORM_1_Y, 
+          y: options.y || Block.PLATFORM_1_Y, 
           colorPallette: colorPallette })] //WALK LEFT
     });
   }
