@@ -56,22 +56,22 @@ export class Helper {
           , boundObj_rt = boundObj.getBounds().x + boundObj.getBounds().frameWidth
           , boundObj_lt = boundObj.getBounds().x;
 
-          if ((char_rt_dest +1 >= boundObj_lt) && (char_lt_dest <= boundObj_lt) && (char_top_now < boundObj_bot) && (char_bot_now > boundObj_top)){
+          if ((char_rt_dest + 1 >= boundObj_lt) && (char_lt_dest < boundObj_lt) && (char_top_now < boundObj_bot) && (char_bot_now > boundObj_top)){
             char.hasCollidedRight.push( boundObj.id );
             boundObj.hasCollidedLeft.push( char.id );
             boundObj.collisionObjectId.push( char.id );
 
-          } else if ((char_rt_dest >= boundObj_rt) && (char_lt_dest -1 <= boundObj_rt) && (char_top_now < boundObj_bot) && (char_bot_now > boundObj_top)){
+          } else if ((char_lt_dest - 1 <= boundObj_rt) && (char_rt_dest > boundObj_rt) && (char_top_now < boundObj_bot) && (char_bot_now > boundObj_top)){
             char.hasCollidedLeft.push( boundObj.id );
             boundObj.hasCollidedRight.push( char.id );
             boundObj.collisionObjectId.push( char.id );
 
-          } else if ((char_top_dest <= boundObj_top) && (char_bot_dest -1 >= boundObj_top) && (char_rt_now > boundObj_lt) && (char_lt_now < boundObj_rt)){
+          } else if ((char_bot_dest + 1 >= boundObj_top) && (char_top_dest < boundObj_top) && (char_rt_now > boundObj_lt) && (char_lt_now < boundObj_rt)){
             char.hasCollidedBottom.push( boundObj.id );
             boundObj.hasCollidedTop.push( char.id );
             boundObj.collisionObjectId.push( char.id );
 
-          } else if ((char_top_dest +1 <= boundObj_bot) && (char_bot_dest >= boundObj_bot) && (char_rt_now > boundObj_lt) && (char_lt_now < boundObj_rt)){
+          } else if ((char_top_dest - 1 <= boundObj_bot) && (char_bot_dest > boundObj_bot) && (char_rt_now > boundObj_lt) && (char_lt_now < boundObj_rt)){
             char.hasCollidedTop.push( boundObj.id );
             boundObj.hasCollidedBottom.push( char.id );
             boundObj.collisionObjectId.push( char.id );

@@ -86,12 +86,12 @@ const step3CM = [
 
 const STARTING_X: number = 250;
 const STARTING_Y: number = 0;
-const SPEED: number = 1;
+const VELOCITY: number = 600 / 1000; // DISTANCE % TIME
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MOD_VERT: number = 5;
 const MAX_VERT: number = 64 * 5;
-const JUMP: number = -1;
+const JUMP: number = 0 - (600 / 1000);
 
 export class Character extends Block {
   private canvasWidth: number = 0;
@@ -124,8 +124,8 @@ export class Character extends Block {
   //   this._velocity = value;
   // }
   
-  get speed(): number {
-    return SPEED;
+  get velocity(): number {
+    return VELOCITY;
   }
 
   get jump() : number {

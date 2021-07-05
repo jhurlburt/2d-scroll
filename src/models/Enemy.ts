@@ -47,7 +47,7 @@ const step2CM = [
   [0,0,0,5,5,5,2,2,2,5,5,5,5,5,5,0],
   [0,0,0,0,5,5,5,2,2,5,5,5,5,5,0,0]];
 
-const SPEED: number = 1;
+const VELOCITY: number = 200 / 1000;
 const STARTING_X: number = 800;
 const STARTING_Y: number = 0;
 
@@ -73,8 +73,8 @@ export class Enemy extends Block {
     this._moveLeft = value;
   }
 
-  get speed(): number {
-    return SPEED;
+  get velocity(): number {
+    return VELOCITY;
   }
 
   // set velocity(value: number){

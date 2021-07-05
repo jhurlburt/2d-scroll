@@ -51,7 +51,7 @@ export class AppComponent {
         this.level1.update();
         this.level1.render();
         this.isdrawing = false;
-      }}, REFRESH);
+      }}, 30/1000); //30 FPS
   }
 
   private handleCheckpoint(options){
