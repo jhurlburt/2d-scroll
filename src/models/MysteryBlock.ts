@@ -43,13 +43,14 @@ const block2 = [
   [2,2,2,2,2,2,2,2,5,5,2,2,2,2,2,5],
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,5],
   [2,2,2,2,2,2,2,2,2,5,2,2,2,2,2,5],
-  [2,2,5,2,2,2,2,2,5,5,2,2,2,5,2,5],
+  [2,2,5,2,2,2,2,2,5,5,2,2,2,5,2,5],  
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,5],
   [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]];
 
+const TPF: number = 100;
   
 export class MysteryBlock extends Block {
-
+  
   constructor(options) {
     super({
       x: options.x,
@@ -57,7 +58,8 @@ export class MysteryBlock extends Block {
       sprites: [
         new Sprite({ 
           context: options.context, 
-          dataMaps: [ block1 ], 
+          ticksPerFrame: TPF,
+          dataMaps: [ block1, block2 ], 
           x: options.x, 
           y: options.y || Block.PLATFORM_1_Y, 
           colorPallette: colorPallette })] //WALK LEFT

@@ -10,7 +10,7 @@ import { Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { Pipe } from './Pipe';
 
-const GRAVITY: number = (500 / 1000); //TODO: changing this to 3 breaks the mario stand action
+const GRAVITY: number = (1000 / 1000); //TODO: changing this to 3 breaks the mario stand action
 const CHECKPOINT_BG_X: number = 1000;
 const CHECKPOINT_ENEMY_DROP_X: number = 600;
 const CHECKPOINT_ENEMY_DROP_Y: number = 0;
@@ -45,6 +45,7 @@ export class Level {
   private previousTime: number = 0;
   private currentTime: number = Date.now();
   private deltaTime: number = 0;
+  private _endTurn: boolean = false;
 
   constructor( options ) {
     this.context = options.context || null;
@@ -205,6 +206,15 @@ export class Level {
     }
   }
 
+  get endTurn(): boolean {
+    return this._endTurn;
+  }
+
+  set endTurn(value: boolean) {
+    this._endTurn = value;
+    // return this.mario.animateDeath();
+  }
+
   public update () {
     let canvas_distance_y: number = 0, canvas_distance_x: number = 0; 
     let mario_distance_y: number = 0, mario_distance_x: number = 0;
@@ -217,14 +227,16 @@ export class Level {
 
     //DISTANCE = VELOCITY * TIME
     mario_distance_x = ( this.key_walk_right ) ? this.mario.velocity * this.deltaTime: ( this.key_walk_left ) ? 0 - (this.mario.velocity * this.deltaTime): 0;
-    mario_distance_y = ( this.key_jump ) ? (this.mario.jump * this.deltaTime): (GRAVITY * this.deltaTime);
-    // if (this.key_jump){
-    //   let velocity = this.mario.velocity + GRAVITY
-    //   velocity = velocity + GRAVITY;
 
-    //   mario_distance_y
-    // }
-
+    if (this.key_jump && this.mario.jump < 0){
+      this.mario.jump = this.mario.jump + (GRAVITY/8);
+      mario_distance_y = this.mario.jump * this.deltaTime;
+    
+    } else {
+      this.key_jump = false;
+      this.mario.initializeJump();
+      mario_distance_y = GRAVITY * this.deltaTime;
+    }
     //CHARACTER COLLISION DETECTION
     let collided : BoundingBox[] = this.getCollisions(this.mario, canvas_distance_y, mario_distance_y, canvas_distance_x, mario_distance_x);
     collided.forEach(element => {
@@ -314,9 +326,11 @@ export class Level {
             enemy.isTerminated = true;
           } else {
             this.mario.isTerminated = true;
+            this.notifyParent.emit({ name : "Termination" });
           }
         } else {
           this.mario.isTerminated = true;
+          this.notifyParent.emit({ name : "Termination" });
         }
       }
       enemy.update({
@@ -330,9 +344,10 @@ export class Level {
       }
     });//this.enemies.forEach...
 
+    // if (!this._endTurn){
     //UPDATE CHARACTER
     this.mario.update({ bg_scroll_vert: canvas_distance_y, bg_scroll_horz: canvas_distance_x, char_scroll_vert: mario_distance_y, char_scroll_horz: mario_distance_x });
-            
+  
     //UPDATE STATIC OBJECTS
     this.pipes.forEach(element => { element.update({vert : 0-canvas_distance_y, scroll : 0-canvas_distance_x}); });
     this.blocks.forEach(element =>{ element.update({vert : 0-canvas_distance_y, scroll : 0-canvas_distance_x}); });
@@ -341,12 +356,13 @@ export class Level {
     //UPDATE BOUNDS X/Y
     this.sourceX += canvas_distance_x;
     this.sourceY += canvas_distance_y;
+    // }
   };
 
   public checkpointLogic(){
     //CHECKPOINT LOGIC
     let mario_x = this.mario.getBounds().x; 
-    let orig_x = mario_x + this.sourceX; 
+    let orig_x = mario_x + this.sourceX;
     let enemy_x = mario_x + CHECKPOINT_ENEMY_DROP_X;
     let enemy_y = CHECKPOINT_ENEMY_DROP_Y;
     let count = (orig_x - (orig_x % CHECKPOINT_BG_X)) / CHECKPOINT_BG_X;

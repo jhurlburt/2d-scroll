@@ -11,7 +11,7 @@ import { ShortPipe } from '../models/ShortPipe';
 import { MediumPipe } from 'src/models/MediumPipe';
 import { LongPipe } from 'src/models/LongPipe';
 
-const REFRESH: number = 1; //lowering refresh rate increases game speed
+const FPS: number = 30; //lowering refresh rate increases game speed
 const CANVAS_HEIGHT: number = 800;
 const CANVAS_WIDTH: number = 1200;
 
@@ -34,24 +34,39 @@ export class AppComponent {
   @ViewChild('audioJump') audioJump: ElementRef<HTMLAudioElement>;
   
   private title: string = 'Super Mario Brothers';
-  private isdrawing: boolean = false;
   private imagesLoaded: number = 0;
   private totalImages: number = 5;
   private level1: Level;
   // audioJump: any;
   private audioJumpPlaying: boolean = false;
+  private endSequenceTimeout: number = 0;
+  private endSequence: boolean = false;
+  private isRunning: boolean = false;
   
   private gameLoop() {
     console.log("begin gameLoop()");
+    this.init();
 
     setInterval(() => {
-      if (!this.isdrawing) { 
-        this.isdrawing = true;
-        this.level1.checkpointLogic();
-        this.level1.update();
-        this.level1.render();
-        this.isdrawing = false;
-      }}, 30/1000); //30 FPS
+      if (this.endSequence){
+        if (!this.isRunning){
+          this.isRunning = true;
+          this.endSequenceTimeout = (this.endSequenceTimeout == 0) ? Date.now() + (1 * 1000) : this.endSequenceTimeout;
+          if (Date.now() > this.endSequenceTimeout){
+            this.init();
+          } 
+          this.isRunning = false;  
+        }
+      } else {
+        if (!this.isRunning){
+          this.isRunning = true;
+          this.level1.checkpointLogic();
+          this.level1.update();
+          this.level1.render();
+          this.isRunning = false;  
+        } 
+      }
+    }, FPS/1000); //30 FPS
   }
 
   private handleCheckpoint(options){
@@ -64,8 +79,15 @@ export class AppComponent {
     );
   }
 
+  private handleTermination(options){
+    this.endSequence = true;
+  }
+
   afterLoading() {
-    if (++this.imagesLoaded == this.totalImages) { this.init(); }
+    if (++this.imagesLoaded == this.totalImages) { 
+      // this.init(); 
+      this.gameLoop();
+    }
   }
 
   init(): void{
@@ -73,6 +95,8 @@ export class AppComponent {
     this.canvasE1.nativeElement.height = CANVAS_HEIGHT;
     this.canvasE1.nativeElement.width = CANVAS_WIDTH;
     let ctx: CanvasRenderingContext2D = this.canvasE1.nativeElement.getContext('2d', { alpha: false });
+    this.endSequenceTimeout = 0;
+    this.endSequence = false;
 
     this.audioMainTheme.nativeElement.play();
 
@@ -85,10 +109,6 @@ export class AppComponent {
       frameHeight:  this.canvasE1.nativeElement.height,
       character:    new Character({ context: ctx, canvasWidth: this.canvasE1.nativeElement.width, canvasHeight: this.canvasE1.nativeElement.height })
     });
-
-    // this.level1.addEnemy(
-    //   new Enemy({ context: ctx, moveLeft: true })
-    // );
 
     for (var i=0; i<100; i++){
       this.level1.addTerras([ 
@@ -116,9 +136,10 @@ export class AppComponent {
       console.log("Name: " + options.name);
       if (options.name == "Checkpoint"){
         this.handleCheckpoint(options);
+      } else if (options.name == "Termination"){
+        this.handleTermination(options);
       }
     });
-    this.gameLoop();
   }
 
   @HostListener('window:keydown', ['$event'])

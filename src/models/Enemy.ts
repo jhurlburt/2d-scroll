@@ -49,7 +49,7 @@ const step2CM = [
 
 const VELOCITY: number = 200 / 1000;
 const STARTING_X: number = 800;
-const STARTING_Y: number = 0;
+const STARTING_Y: number = 300;
 
 export class Enemy extends Block {
   private _moveLeft: boolean;

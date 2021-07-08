@@ -85,18 +85,19 @@ const step3CM = [
   [0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0]];
 
 const STARTING_X: number = 250;
-const STARTING_Y: number = 0;
+const STARTING_Y: number = 300;
 const VELOCITY: number = 600 / 1000; // DISTANCE % TIME
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MOD_VERT: number = 5;
 const MAX_VERT: number = 64 * 5;
-const JUMP: number = 0 - (600 / 1000);
+const JUMP: number = 0 - (4000 / 1000);
 
 export class Character extends Block {
   private canvasWidth: number = 0;
   private canvasHeight: number = 0;
   private _velocity: number = 0;
+  private _jump: number = 0;
   private _jumpVertex: number = 0;
 
   constructor(options) {
@@ -116,20 +117,34 @@ export class Character extends Block {
     this.lastAction = ACTION.STAND_RIGHT;
     this.canvasHeight = options.canvasHeight;
     this.canvasWidth = options.canvasWidth;
-    // this._velocity = VELOCITY;
+    this.velocity = VELOCITY;
+    this.jump = JUMP;
     // this.jumpVertex = 64 * 5;  
   }
 
-  // set velocity(value : number){
-  //   this._velocity = value;
-  // }
-  
-  get velocity(): number {
-    return VELOCITY;
+  public initializeJump() {
+    this._jump = JUMP;
   }
 
-  get jump() : number {
-    return JUMP;
+  public animateDeath() : boolean {
+    // this.bounds.forEach(sprite => { 
+    //   sprite.stopUpdate();  
+    // });
+    return true;
+  }
+
+  set velocity(value : number){ 
+    this._velocity = value; 
+  }
+  get velocity(): number { 
+    return this._velocity; 
+  }
+
+  set jump(value : number){ 
+    this._jump = value; 
+  }
+  get jump() : number { 
+    return this._jump; 
   }
 
   public update (options : any) {
@@ -143,7 +158,7 @@ export class Character extends Block {
     //mario velocity = mario velocity + mario gravity * dt
 
     if (this.isTerminated){
-      // console.log("Hey, dog. This aint for me! - mario")
+        // console.log("Hey, dog. This aint for me! - mario")
     }
     if (scroll_vert < 0 && scroll_horz < 0) {
       action = ACTION.JUMP_LEFT;  

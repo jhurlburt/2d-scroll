@@ -17,6 +17,8 @@ export class Sprite  {
   private colorPallette: string[];
   private canvases: HTMLCanvasElement[];
   // private canvas: HTMLCanvasElement;
+  // private _stopUpdate: boolean = false;
+  // private _animateTermination: boolean = false;
 
   constructor(options) {
     this.ticksPerFrame = options.ticksPerFrame || TPF;
@@ -43,6 +45,10 @@ export class Sprite  {
     }
   }
 
+  // set animateTermination(value: boolean){
+  //   this._animateTermination = value;
+  // }
+
   get dataMap(): number[][] {
     return (this.dataMaps.length > this.frameIndex) 
     ? this.dataMaps[this.frameIndex]
@@ -54,16 +60,18 @@ export class Sprite  {
   }
 
   update(vert: number, scroll: number) {
-    this.tickCount += 1;
-    if (this.tickCount > this.ticksPerFrame) {
-      this.tickCount = 0;
-      // If the current frame index is in range
-      if (this.frameIndex < this.numberOfFrames - 1) {
-        this.frameIndex += 1;
-      } else {
-        this.frameIndex = 0;
-      }
-    } 
+    // if (!this._stopUpdate){
+      this.tickCount += 1;
+      if (this.tickCount > this.ticksPerFrame) {
+        this.tickCount = 0;
+        // If the current frame index is in range
+        if (this.frameIndex < this.numberOfFrames - 1) {
+          this.frameIndex += 1;
+        } else {
+          this.frameIndex = 0;
+        }
+      } 
+    //}
     this.x += scroll;
     this.y += vert;
   };
@@ -96,8 +104,8 @@ export class Sprite  {
               if(((x + SIZE_MULTIPLIER >= srcX) && (x < srcX + srcWidth)) &&
                   ((y + SIZE_MULTIPLIER >= srcY) && (y < srcY + srcHeight))) {
                     ctx.fillStyle = this.colorPallette[color];
-                    ctx.fillRect(x, y, SIZE_MULTIPLIER, SIZE_MULTIPLIER);
-                    
+                    ctx.fillRect(x, y, SIZE_MULTIPLIER, SIZE_MULTIPLIER);                    
+
               }
             }
           }
@@ -108,9 +116,10 @@ export class Sprite  {
   };
 
   stopUpdate() {
+    // this._stopUpdate = true;
     this.frameIndex = 0;
-    this.ticksPerFrame = 0;
-      // this.numberOfFrames = 1;
+    // this.ticksPerFrame = 0;
+    // this.numberOfFrames = 1;
   };
 
   toString () {
