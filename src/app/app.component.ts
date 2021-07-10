@@ -11,7 +11,7 @@ import { ShortPipe } from '../models/ShortPipe';
 import { MediumPipe } from 'src/models/MediumPipe';
 import { LongPipe } from 'src/models/LongPipe';
 
-const FPS: number = 30; //lowering refresh rate increases game speed
+const FPS: number = 60; //lowering refresh rate increases game speed
 const CANVAS_HEIGHT: number = 800;
 const CANVAS_WIDTH: number = 1200;
 

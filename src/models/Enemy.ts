@@ -47,13 +47,15 @@ const step2CM = [
   [0,0,0,5,5,5,2,2,2,5,5,5,5,5,5,0],
   [0,0,0,0,5,5,5,2,2,5,5,5,5,5,0,0]];
 
-const VELOCITY: number = 200 / 1000;
+const GRAVITY: number = 500;
+const VELOCITY: number = 500;
 const STARTING_X: number = 800;
 const STARTING_Y: number = 300;
 
 export class Enemy extends Block {
   private _moveLeft: boolean;
-  // private _velocity: number = SPEED;
+  private _velocity: number = VELOCITY;
+  private _gravity: number = GRAVITY;
 
   constructor(options) {
     super({
@@ -65,6 +67,10 @@ export class Enemy extends Block {
     this._moveLeft = options.moveLeft;
   }
 
+  get gravity(): number {
+    return this._gravity;
+  }
+
   get moveLeft(): boolean {
     return this._moveLeft;
   }
@@ -74,7 +80,7 @@ export class Enemy extends Block {
   }
 
   get velocity(): number {
-    return VELOCITY;
+    return this._velocity;
   }
 
   // set velocity(value: number){

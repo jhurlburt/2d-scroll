@@ -10,7 +10,7 @@ import { Output } from '@angular/core';
 import { EventEmitter } from '@angular/core';
 import { Pipe } from './Pipe';
 
-const GRAVITY: number = (1000 / 1000); //TODO: changing this to 3 breaks the mario stand action
+// const GRAVITY: number = (600 / 1000); //TODO: changing this to 3 breaks the mario stand action
 const CHECKPOINT_BG_X: number = 1000;
 const CHECKPOINT_ENEMY_DROP_X: number = 600;
 const CHECKPOINT_ENEMY_DROP_Y: number = 0;
@@ -222,20 +222,19 @@ export class Level {
     this.reset();
 
     this.currentTime = Date.now();
-    this.deltaTime = this.currentTime - this.previousTime; //MILLISECONDS
+    this.deltaTime = (this.currentTime - this.previousTime) / 1000; //MILLISECONDS
     this.previousTime = this.currentTime;
 
     //DISTANCE = VELOCITY * TIME
-    mario_distance_x = ( this.key_walk_right ) ? this.mario.velocity * this.deltaTime: ( this.key_walk_left ) ? 0 - (this.mario.velocity * this.deltaTime): 0;
+    mario_distance_x = ( this.key_walk_right ) ? this.mario.velocity_x * this.deltaTime: ( this.key_walk_left ) ? 0 - (this.mario.velocity_x * this.deltaTime): 0;
 
-    if (this.key_jump && this.mario.jump < 0){
-      this.mario.jump = this.mario.jump + (GRAVITY/8);
-      mario_distance_y = this.mario.jump * this.deltaTime;
+    if (this.key_jump && this.mario.velocity_y < 0){
+      this.mario.velocity_y = this.mario.velocity_y + this.mario.gravity;
+      mario_distance_y = this.mario.velocity_y * this.deltaTime;
     
     } else {
       this.key_jump = false;
-      this.mario.initializeJump();
-      mario_distance_y = GRAVITY * this.deltaTime;
+      mario_distance_y = this.mario.velocity_y * this.deltaTime;
     }
     //CHARACTER COLLISION DETECTION
     let collided : BoundingBox[] = this.getCollisions(this.mario, canvas_distance_y, mario_distance_y, canvas_distance_x, mario_distance_x);
@@ -270,15 +269,15 @@ export class Level {
     if (mario_distance_x > 0){
       mario_distance_x = this.mario.canScrollRight( mario_distance_x );
       if (mario_distance_x == 0){ console.debug("can scroll right? no. fucking. way") }
-      canvas_distance_x = (mario_distance_x < (this.mario.velocity * this.deltaTime)) ? (this.canScrollRight((this.mario.velocity * this.deltaTime) - mario_distance_x)) : 0;
+      canvas_distance_x = (mario_distance_x < (this.mario.velocity_x * this.deltaTime)) ? (this.canScrollRight((this.mario.velocity_x * this.deltaTime) - mario_distance_x)) : 0;
 
     } else if (mario_distance_x < 0){
       mario_distance_x = this.mario.canScrollLeft( mario_distance_x );
-      canvas_distance_x = (mario_distance_x > (0 - (this.mario.velocity * this.deltaTime))) ? (this.canScrollLeft(0 - (this.mario.velocity * this.deltaTime) - mario_distance_x)) : 0;
+      canvas_distance_x = (mario_distance_x > (0 - (this.mario.velocity_x * this.deltaTime))) ? (this.canScrollLeft(0 - (this.mario.velocity_x * this.deltaTime) - mario_distance_x)) : 0;
     }
     //UPDATE ENEMIES
     this.enemies.forEach(enemy => {
-      let enemy_y = GRAVITY * this.deltaTime;
+      let enemy_y = enemy.gravity * this.deltaTime;
       let enemy_x = ( enemy.moveLeft ) ? 0 - (enemy.velocity * this.deltaTime) : enemy.velocity * this.deltaTime;
 
       let collided: BoundingBox[] = this.getCollisions(enemy, canvas_distance_y, enemy_y, canvas_distance_x, enemy_x);

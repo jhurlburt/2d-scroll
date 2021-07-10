@@ -84,9 +84,11 @@ const step3CM = [
   [0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0]];
 
+const GRAVITY: number = 500;
 const STARTING_X: number = 250;
 const STARTING_Y: number = 300;
-const VELOCITY: number = 600 / 1000; // DISTANCE % TIME
+const VELOCITY_X: number = 800; // DISTANCE % TIME
+const VELOCITY_Y: number = 0; // DISTANCE % TIME
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MOD_VERT: number = 5;
@@ -96,15 +98,14 @@ const JUMP: number = 0 - (4000 / 1000);
 export class Character extends Block {
   private canvasWidth: number = 0;
   private canvasHeight: number = 0;
-  private _velocity: number = 0;
-  private _jump: number = 0;
+  private _velocity_x: number = 0;
+  private _velocity_y: number = 0;
   private _jumpVertex: number = 0;
+  private _gravity: number = 0;
 
   constructor(options) {
     super({
       id: options.id,
-      x: STARTING_X,
-      y: STARTING_Y,
       ticksPerFrame: options.ticksPerFrame,
       sprites: [ 
         new Sprite({ context: options.context, dataMaps: [ standingCM ], x: STARTING_X, y: STARTING_Y, direction: "left", colorPallette: colorPallette }), //STAND_LEFT
@@ -117,14 +118,15 @@ export class Character extends Block {
     this.lastAction = ACTION.STAND_RIGHT;
     this.canvasHeight = options.canvasHeight;
     this.canvasWidth = options.canvasWidth;
-    this.velocity = VELOCITY;
-    this.jump = JUMP;
+    this._velocity_x = VELOCITY_X;
+    this._velocity_y = GRAVITY;
+    this._gravity = GRAVITY;
     // this.jumpVertex = 64 * 5;  
   }
 
-  public initializeJump() {
-    this._jump = JUMP;
-  }
+  // public initializeJump() {
+  //   this._jump = JUMP;
+  // }
 
   public animateDeath() : boolean {
     // this.bounds.forEach(sprite => { 
@@ -133,18 +135,24 @@ export class Character extends Block {
     return true;
   }
 
-  set velocity(value : number){ 
-    this._velocity = value; 
-  }
-  get velocity(): number { 
-    return this._velocity; 
+  set velocity_x(value : number){ 
+    this._velocity_x = value; 
   }
 
-  set jump(value : number){ 
-    this._jump = value; 
+  get velocity_x(): number { 
+    return this._velocity_x; 
   }
-  get jump() : number { 
-    return this._jump; 
+
+  set velocity_y(value : number){ 
+    this._velocity_y = value; 
+  }
+
+  get velocity_y() : number { 
+    return this._velocity_y; 
+  }
+
+  get gravity(): number {
+    return this._gravity;
   }
 
   public update (options : any) {
