@@ -226,16 +226,14 @@ export class Level {
     this.previousTime = this.currentTime;
 
     //DISTANCE = VELOCITY * TIME
-    mario_distance_x = ( this.key_walk_right ) ? this.mario.velocity_x * this.deltaTime: ( this.key_walk_left ) ? 0 - (this.mario.velocity_x * this.deltaTime): 0;
+    this.mario.velocity_x = this.mario.speed - this.mario.gravity;
+    mario_distance_x = 
+      ( this.key_walk_right ) ? (this.mario.velocity_x) * this.deltaTime: 
+      ( this.key_walk_left ) ? 0 - ((this.mario.velocity_x) * this.deltaTime): 0;
 
-    if (this.key_jump && this.mario.velocity_y < 0){
-      this.mario.velocity_y = this.mario.velocity_y + this.mario.gravity;
-      mario_distance_y = this.mario.velocity_y * this.deltaTime;
-    
-    } else {
-      this.key_jump = false;
-      mario_distance_y = this.mario.velocity_y * this.deltaTime;
-    }
+    this.mario.velocity_y = (this.key_jump) ? (this.mario.gravity - this.mario.speed) : this.mario.gravity;
+    mario_distance_y = this.mario.velocity_y * this.deltaTime;
+
     //CHARACTER COLLISION DETECTION
     let collided : BoundingBox[] = this.getCollisions(this.mario, canvas_distance_y, mario_distance_y, canvas_distance_x, mario_distance_x);
     collided.forEach(element => {
@@ -278,7 +276,7 @@ export class Level {
     //UPDATE ENEMIES
     this.enemies.forEach(enemy => {
       let enemy_y = enemy.gravity * this.deltaTime;
-      let enemy_x = ( enemy.moveLeft ) ? 0 - (enemy.velocity * this.deltaTime) : enemy.velocity * this.deltaTime;
+      let enemy_x = ( enemy.moveLeft ) ? 0 - ((enemy.speed - enemy.gravity) * this.deltaTime) : ((enemy.speed - enemy.gravity) * this.deltaTime);
 
       let collided: BoundingBox[] = this.getCollisions(enemy, canvas_distance_y, enemy_y, canvas_distance_x, enemy_x);
       collided.forEach(element => {
@@ -287,10 +285,10 @@ export class Level {
             enemy_y = 0;
           } else if (element.hasCollidedLeft.includes( enemy.id )) { 
             enemy.moveLeft = true;
-            enemy_x = ( enemy.moveLeft ) ? (0 - (enemy.velocity * this.deltaTime)) : (enemy.velocity * this.deltaTime);
+            enemy_x = ( enemy.moveLeft ) ? (0 - ((enemy.speed - enemy.gravity) * this.deltaTime)) : ((enemy.speed - enemy.gravity) * this.deltaTime);
           } else if (element.hasCollidedRight.includes( enemy.id )) {
             enemy.moveLeft = false;
-            enemy_x = ( enemy.moveLeft ) ? (0 - (enemy.velocity * this.deltaTime)) : (enemy.velocity * this.deltaTime);
+            enemy_x = ( enemy.moveLeft ) ? (0 - ((enemy.speed - enemy.gravity) * this.deltaTime)) : ((enemy.speed - enemy.gravity) * this.deltaTime);
           }
         }
       });

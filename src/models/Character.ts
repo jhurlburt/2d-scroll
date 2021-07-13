@@ -84,16 +84,14 @@ const step3CM = [
   [0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0]];
 
-const GRAVITY: number = 500;
+const SPEED: number = 1000;
+const GRAVITY: number = 400;
 const STARTING_X: number = 250;
 const STARTING_Y: number = 300;
-const VELOCITY_X: number = 800; // DISTANCE % TIME
-const VELOCITY_Y: number = 0; // DISTANCE % TIME
 const HEIGHT: number = 64;
 const WIDTH: number = 64;
 const MOD_VERT: number = 5;
 const MAX_VERT: number = 64 * 5;
-const JUMP: number = 0 - (4000 / 1000);
 
 export class Character extends Block {
   private canvasWidth: number = 0;
@@ -101,7 +99,6 @@ export class Character extends Block {
   private _velocity_x: number = 0;
   private _velocity_y: number = 0;
   private _jumpVertex: number = 0;
-  private _gravity: number = 0;
 
   constructor(options) {
     super({
@@ -118,15 +115,10 @@ export class Character extends Block {
     this.lastAction = ACTION.STAND_RIGHT;
     this.canvasHeight = options.canvasHeight;
     this.canvasWidth = options.canvasWidth;
-    this._velocity_x = VELOCITY_X;
-    this._velocity_y = GRAVITY;
-    this._gravity = GRAVITY;
-    // this.jumpVertex = 64 * 5;  
+    this._velocity_x = 0;
+    this._velocity_y = 0;
   }
 
-  // public initializeJump() {
-  //   this._jump = JUMP;
-  // }
 
   public animateDeath() : boolean {
     // this.bounds.forEach(sprite => { 
@@ -152,7 +144,11 @@ export class Character extends Block {
   }
 
   get gravity(): number {
-    return this._gravity;
+    return GRAVITY;
+  }
+
+  get speed(): number {
+    return SPEED;
   }
 
   public update (options : any) {
