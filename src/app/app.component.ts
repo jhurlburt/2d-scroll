@@ -11,7 +11,7 @@ import { ShortPipe } from '../models/ShortPipe';
 import { MediumPipe } from 'src/models/MediumPipe';
 import { LongPipe } from 'src/models/LongPipe';
 
-const FPS: number = 60; //lowering refresh rate increases game speed
+const FPS: number = 30; //lowering refresh rate increases game speed
 const CANVAS_HEIGHT: number = 800;
 const CANVAS_WIDTH: number = 1200;
 
@@ -60,13 +60,13 @@ export class AppComponent {
       } else {
         if (!this.isRunning){
           this.isRunning = true;
-          this.level1.checkpointLogic();
+          //this.level1.checkpointLogic();
           this.level1.update();
           this.level1.render();
           this.isRunning = false;  
         } 
       }
-    }, FPS/1000); //30 FPS
+    }, FPS * .001); //30 FPS
   }
 
   private handleCheckpoint(options){

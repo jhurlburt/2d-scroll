@@ -1,6 +1,8 @@
 import { Constants } from "src/helpers/Constants";
 
-const SIZE_MULTIPLIER = 4;
+const ANIMATE_TPF: number = 30;
+const ANIMATE_Y_OFFSET: number = 20;
+const SIZE_MULTIPLIER: number = 4;
 const TPF: number = 18;
 
 export class Sprite  {
@@ -17,8 +19,8 @@ export class Sprite  {
   private colorPallette: string[];
   private canvases: HTMLCanvasElement[];
   // private canvas: HTMLCanvasElement;
-  // private _stopUpdate: boolean = false;
-  // private _animateTermination: boolean = false;
+  private _stopUpdate: boolean = false;
+  private _animateCount: number = 0;
 
   constructor(options) {
     this.ticksPerFrame = options.ticksPerFrame || TPF;
@@ -45,10 +47,6 @@ export class Sprite  {
     }
   }
 
-  // set animateTermination(value: boolean){
-  //   this._animateTermination = value;
-  // }
-
   get dataMap(): number[][] {
     return (this.dataMaps.length > this.frameIndex) 
     ? this.dataMaps[this.frameIndex]
@@ -60,7 +58,14 @@ export class Sprite  {
   }
 
   update(vert: number, scroll: number) {
-    // if (!this._stopUpdate){
+
+    if (this._animateCount > 0){
+      this._animateCount--;
+      if (this._animateCount == 0){
+        this.y += ANIMATE_Y_OFFSET;
+      }  
+    }
+    if (!this._stopUpdate){
       this.tickCount += 1;
       if (this.tickCount > this.ticksPerFrame) {
         this.tickCount = 0;
@@ -71,7 +76,7 @@ export class Sprite  {
           this.frameIndex = 0;
         }
       } 
-    //}
+    }
     this.x += scroll;
     this.y += vert;
   };
@@ -115,11 +120,15 @@ export class Sprite  {
     this.context.drawImage(this.canvases[this.frameIndex], this.x, this.y);
   };
 
+  animate() {
+    this.y -= ANIMATE_Y_OFFSET; //MOVE VERT POS BY OFFSET SIZE
+    this._animateCount = ANIMATE_TPF; //REMAIN IN NEW VERT POS FOR DURATION OF COUNT
+    this.stopUpdate(); //STOP FRAME INDEX UPDATES - MAINTAIN INITIAL STATE
+  }
+
   stopUpdate() {
-    // this._stopUpdate = true;
+    this._stopUpdate = true;
     this.frameIndex = 0;
-    // this.ticksPerFrame = 0;
-    // this.numberOfFrames = 1;
   };
 
   toString () {

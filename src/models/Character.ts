@@ -1,5 +1,4 @@
 import { Sprite } from './Sprite';
-import { Constants } from '../helpers/Constants';
 import { ACTION } from '../helpers/Character';
 import { Block } from './Block';
 
@@ -84,8 +83,8 @@ const step3CM = [
   [0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0]];
 
-const SPEED: number = 1000;
-const GRAVITY: number = 400;
+const SPEED: number = 800;
+const GRAVITY: number = 1400;
 const STARTING_X: number = 250;
 const STARTING_Y: number = 300;
 const HEIGHT: number = 64;
@@ -194,9 +193,11 @@ export class Character extends Block {
 
   public canScrollRight (scroll: number ) {   
     return (this.canvasWidth / 2) <= this.bounds[this.lastAction].x + scroll ? (this.canvasWidth / 2) - this.bounds[this.lastAction].x : scroll;
+    // return scroll;
   };
 
   public canScrollLeft (scroll: number ) {
+    // return scroll;
     return STARTING_X >= (this.bounds[this.lastAction].x + scroll) ? STARTING_X - this.bounds[this.lastAction].x : scroll;
   };
 } 
