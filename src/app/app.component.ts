@@ -60,7 +60,7 @@ export class AppComponent {
       } else {
         if (!this.isRunning){
           this.isRunning = true;
-          //this.level1.checkpointLogic();
+          this.level1.checkpointLogic();
           this.level1.update();
           this.level1.render();
           this.isRunning = false;  

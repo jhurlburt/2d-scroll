@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "..\\gridTest"
+		},
+		{
+			"path": "..\\asteroids"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\centipede2"
+		}
+	],
+	"settings": {
+	}
+}
